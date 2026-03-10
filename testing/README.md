@@ -45,4 +45,4 @@ After `task infra:setup`, a local web terminal is exposed at `http://localhost:3
 
 ## Notes
 - State (Docker volumes) is intentionally preserved across runs; use `task reset` if you want a destructive cleanup.
-- See `testing/PROGRESS.md` for currently verified workflows.
+- `task setup:secrets` generates harness-only secret files under `testing/.secrets/`.
