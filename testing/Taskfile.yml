@@ -62,13 +62,15 @@ tasks:
       - mkdir -p {{.SECRETS_DIR}}/inventory/group_vars
       - chmod 700 {{.SECRETS_DIR}}
       - test -f {{.SECRETS_DIR}}/id_rsa || ssh-keygen -t rsa -b 2048 -N '' -C 'splunk-test-cluster' -f {{.SECRETS_DIR}}/id_rsa
-      - test -f {{.SECRETS_DIR}}/ansible_password || dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 20 > {{.SECRETS_DIR}}/ansible_password
-      - test -f {{.SECRETS_DIR}}/inventory/inventory.yml || printf -- '---\nall:\n' > {{.SECRETS_DIR}}/inventory/inventory.yml
+      - test -f {{.SECRETS_DIR}}/ansible_password || dd if=/dev/urandom bs=1 count=100 2>/dev/null | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 20 > {{.SECRETS_DIR}}/ansible_password
+      - test -f {{.SECRETS_DIR}}/inventory/inventory.yml || printf '%s\n' "---" "all:" > {{.SECRETS_DIR}}/inventory/inventory.yml
       - |
-        test -f {{.SECRETS_DIR}}/inventory/group_vars/all.yml || printf -- '---\nsplunk_admin_password: %s\ngitea_secret_key: %s\n' \
-          "$(dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 20)" \
-          "$(dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 40)" \
-          > {{.SECRETS_DIR}}/inventory/group_vars/all.yml
+        if [ ! -f {{.SECRETS_DIR}}/inventory/group_vars/all.yml ]; then
+          ADMIN_PASS="$(dd if=/dev/urandom bs=1 count=200 2>/dev/null | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 20)"
+          GITEA_KEY="$(dd if=/dev/urandom bs=1 count=200 2>/dev/null | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 40)"
+          printf '%s\n' "---" "splunk_admin_password: ${ADMIN_PASS}" "gitea_secret_key: ${GITEA_KEY}" \
+            > {{.SECRETS_DIR}}/inventory/group_vars/all.yml
+        fi
       - echo "Secrets OK"
     status:
       - test -f {{.SECRETS_DIR}}/id_rsa
