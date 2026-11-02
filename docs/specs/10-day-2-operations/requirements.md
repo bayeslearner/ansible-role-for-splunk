@@ -8,7 +8,7 @@ epic: testing
 features: [day2-git-app-deploy, day2-backup-recovery, day2-cluster-maintenance, day2-advanced-ops, day2-multi-env, day2-ops-validation]
 supersedes: []
 superseded_by: null
-depends_on: []
+depends_on: [05-molecule-virtual-lab]
 anchors: []
 ---
 

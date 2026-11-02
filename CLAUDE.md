@@ -57,7 +57,8 @@ Lint (repo root): `pre-commit run --all-files` (yamllint, ansible-lint on `roles
 - Spec task marks and Logs as work lands; `docs/design/feature-matrix.md` in the same commit as any change to a lab capability.
 - `testing/README.md` when a Taskfile target, topology or controller workflow changes.
 - A decision file in `docs/decisions/` for every decision; owner questions go there and on the Board.
-- Findings outside an ACTIVE spec: GitHub Issues on the fork.
+- Findings: tasks in the ACTIVE spec. The fork has GitHub Issues disabled.
+- 🚨 The fork is a public repository. Facts about work hosts (FQDNs, networks, users, internal paths, security posture of a named host) go in the private work notes, never in this repo.
 
 ## Not in this file
 
