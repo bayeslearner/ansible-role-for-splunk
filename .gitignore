@@ -3,3 +3,4 @@ roles/splunk/files/*.lic
 roles/splunkupgrader/files/splunk-upgrader-linux-*.tgz
 .DS_Store
 .vscode/settings.json
+.codegraph/
