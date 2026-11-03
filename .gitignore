@@ -1,5 +1,6 @@
 environments/test
 roles/splunk/files/*.lic
+roles/splunk/files/*splunk.secret*
 roles/splunkupgrader/files/splunk-upgrader-linux-*.tgz
 .DS_Store
 .vscode/settings.json

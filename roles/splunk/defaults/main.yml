@@ -27,6 +27,7 @@ splunk_nix_group: splunk
 # splunk_nix_groups: "group1,group2" # Uncomment and add a comma separated list of groups if you want to add the splunk_nix_user to additional groups. Uncomment and leave empty if you want to remove splunk from all additional groups. This can also be set in group_vars or host_vars.
 local_os_user: false  # Whenther or not to force creation of a user using the `luseradd` or not.
 local_os_group: false  # Whether or not to force creation of a group using the `lgroupadd` or not.
+# splunk_nix_pass_max_days: 90  # Set PASS_MAX_DAYS for the splunk OS user. If unset, the OS default is left unchanged. -1 removes password validity checking.
 splunk_uri_lm: undefined
 splunk_license_file: [ ]  # This can be a list of license files to copy to the host.
 splunk_license_group: Trial  # The default matches with the group splunk ships with. You can also set the value via a group_vars or host_vars file.
@@ -38,8 +39,9 @@ splunk_general_key: undefined  # Configures a pass4SymmKey in server.conf under 
 splunk_ds_key: undefined  # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
 splunk_admin_username: admin
 splunk_admin_password: undefined  # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
-splunk_configure_secret: false  # If set to true, you need to update files/splunk.secret
-splunk_secret_file: splunk.secret  # Used to specify your splunk.secret filename(s), files should be placed in the "files" folder of the role
+splunk_configure_secret: false  # If set to true, configure a common splunk.secret across hosts
+splunk_secret_file: splunk.secret  # Filename in the role's "files" directory. Used when splunk_secret_content is not set.
+splunk_secret_content: ""  # Set via ansible-vault encrypt_string. Takes precedence over splunk_secret_file when non-empty.
 # Although there are tasks for the following Splunk configurations in this role, they are not included in any tasks by default. You can add them to your install_splunk.yml if you would like to have Ansible manage any of these files
 splunk_configure_authentication: false
 ad_bind_password: undefined  # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
@@ -54,12 +56,20 @@ splunk_disable_mgmt_port: false  # If set to true, will disable splunkd manageme
 splunk_mgmt_uri: "{{ ansible_fqdn }}"  # If the `ansible_fqdn` is not resolvable by other hosts, you can set it to something like `ansible_facts.default_ipv4.address` in `host_vars` or `group_vars` to use the IP address instead.
 splunkd_port: 8089  # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/  # Base directory under which repositories for app deplyoment should be cloned to
-git_server: undefined  # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
-git_key: undefined  # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
+git_server: undefined  # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or per app in the apps list
+git_key: undefined  # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or per app in the apps list
 git_project: undefined
-git_version: master  # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
+git_version: master  # Configure default version to clone, overridable per app in the apps list
+git_depth: 1
+git_single_branch: true
+git_recursive: false
 app_relative_path:  # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
-splunk_app_deploy_path: undefined  # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+splunk_app_deploy_path: undefined  # App directory under $SPLUNK_HOME to deploy to (an apps directory under etc/, e.g. etc/apps or etc/deployment-apps) - may be set in group_vars, host_vars, playbook vars, or per app in the apps list
+# S3 app source (used when an app entry has download_app_source: s3).
+# splunk_app_s3_bucket: my-splunk-apps-bucket  # Default bucket; overridable per app with item.bucket
+# splunk_app_s3_bucket_prefix: prod            # Key prefix (directory) under the bucket; forms <prefix>/<app_id>/<version>/
+# s3_access_key_id: "{{ vault_s3_access_key_id }}"      # Omit to use the controller's IAM role / credential chain
+# s3_secret_access_key: "{{ vault_s3_secret_access_key }}"  # Omit to use the controller's IAM role / credential chain
 splunk_auditd_configure: false  # Whether or not to install auditd filtering rules for splunk launched executables
 splunk_db_path: "{{ splunk_home }}/var/lib/splunk" # Path which specifies the location of indexes on indexers and KVStores on other systems - defaults to $SPLUNK_HOME/var/lib/splunk
 # IDXC Vars
@@ -81,6 +91,7 @@ splunk_shc_target_group: shc
 splunk_shc_deployer: "{{ groups['shdeployer'] | first }}"  # If you manage multiple SHCs, configure the var value in group_vars
 splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].splunk_mgmt_uri }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}"  # If you manage multiple SHCs, configure the var value in group_vars
 start_splunk_handler_fired: false  # Do not change; used to prevent unnecessary splunk restarts
+skip_splunk_restart: false  # Set to true to suppress the "restart splunk" handler (e.g. during maintenance windows where you want to defer restarts)
 # Linux and scripting related vars
 add_crashlog_script: false  # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
 add_diag_script: false  # Set to true to install a script and cron job to automatically cleanup splunk diag files older than 30 days
