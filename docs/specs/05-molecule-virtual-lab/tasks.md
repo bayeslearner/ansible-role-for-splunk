@@ -41,6 +41,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
   - [ ] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
+    - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). A lab run is still owed.
     - Requirements: R4, R5
 
 - [ ] 3. Portability and isolation for the pve2 VM and the pre-production host
@@ -78,3 +79,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
+- 2026-11-02: Merged `upstream/master` (`750c071`) into `feature/virtual-lab`. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged. Day0 and day1 converge pass `--syntax-check` against the merged role.
