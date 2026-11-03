@@ -1,0 +1,4 @@
+{
+  "05-molecule-virtual-lab": "The Docker and Molecule lab as built, reconstructed from the code: verify it, close the gaps between its docs and its code, and make it safe to run on the pve2 VM and the pre-production host.",
+  "10-day-2-operations": "Day 2 operations scenarios (app deployment from git, backup and recovery, cluster maintenance), planned before the lab became a virtual lab; needs a design and tasks."
+}

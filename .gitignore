@@ -5,3 +5,4 @@ roles/splunkupgrader/files/splunk-upgrader-linux-*.tgz
 .DS_Store
 .vscode/settings.json
 .codegraph/
+.build/

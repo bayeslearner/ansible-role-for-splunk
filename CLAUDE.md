@@ -12,7 +12,9 @@ Load at session start (also listed in `.claude/required-skills`): `house-rules`,
 
 ## The board
 
-Not published yet.
+- Board: https://claude.ai/artifact/WCbneMKxdKJJuiWAfcXAo2 (kit config in `docs/board/`; reseed with `python3 docs/board/seed.py --out .build/board`, republish the page with `python3 docs/board/seed.py page --out board/board.html`)
+- Notes Viewer (ansible-role-for-splunk): https://claude.ai/artifact/LES4pcfC7J9giupJGLE6D2
+- Spec 05 review and Molecule teaching doc (Claude Doc): https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP
 
 ## Required reading on session start
 

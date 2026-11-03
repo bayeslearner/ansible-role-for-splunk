@@ -1,0 +1,850 @@
+<title>ansible-role-for-splunk virtual lab Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* The shared project Board (spec-driven-dev, Project Board): one page for every project, all of it
+   rendered from the db store that board/seed.py writes; the project's own name, repo, Notes Viewer
+   and Live tab come from the store's config doc. Overview answers "where are we and what is going
+   on"; open questions appear only there, under Needs you. Cold white light theme (house rule). */
+:root {
+  --bg: #ffffff; --surface: #f4f6f9; --line: #dde2ea; --fg: #121720; --muted: #586276;
+  --accent: #1f5fd1; --accent-soft: #e7eefb;
+  --ok: #13795b; --ok-soft: #e2f3eb; --warn: #9a5800; --warn-soft: #fbf0df; --bad: #b42318; --bad-soft: #fbe7e5;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1218; --surface: #171b23; --line: #2a303c; --fg: #e8ebf1; --muted: #9aa3b5; --accent: #7aa7ff; --accent-soft: #1b2740;
+  --ok: #4fc79b; --ok-soft: #14302a; --warn: #f0b35a; --warn-soft: #33270f; --bad: #f2867b; --bad-soft: #3a1a17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1218; --surface: #171b23; --line: #2a303c; --fg: #e8ebf1; --muted: #9aa3b5; --accent: #7aa7ff; --accent-soft: #1b2740;
+  --ok: #4fc79b; --ok-soft: #14302a; --warn: #f0b35a; --warn-soft: #33270f; --bad: #f2867b; --bad-soft: #3a1a17; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 1.08rem; font-weight: 600; margin: 0 0 10px; }
+h3 { font-size: .98rem; font-weight: 600; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .86em; }
+.lede { margin-top: 6px; color: var(--muted); max-width: 80ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; gap: 2px; overflow-x: auto; }
+.tabs button { font: inherit; font-size: .9rem; font-weight: 500; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 12px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs .n { font-family: var(--mono); font-size: .75rem; margin-left: 4px; color: var(--muted); }
+.tabs .n.hot { color: #fff; background: var(--accent); border-radius: 99px; padding: 0 6px; }
+.status { font-size: .85rem; color: var(--warn); min-height: 1.2em; }
+.panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; min-width: 0; }
+.refs { font-size: .84rem; color: var(--muted); }
+.chip { display: inline-block; font-size: .7rem; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.c-open, .c-pending, .c-DRAFT, .c-planned, .c-superseded, .c-record, .c-SUPERSEDED, .c-stopped { background: var(--surface); color: var(--muted); }
+.c-answered, .c-done, .c-decided, .c-CLOSED, .c-ok, .c-accepted, .c-SHIPPED, .c-running, .c-up, .c-healthy { background: var(--ok-soft); color: var(--ok); }
+.c-in_progress, .c-ACTIVE, .c-living, .c-FORK-FORWARD { background: var(--accent-soft); color: var(--accent); }
+.c-blocked, .c-stale, .c-partial, .c-exited { background: var(--warn-soft); color: var(--warn); }
+.c-dropped, .c-failed, .c-down, .c-RETRACTED { background: var(--bad-soft); color: var(--bad); }
+.empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; padding: 14px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card .k { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.card .v { font-size: 1.05rem; font-weight: 600; }
+.card .v a { text-decoration: none; }
+.bar { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); }
+.q { border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.qs { display: grid; gap: 14px; }
+.qhead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.qhead h3 { flex: 1 1 280px; }
+.qid { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+.more { border: 1px solid var(--line); border-radius: 8px; }
+.more > summary { cursor: pointer; padding: 10px 14px; color: var(--accent); font-weight: 500; }
+.more > .qs { padding: 0 14px 14px; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.opt { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt input { margin-top: 4px; accent-color: var(--accent); }
+.opt .def { font-size: .7rem; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-left: 6px; }
+.opt .cons { display: block; color: var(--muted); font-size: .87rem; }
+#docfilter { font: inherit; font-size: .92rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); min-width: 0; flex: 1 1 220px; }
+textarea { width: 100%; box-sizing: border-box; min-height: 52px; font: inherit; font-size: .92rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.btn { font: inherit; font-weight: 500; font-size: .9rem; color: #fff; background: var(--accent); border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: default; }
+textarea:focus, .opt:focus-within, button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.when { font-family: var(--mono); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.box { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.box > header { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 14px; background: var(--surface); }
+.box > header h3 { flex: 1 1 240px; }
+.box > p.sum { padding: 10px 14px 0; color: var(--muted); font-size: .9rem; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 8px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+th { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 500; }
+td.id { font-family: var(--mono); font-size: .8rem; white-space: nowrap; color: var(--muted); }
+td.num { font-family: var(--mono); font-size: .82rem; white-space: nowrap; }
+td.c { width: 1%; }
+.note { display: block; color: var(--muted); font-size: .84rem; }
+.log { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.log li { display: grid; grid-template-columns: 120px 1fr; gap: 12px; }
+@media (max-width: 560px) { .log li { grid-template-columns: 1fr; gap: 0; } }
+.cbtn { font: inherit; font-size: .78rem; color: var(--accent); background: none; border: 1px solid var(--line); border-radius: 99px; padding: 1px 9px; cursor: pointer; white-space: nowrap; }
+.cbtn:hover { border-color: var(--accent); }
+body.no-comments .cbtn { display: none; }
+.doc { border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.doc > summary { list-style: none; cursor: pointer; padding: 12px 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; background: var(--surface); border-radius: 8px; }
+.doc[open] > summary { border-radius: 8px 8px 0 0; border-bottom: 1px solid var(--line); }
+.doc > summary::-webkit-details-marker { display: none; }
+.doc > summary h3 { flex: 1 1 260px; }
+.doc > summary .sum { flex-basis: 100%; color: var(--muted); font-size: .88rem; }
+.doc[open] > summary .sum { display: none; }
+.md { padding: 6px 18px 16px; overflow-x: auto; max-width: 100%; }
+.md h1, .md h2, .md h3, .md h4 { margin: 18px 0 8px; line-height: 1.3; }
+.md h1 { font-size: 1.25rem; } .md h2 { font-size: 1.12rem; } .md h3 { font-size: 1rem; } .md h4 { font-size: .95rem; }
+.md p, .md ul, .md ol, .md table, .md pre, .md blockquote { margin: 0 0 10px; }
+.md ul, .md ol { padding-left: 22px; }
+.md li { margin: 2px 0; }
+.md table { width: auto; max-width: 100%; display: block; overflow-x: auto; }
+.md th, .md td { padding: 6px 10px; border: 1px solid var(--line); }
+.md pre { background: var(--surface); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: .84rem; }
+.md blockquote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted); }
+.md .mermaid svg { max-width: none; }
+.md .mermaid { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow-x: auto; margin-bottom: 12px; }
+.specs { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 820px) { .specs { grid-template-columns: 1fr; } }
+.where { border: 1px solid var(--line); border-radius: 8px; display: grid; min-width: 0; }
+.links { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 18px 14px; }
+.links a { font-size: .86rem; border: 1px solid var(--line); border-radius: 99px; padding: 3px 12px; text-decoration: none; }
+.speclist button.compact { padding: 5px 10px; display: flex; gap: 8px; align-items: baseline; }
+.speclist button.compact b { font-weight: 500; font-size: .86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.next { font-size: .88rem; }
+.where .here { padding: 12px 18px; background: var(--accent-soft); border-radius: 8px 8px 0 0; font-weight: 500; }
+.where .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 820px) { .where .cols { grid-template-columns: 1fr; } }
+.speclist { display: grid; gap: 8px; position: sticky; top: 52px; max-height: calc(100vh - 80px); overflow-y: auto; }
+@media (max-width: 820px) { .speclist { position: static; max-height: none; } }
+.speclist h4 { margin: 8px 0 0; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.speclist button { font: inherit; text-align: left; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--bg); color: var(--fg); cursor: pointer; display: grid; gap: 4px; }
+.speclist button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.speclist .sid { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+.subtabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.subtabs button { font: inherit; font-size: .88rem; border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; background: var(--bg); color: var(--fg); cursor: pointer; }
+.subtabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: .84rem; color: var(--muted); }
+.meta b { color: var(--fg); font-weight: 500; }
+/* Timeline: one row per spec, its name on the left and its bar on the right on one shared date axis;
+   details float on hover (tap on a phone), and hovering a row highlights it. */
+.tl { padding: 12px 18px 16px; overflow-x: auto; }
+.tl-grid { display: grid; grid-template-columns: minmax(200px, 2fr) minmax(320px, 3fr); column-gap: 14px; min-width: 560px; }
+.tl-axis { position: relative; height: 22px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+.tl-axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.tl-sec { grid-column: 1 / -1; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 12px 0 2px; }
+.tl-name, .tl-track { padding: 4px 0; border-radius: 4px; }
+.tl-name { display: grid; grid-template-columns: 34px 1fr; gap: 6px; color: var(--fg); text-decoration: none; font-size: .9rem; line-height: 1.3; align-items: center; }
+.tl-name .n { font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+.tl-track { position: relative; min-height: 22px; }
+.tl-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 14px; border-radius: 4px; min-width: 8px; }
+.tl-bar.done { background: var(--ok); opacity: .55; }
+.tl-bar.active { background: var(--accent); }
+.tl-bar.planned { background: transparent; border: 1.5px dashed var(--muted); box-sizing: border-box; }
+.tl-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); opacity: .35; pointer-events: none; }
+.tl .hi { background: var(--accent-soft); }
+.tl .hi .tl-bar { outline: 2px solid var(--fg); outline-offset: 1px; opacity: 1; }
+.tl-tip { position: fixed; z-index: 20; pointer-events: none; background: var(--fg); color: var(--bg); font-size: .82rem; padding: 6px 9px; border-radius: 6px; max-width: 320px; display: none; white-space: pre-line; }
+/* Reading pane: a repo document opened on the Board itself, fetched live from Dropbox (the Notes
+   Viewer's renderer, trimmed); it slides over the right side and covers the page on a phone. */
+.reader-veil { position: fixed; inset: 0; z-index: 29; background: rgba(18, 23, 32, .28); }
+.reader { position: fixed; z-index: 30; top: 0; right: 0; bottom: 0; width: min(940px, 100vw); background: var(--bg); border-left: 1px solid var(--line); box-shadow: -10px 0 28px rgba(0, 0, 0, .14); display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.reader[hidden], .reader-veil[hidden], .reader [hidden] { display: none; }
+.reader > header { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; padding: max(12px, env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.reader > header .path { font-family: var(--mono); font-size: .8rem; color: var(--muted); flex: 1 1 280px; overflow-wrap: anywhere; }
+.reader > header .path b { display: block; font-family: var(--sans); font-size: .98rem; color: var(--fg); font-weight: 600; }
+.reader > header a, .reader > header button { font: inherit; font-size: .84rem; border: 1px solid var(--line); border-radius: 99px; padding: 3px 12px; background: var(--bg); color: var(--accent); text-decoration: none; cursor: pointer; white-space: nowrap; }
+.reader-body { overflow-y: auto; padding: 6px 4px 48px; overscroll-behavior: contain; }
+.reader-body .md { max-width: 880px; }
+.reader-body .md h1 { font-size: 1.45rem; }
+.reader-msg { margin: 18px; }
+.md .table-wrap { overflow-x: auto; margin: 0 0 10px; }
+.md .table-wrap table { display: table; width: auto; }
+.md .callout { margin: 0 0 12px; padding: 10px 14px; border-radius: 6px; background: var(--surface); border-left: 3px solid var(--accent); }
+.md .callout-title { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+.md .callout-warning, .md .callout-caution, .md .callout-danger, .md .callout-bug { border-left-color: var(--warn); }
+.md .callout-tip, .md .callout-success, .md .callout-example, .md .callout-check { border-left-color: var(--ok); }
+.md a.code-ref { text-decoration: underline dotted; text-underline-offset: 3px; }
+.code-file { display: grid; grid-template-columns: auto minmax(0, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font: .8rem/1.5 var(--mono); margin: 12px 18px; }
+.code-file pre { margin: 0; padding: 12px 14px; font: inherit; background: none; }
+.code-file .gutter { color: var(--muted); text-align: right; user-select: none; border-right: 1px solid var(--line); }
+.code-file .gutter .hit { color: var(--accent); font-weight: 600; }
+.code-file .src { overflow-x: auto; }
+/* highlight.js token colours; its theme CSS cannot load (stylesheets only from Google Fonts). */
+.hljs-keyword, .hljs-selector-tag, .hljs-doctag { color: #a626a4; }
+.hljs-string, .hljs-regexp, .hljs-addition { color: #1d7a45; }
+.hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet { color: #9a5b00; }
+.hljs-comment, .hljs-quote { color: #6a7380; font-style: italic; }
+.hljs-type, .hljs-built_in, .hljs-title.class_ { color: #1f5fbf; }
+.hljs-title, .hljs-title.function_, .hljs-section, .hljs-name, .hljs-attr, .hljs-attribute, .hljs-property { color: #0b6e8a; }
+.hljs-meta, .hljs-deletion { color: #b3261e; }
+/* Dossier: the review copy of a spec's As Built and Architect's Review, with the owner's sign-off. */
+.signoff { border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 10px; }
+.signoff.done { border-color: var(--ok); background: var(--ok-soft); }
+.c-awaiting { background: var(--warn-soft); color: var(--warn); }
+.c-signed { background: var(--ok-soft); color: var(--ok); }
+/* Live: headline numbers, score tables and screenshots of what the project runs. */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px 14px 14px; }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; }
+.stat b { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: .84rem; }
+td.lowv { color: var(--warn); }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 12px 14px 14px; }
+.shot { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: grid; align-content: start; min-width: 0; }
+.shot button { padding: 0; border: 0; background: none; cursor: zoom-in; display: block; }
+.shot img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); }
+.shot figcaption { padding: 8px 12px 12px; font-size: .86rem; color: var(--muted); display: grid; gap: 3px; }
+.shot figcaption b { color: var(--fg); }
+.shot .where { font-family: var(--mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; }
+.shot .where.live { color: var(--ok); }
+.lightbox { position: fixed; inset: 0; z-index: 40; background: rgba(18, 23, 32, .82); display: grid; place-items: center; padding: 16px; cursor: zoom-out; }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 6px; background: #fff; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 id="b-title">Project Board</h1>
+    <div class="lede" id="b-lede"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Board sections" id="tabs"></nav>
+  <p class="status" id="status">Loading the board from its store…</p>
+
+  <section class="panel" id="p-overview" role="tabpanel" hidden>
+    <div id="goals-wrap" hidden><h2>Your goals</h2><div class="where"><div class="md" id="goals"></div><div class="links" id="links"></div></div></div>
+    <div><h2>Where we are</h2><div class="where" id="where"><p class="empty">The roadmap and why the lab is at this step appear here.</p></div></div>
+    <div><h2>Being worked on</h2><div class="cards" id="glance"><p class="empty">The active specs appear here.</p></div></div>
+    <div><h2>Needs you</h2><div id="questions"><p class="empty">Open questions appear here, each with options and a Save button.</p></div></div>
+    <div><h2>Since you last looked</h2><ul class="log" id="recent"><li><span class="when"></span><span class="empty">The newest notes appear here.</span></li></ul></div>
+  </section>
+  <section class="panel" id="p-specs" role="tabpanel" hidden>
+    <div><h2>Work graph</h2><p class="refs">How the specs depend on each other, and the open decisions they wait on. Blue: being worked on; dashed: planned; green: done; amber: an open decision. Drawn from the specs' frontmatter by <code>docs/board/seed.py</code>.</p><div class="where"><div class="md" id="workgraph"><p class="empty">The work graph appears here.</p></div></div></div>
+    <div class="specs"><div class="speclist" id="speclist"><p class="empty">Specs appear here.</p></div><div class="panel" id="specview"></div></div>
+  </section>
+  <section class="panel" id="p-done" role="tabpanel" hidden>
+    <p class="refs">Specs that are closed, each with its design as built; a spec whose review still awaits you shows it under Review, with a sign-off.</p>
+    <div class="specs"><div class="speclist" id="speclist-done"><p class="empty">Closed specs appear here.</p></div><div class="panel" id="specview-done"></div></div>
+  </section>
+  <section class="panel" id="p-steering" role="tabpanel" hidden><p class="refs" id="steering-intro">What the lab is for, the decisions it runs on, and the site's facts and traps. Read opens each one in full, here on the Board.</p><div class="panel" data-docs="steering"><p class="empty">Steering documents appear here.</p></div></section>
+  <section class="panel" id="p-architecture" role="tabpanel" hidden><p class="refs" id="architecture-intro">How the lab is built: placement, the two command front doors, exposure, names, storage, the feature matrix and the ledger of what runs where. From <code>docs/design/</code> and <code>docs/transition.md</code>.</p><div class="panel" data-docs="architecture"><p class="empty">Architecture documents appear here.</p></div></section>
+  <section class="panel" id="p-review" role="tabpanel" hidden>
+    <p class="refs" id="review-intro">The code worth reading first, grouped by area, each with why it matters. Each opens here, read live from the repo; the Notes Viewer link in the reader is the place to comment line by line.</p>
+    <div id="review"><p class="empty">Code to review appears here.</p></div>
+  </section>
+  <section class="panel" id="p-docs" role="tabpanel" hidden>
+    <p class="refs">Every other document the repository keeps: guides, design notes, research, reviews, verification records, handoffs and READMEs. Each opens here, read live from the repo, with a link to the same file in the Notes Viewer.</p>
+    <div class="actions"><input id="docfilter" type="search" placeholder="Filter by title or path" aria-label="Filter documents"><div class="subtabs" id="dockinds" role="group" aria-label="Kinds"></div></div>
+    <div class="tablewrap box"><table><thead><tr><th>Kind</th><th>Document</th><th>Date</th><th></th></tr></thead><tbody id="library"><tr><td colspan="4" class="empty">Documents appear here.</td></tr></tbody></table></div>
+  </section>
+  <section class="panel" id="p-decisions" role="tabpanel" hidden>
+    <p class="refs">The record of what was decided. Nothing here asks you anything: every open question is on Overview, under Needs you.</p>
+    <div><h2>Decided</h2><div class="tablewrap box"><table><thead><tr><th>Date</th><th>Decision</th><th>Status</th><th></th></tr></thead><tbody id="decisions"><tr><td colspan="4" class="empty">Decision files appear here.</td></tr></tbody></table></div></div>
+    <div><h2>Your answers on this board</h2><div class="tablewrap box"><table><thead><tr><th>Id</th><th>Question and answer</th><th>Saved</th><th></th></tr></thead><tbody id="answered"><tr><td colspan="4" class="empty">Questions you answer move here.</td></tr></tbody></table></div></div>
+  </section>
+  <section class="panel" id="p-live" role="tabpanel" hidden><p class="refs" id="live-intro">Read live; each group says when and with what command.</p><div id="live" class="panel"><p class="empty">What the project runs or builds appears here.</p></div></section>
+  <section class="panel" id="p-worknotes" role="tabpanel" hidden><ul class="log" id="log"><li><span class="when"></span><span class="empty">Dated notes appear here, newest first.</span></li></ul></section>
+</div>
+<div class="reader-veil" id="reader-veil" hidden></div>
+<aside class="reader" id="reader" role="dialog" aria-modal="true" aria-labelledby="reader-title" hidden>
+  <header><button type="button" id="reader-back" hidden>← Back</button><span class="path" id="reader-title"></span><a id="reader-viewer" target="_blank" rel="noopener">Open in Notes Viewer</a><button type="button" id="reader-close">Close</button></header>
+  <div class="reader-body" id="reader-body"></div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+document.documentElement.dataset.theme = "light";
+// Everything project-specific comes from the store's config/current (written by seed.py from
+// docs/board/board.json), so one page serves every project's Board.
+let REPO = "";
+let CFG = {};
+// Order (Kun, 2026-11-02): stable steering first, then where we are, then the spec reviews, records last.
+// The page still opens on Overview.
+const TABS = [["steering", "Steering"], ["architecture", "Architecture"], ["overview", "Overview"], ["worknotes", "Worknotes"], ["live", "Live"], ["done", "Specs done"], ["specs", "Specs next"], ["review", "Code"], ["docs", "Docs"], ["decisions", "Decisions"]];
+const SECTIONS = [["requirements", "Requirements"], ["design", "Design"], ["tasks", "Tasks"], ["log", "Log"]];
+const SHOWN = 5; // Needs you shows the first five; the rest fold below them.
+const state = { config: [], orientation: [], graph: [], questions: [], docs: [], specs: [], tasks: [], decisions: [], live: [], log: [], signoffs: [] };
+let docKind = null; // the first kind (guides) until the reader picks another
+const statusEl = document.getElementById("status");
+let db = null, me = null, comments = null;
+// Mermaid draws the work graph and diagrams in documents; the Overview timeline is plain HTML (timeline()).
+if (window.mermaid) window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral", themeVariables: { fontSize: "15px" } });
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const link = (path, text) => !path ? "" : path.startsWith("#") ? `<a href="${esc(path)}">${esc(text || path)}</a>` : `<a href="${path.startsWith("http") ? esc(path) : REPO + esc(path)}" target="_blank" rel="noopener">${esc(text || path)}</a>`;
+// Repo documents open in the project's Notes Viewer when board.json names one: GitHub blob links
+// to a private repo fail inside the Board's frame.
+const viewerHref = path => CFG.viewer_url && CFG.viewer_project && !/^(https?:|#)/.test(path) ? `${CFG.viewer_url}#${CFG.viewer_project}/${path}` : path;
+// A repo file link opens the reading pane (the click handler below); its href is the Notes Viewer,
+// so a modifier-click or a view without the pane still reaches the file.
+const docLink = (path, text) => !path ? "" : `<a href="${esc(viewerHref(path))}" data-doc="${esc(path)}" target="_blank" rel="noopener">${esc(text || path)}</a>`;
+const chip = s => s && s !== "null" ? `<span class="chip c-${esc(s)}">${esc(String(s).replaceAll("_", " "))}</span>` : "";
+const sid = s => String(s).replace(/[^A-Za-z0-9_-]/g, "-");
+const cbtn = id => `<button type="button" class="cbtn" data-c="${esc(id)}" title="Comment on this">Comment</button>`;
+const fmt = iso => { try { return new Date(iso).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return iso; } };
+const openQs = () => state.questions.filter(q => q.status !== "answered").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+// A relative link inside a repo document, joined onto the document's folder: a repo path.
+function repoPath(href, base) {
+  const parts = (base || "").split("/").slice(0, -1);
+  for (const seg of href.split("/")) { if (seg === "..") parts.pop(); else if (seg && seg !== ".") parts.push(seg); }
+  return parts.join("/");
+}
+// Files the pane can show: notes as Markdown, code by extension (highlight.js language; "" is plain).
+const CODE_LANGS = { py: "python", sh: "bash", bash: "bash", yml: "yaml", yaml: "yaml", json: "json", toml: "ini", ini: "ini", conf: "ini", cfg: "ini",
+  xml: "xml", html: "xml", js: "javascript", mjs: "javascript", jsx: "javascript", ts: "typescript", tsx: "typescript", css: "css", sql: "sql",
+  swift: "swift", go: "go", rs: "rust", java: "java", kt: "kotlin", rb: "ruby", c: "c", h: "c", cpp: "cpp", diff: "diff", spl: "", txt: "", csv: "", meta: "ini" };
+const extOf = p => (String(p).match(/\.([A-Za-z0-9]+)$/) || [])[1]?.toLowerCase() || "";
+const isNote = p => /\.q?md$/i.test(p);
+const isFile = p => isNote(p) || Object.hasOwn(CODE_LANGS, extOf(p)) || /(^|\/)(Makefile|Dockerfile)$/.test(p);
+// Obsidian callouts ("> [!kind]± Title" and its "> " lines) become asides or folded <details>, as in the Notes Viewer.
+function convertCallouts(src) {
+  const lines = src.split("\n"), out = [];
+  for (let i = 0; i < lines.length;) {
+    const m = lines[i].match(/^( *)> \[!(\w+)\]([+-]?) ?(.*)$/);
+    if (!m) { out.push(lines[i++]); continue; }
+    const [, indent, kindRaw, fold, title] = m, kind = kindRaw.toLowerCase(), body = [];
+    for (i++; i < lines.length && lines[i].startsWith(indent + ">"); i++) { const rest = lines[i].slice(indent.length + 1); body.push(rest.startsWith(" ") ? rest.slice(1) : rest); }
+    const inner = window.marked.parse(convertCallouts(body.join("\n"))), label = title ? window.marked.parseInline(title) : kind[0].toUpperCase() + kind.slice(1);
+    out.push(fold ? `\n${indent}<details class="callout callout-${kind}"${fold === "+" ? " open" : ""}><summary class="callout-title">${label}</summary>${inner}</details>\n`
+      : `\n${indent}<aside class="callout callout-${kind}"><div class="callout-title">${label}</div>${inner}</aside>\n`);
+  }
+  return out.join("\n");
+}
+// Markdown to sanitized HTML. Links to repo files carry data-doc (the pane opens them), so does
+// inline code naming a file (`inventory_store/rows.py`, `seed.py:42`); Mermaid blocks become
+// .mermaid boxes drawn by drawDiagrams; fenced code is highlighted.
+function md(text, base) {
+  if (!window.marked || !window.DOMPurify) return `<pre>${esc(text)}</pre>`;
+  const src = String(text || "").replace(/^---\n[\s\S]*?\n---\n/, "");
+  const html = window.DOMPurify.sanitize(window.marked.parse(convertCallouts(src), { gfm: true }), { USE_PROFILES: { html: true }, ADD_TAGS: ["details", "summary", "aside"] });
+  const tmp = document.createElement("div"); tmp.innerHTML = html;
+  const viewerPrefix = CFG.viewer_url && CFG.viewer_project ? `${CFG.viewer_url}#${CFG.viewer_project}/` : null;
+  tmp.querySelectorAll("a[href]").forEach(a => {
+    const href = a.getAttribute("href");
+    a.target = "_blank"; a.rel = "noopener";
+    if (href.startsWith("#")) { a.removeAttribute("target"); a.dataset.anchor = href.slice(1); return; }
+    const path = viewerPrefix && href.startsWith(viewerPrefix) ? decodeURIComponent(href.slice(viewerPrefix.length)) : /^[a-z][\w+.-]*:|^\/\//i.test(href) ? null : repoPath(href.split("#")[0], base);
+    if (path === null) return;
+    a.href = viewerHref(path);
+    if (isFile(path)) a.dataset.doc = path;
+  });
+  tmp.querySelectorAll("img").forEach(img => { const path = repoPath(img.getAttribute("src") || "", base); const a = document.createElement("a"); a.href = viewerHref(path); a.target = "_blank"; a.rel = "noopener"; a.textContent = "[image: " + (img.alt || path) + "]"; img.replaceWith(a); });
+  tmp.querySelectorAll("pre > code.language-mermaid").forEach(code => { const d = document.createElement("div"); d.className = "mermaid"; d.textContent = code.textContent; code.parentElement.replaceWith(d); });
+  tmp.querySelectorAll("pre > code[class*='language-']").forEach(code => highlight(code, (code.className.match(/language-\{?([\w-]+)/) || [])[1]));
+  tmp.querySelectorAll(":not(pre) > code").forEach(code => {
+    const m = code.textContent.match(/^([\w@+.\-\/]*[\w-]\.[A-Za-z0-9]+|[\w@+.\-\/]*(?:Makefile|Dockerfile))(?::(\d+))?$/);
+    if (!m || code.closest("a") || !isFile(m[1]) || !(m[1].includes("/") || extOf(m[1]).length > 1)) return;
+    const a = document.createElement("a"); a.className = "code-ref"; a.href = viewerHref(m[1]); a.target = "_blank"; a.rel = "noopener";
+    a.dataset.doc = m[1]; a.dataset.ref = "1"; if (m[2]) a.dataset.line = m[2];
+    code.replaceWith(a); a.append(code);
+  });
+  tmp.querySelectorAll("table").forEach(t => { const w = document.createElement("div"); w.className = "table-wrap"; t.replaceWith(w); w.append(t); });
+  // The base travels with the link so a bare file name resolves from the document that named it.
+  tmp.querySelectorAll("a[data-doc]").forEach(a => { a.dataset.from = base || ""; });
+  return tmp.innerHTML;
+}
+function highlight(codeEl, lang) {
+  if (!window.hljs || !lang || codeEl.textContent.length > 400000 || !window.hljs.getLanguage(lang)) return;
+  codeEl.innerHTML = window.hljs.highlight(codeEl.textContent, { language: lang, ignoreIllegals: true }).value; codeEl.classList.add("hljs");
+}
+function drawDiagrams(root) {
+  if (!window.mermaid || !root) return;
+  const nodes = [...root.querySelectorAll(".mermaid:not([data-processed])")].filter(n => n.offsetParent !== null);
+  if (nodes.length) window.mermaid.run({ nodes }).catch(() => {});
+}
+
+// The reading pane. Repo files are fetched live through the viewer's claude.ai Dropbox connector
+// (capability mcp: Dropbox fetch, list_folder, search), from /Projects/<viewer_project>/<path>, the
+// folder the Notes Viewer opens; the call wrapper and resolveRef are the Notes Viewer's.
+const DROPBOX = "Dropbox";
+let mcp; // undefined until first asked; null when this view cannot reach the connector
+async function useMcp() {
+  if (mcp === undefined) mcp = window.claude ? await Promise.resolve(window.claude.use("mcp")).catch(() => null) : null;
+  return mcp;
+}
+async function call(tool, input) {
+  const res = await mcp.callTool(DROPBOX, tool, input);
+  let p = res.payload;
+  if (typeof p === "string") { try { p = JSON.parse(p); } catch {} }
+  return p;
+}
+const repoRoot = () => CFG.dropbox_root || `/Projects/${CFG.viewer_project}`;
+const repoFile = path => `${repoRoot()}/${path}`;
+async function fetchRepo(path) {
+  const p = await call("fetch", { id: repoFile(path) });
+  if (!p || typeof p.text !== "string") throw { code: "not_found", message: "no text came back" };
+  return { text: p.text, saved: p.metadata?.server_modified || "" };
+}
+const noDropbox = path => `<p class="empty">Dropbox can't be reached from this view, so the Board cannot read <code>${esc(path)}</code> in place. Open the Board in Claude while signed in, with the Dropbox connector connected, and allow it for this page (the artifact's Permissions menu). ${docLink(path, "Open it in the Notes Viewer")} meanwhile.</p>`;
+// A file a document names (`inventory_store/rows.py`) is found as the Notes Viewer finds it: under
+// the naming document's folder and each folder above it up to the repo root, then by a Dropbox
+// file-name search under the repo whose match ends with the whole reference.
+async function resolveRef(ref, fromPath) {
+  const rel = ref.replace(/^\/+/, "");
+  const dirs = []; for (let d = (fromPath || "").split("/").slice(0, -1); ; d = d.slice(0, -1)) { dirs.push(d.join("/")); if (!d.length) break; }
+  for (const dir of dirs) {
+    const path = repoPath(rel, dir ? dir + "/x" : "x");
+    try { return { path, doc: await fetchRepo(path) }; } catch {}
+  }
+  const tail = "/" + rel.replace(/^(\.\.?\/)+/, "").toLowerCase();
+  try {
+    const r = await call("search", { query: rel.split("/").pop(), search_mode: "title_only", path: repoRoot(), max_results: 50 });
+    const hits = (r?.results || []).map(h => h.path_display || "").filter(p => p.toLowerCase().endsWith(tail) && !p.includes("/.claude/worktrees/"));
+    for (const hit of hits.sort((a, b) => a.length - b.length)) {
+      const path = hit.slice(repoRoot().length + 1);
+      try { return { path, doc: await fetchRepo(path) }; } catch {}
+    }
+  } catch {}
+  return null;
+}
+const reader = document.getElementById("reader"), readerBody = document.getElementById("reader-body"), veil = document.getElementById("reader-veil");
+const readerStack = [];
+let readerReturn = null;
+function closeReader() { reader.hidden = veil.hidden = true; readerStack.length = 0; document.body.style.overflow = ""; readerReturn?.focus?.(); }
+async function openDoc(path, opts = {}) {
+  if (reader.hidden) { readerReturn = document.activeElement; readerStack.length = 0; }
+  if (!opts.back) readerStack.push({ path, opts });
+  reader.hidden = veil.hidden = false; document.body.style.overflow = "hidden";
+  document.getElementById("reader-back").hidden = readerStack.length < 2;
+  const title = document.getElementById("reader-title"), viewer = document.getElementById("reader-viewer");
+  const setHead = p => { title.innerHTML = `<b>${esc(p.split("/").pop())}</b>${esc(p)}`; viewer.href = viewerHref(p); viewer.hidden = !CFG.viewer_url; };
+  setHead(path);
+  readerBody.innerHTML = '<p class="empty reader-msg">Fetching from Dropbox…</p>';
+  readerBody.scrollTop = 0;
+  document.getElementById("reader-close").focus();
+  if (!(await useMcp())) { readerBody.innerHTML = `<div class="reader-msg">${noDropbox(path)}</div>`; return; }
+  let hit = null;
+  try { hit = { path, doc: await fetchRepo(path) }; }
+  catch (e) { if (opts.ref || e?.code === "tool_error" || e?.code === "not_found") hit = await resolveRef(path, opts.from); if (!hit && !opts.ref) { readerBody.innerHTML = `<p class="empty reader-msg">Could not fetch <code>${esc(path)}</code> (${esc(e?.code || e?.message || "error")}). ${docLink(path, "Try the Notes Viewer")}.</p>`; return; } }
+  if (!hit) { readerBody.innerHTML = `<p class="empty reader-msg">Could not find <code>${esc(path)}</code> near ${esc(opts.from || "the repo root")} or by name under the repo.</p>`; return; }
+  if (hit.path !== path) { setHead(hit.path); readerStack[readerStack.length - 1].path = hit.path; }
+  const saved = `<p class="refs" style="padding:8px 18px 0">Read live from Dropbox · saved ${esc(fmt(hit.doc.saved))}</p>`;
+  if (isNote(hit.path)) {
+    readerBody.innerHTML = saved + `<article class="md" id="reader-doc">${md(hit.doc.text, hit.path)}</article>`;
+    drawDiagrams(readerBody);
+  } else {
+    const text = hit.doc.text.replace(/\n$/, ""), line = +opts.line || 0;
+    readerBody.innerHTML = saved + `<div class="code-file"><pre class="gutter" aria-hidden="true">${text.split("\n").map((_, i) => i + 1 === line ? `<span class="hit">${i + 1}</span>` : i + 1).join("\n")}</pre><pre class="src"><code></code></pre></div>`;
+    const code = readerBody.querySelector(".src code"); code.textContent = text; highlight(code, CODE_LANGS[extOf(hit.path)] ?? "");
+    readerBody.querySelector(".gutter .hit")?.scrollIntoView({ block: "center" });
+  }
+}
+document.getElementById("reader-close").addEventListener("click", closeReader);
+veil.addEventListener("click", closeReader);
+document.getElementById("reader-back").addEventListener("click", () => { readerStack.pop(); const prev = readerStack[readerStack.length - 1]; if (prev) openDoc(prev.path, { ...prev.opts, back: true }); });
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && !reader.hidden) closeReader(); });
+// Any repo-file link opens in the pane; a modifier-click keeps the browser's own behaviour (the
+// Notes Viewer in a new tab). An in-document "#anchor" scrolls to its heading instead of changing
+// the Board's tab route.
+document.addEventListener("click", ev => {
+  const anchor = ev.target.closest("a[data-anchor]");
+  if (anchor) {
+    ev.preventDefault();
+    const slug = s => s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+    const scope = anchor.closest(".reader-body, .md") || document;
+    [...scope.querySelectorAll("h1, h2, h3, h4")].find(h => slug(h.textContent) === anchor.dataset.anchor.toLowerCase())?.scrollIntoView({ block: "start" });
+    return;
+  }
+  const a = ev.target.closest("a[data-doc]");
+  if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button) return;
+  ev.preventDefault();
+  openDoc(a.dataset.doc, { from: a.dataset.from, ref: !!a.dataset.ref, line: a.dataset.line });
+});
+
+function counts() {
+  const docsIn = t => state.docs.filter(d => d.tab === t).length;
+  return { overview: openQs().length, specs: state.specs.filter(s => s.status === "ACTIVE").length, steering: docsIn("steering"), architecture: docsIn("architecture"),
+    review: (state.docs.find(d => d.id === "review")?.rows || []).length,
+    docs: (state.docs.find(d => d.id === "library")?.rows || []).length, decisions: 0, live: state.live.length, worknotes: 0 };
+}
+function route() { const [t, s, sec] = location.hash.slice(1).split("/"); return { tab: TABS.some(([k]) => k === t) ? t : "overview", spec: s, sec }; }
+function renderTabs() {
+  const cur = route().tab, n = counts();
+  // Review shows only on a Board whose board.json lists code to review.
+  document.getElementById("tabs").innerHTML = TABS.filter(([k]) => k !== "review" || n.review).map(([k, label]) => `<button role="tab" id="t-${k}" aria-controls="p-${k}" aria-selected="${k === cur}" data-tab="${k}">${label}${n[k] ? `<span class="n${k === "overview" ? " hot" : ""}">${n[k]}</span>` : ""}</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => { location.hash = b.dataset.tab; }));
+}
+function show() {
+  const { tab } = route();
+  TABS.forEach(([t]) => { document.getElementById("p-" + t).hidden = t !== tab; });
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  if (tab === "specs") { renderSpecs("next"); renderWorkgraph(); }
+  if (tab === "done") renderSpecs("done");
+  drawDiagrams(document.getElementById("p-" + tab));
+}
+
+// The timeline is drawn as plain HTML, because Mermaid's labelled bars were unreadable at the
+// panel's width. Its data is graph/current `rows` (docs/board/seed.py: id, num, title, status,
+// start, end inclusive, summary, tasks); an older store has only the gantt text, read line by line
+// ("<label> :<tags>, <id>, <start>, <end date | Nd>").
+const TL_SECTION = { ACTIVE: "Being worked on", DRAFT: "Planned", CLOSED: "Done" };
+const TL_STATE = { ACTIVE: "active", DRAFT: "planned", CLOSED: "done" };
+function timeline(src, rows) {
+  const day = 864e5, items = []; let section = "";
+  for (const r of rows || []) {
+    const start = new Date(r.start + "T00:00:00"), end = new Date(new Date(r.end + "T00:00:00").getTime() + day);
+    if (isNaN(start) || isNaN(end)) continue;
+    items.push({ section: TL_SECTION[r.status] || r.status, num: r.num, name: r.title, label: `${r.num} ${r.title}`, id: r.id, start, end,
+      state: TL_STATE[r.status] || "planned", more: [r.tasks ? `${r.tasks} tasks` : "", r.summary || ""].filter(Boolean).join(" · ") });
+  }
+  for (const line of rows?.length ? [] : String(src || "").split("\n").map(l => l.trim())) {
+    if (line.startsWith("section ")) { section = line.slice(8); continue; }
+    const m = line.match(/^(.+?)\s*:(.+)$/);
+    if (!m || /^(gantt|dateFormat|axisFormat|tickInterval|todayMarker|title)\b/.test(line)) continue;
+    const parts = m[2].split(",").map(s => s.trim());
+    const tags = parts.filter(p => /^(done|active|crit|milestone)$/.test(p));
+    const rest = parts.filter(p => !tags.includes(p));
+    const start = new Date(rest[rest.length - 2] + "T00:00:00"), endRaw = rest[rest.length - 1];
+    const end = /^\d+d$/.test(endRaw) ? new Date(start.getTime() + parseInt(endRaw) * day) : new Date(endRaw + "T00:00:00");
+    if (isNaN(start) || isNaN(end)) continue;
+    const label = m[1].trim(), num = (label.match(/^(\d+)\s/) || [])[1] || "";
+    items.push({ section, label, num, name: num ? label.slice(num.length).trim() : label, start, end: end > start ? end : new Date(start.getTime() + day),
+      state: tags.includes("done") ? "done" : tags.includes("active") ? "active" : "planned" });
+  }
+  if (!items.length) return md("```mermaid\n" + src + "\n```", "");
+  const order = ["Being worked on", "Planned", "Done"];
+  const today = new Date(new Date().toDateString());
+  const lo = Math.min(...items.map(i => i.start), today), hi = Math.max(...items.map(i => i.end), today.getTime() + day);
+  const pct = t => (100 * (t - lo) / (hi - lo)).toFixed(2);
+  const short = d => d.toLocaleDateString([], { month: "short", day: "numeric" });
+  const range = i => `${short(i.start)} – ${short(new Date(i.end - day))}`;
+  // At most about eight labels whatever the span: a label every two days crowds a span of weeks.
+  const step = [1, 2, 3, 7, 14, 30, 61, 91].find(n => (hi - lo) / day / n <= 8) || 182;
+  const ticks = []; for (let t = lo; t <= hi; t += step * day) ticks.push(`<span style="left:${pct(t)}%">${short(new Date(t))}</span>`);
+  const sections = [...new Set(items.map(i => i.section))].sort((a, b) => (order.indexOf(a) + 9) % 9 - (order.indexOf(b) + 9) % 9);
+  const today_ = `<span class="tl-today" style="left:${pct(today)}%"></span>`;
+  const row = i => {
+    const key = esc(i.num || i.label), tipText = esc([i.label, `${range(i)} · ${i.state}`, i.more].filter(Boolean).join("\n"));
+    const href = "#specs/" + esc(i.id || state.specs.find(x => x.id.startsWith(i.num + "-"))?.id || "");
+    return `<a class="tl-name" href="${href}" data-tl="${key}" data-tip="${tipText}"><span class="n">${esc(i.num)}</span><span>${esc(i.name)}</span></a>`
+      + `<div class="tl-track" data-tl="${key}" data-tip="${tipText}">${today_}<span class="tl-bar ${i.state}" style="left:${pct(i.start)}%;width:${(pct(i.end) - pct(i.start)).toFixed(2)}%"></span></div>`;
+  };
+  return `<div class="tl"><div class="tl-grid"><div></div><div class="tl-axis">${ticks.join("")}</div>`
+    + [...items].sort((a, b) => String(a.num).localeCompare(String(b.num), undefined, { numeric: true })).map(row).join("") + `</div></div>`;
+}
+// Hover a bar for its name and dates; hovering a bar or a list row highlights its partner.
+const tip = Object.assign(document.createElement("div"), { className: "tl-tip" }); document.body.appendChild(tip);
+document.addEventListener("mouseover", ev => {
+  const el = ev.target.closest("[data-tl]");
+  document.querySelectorAll(".tl .hi").forEach(n => n.classList.remove("hi"));
+  if (!el) { tip.style.display = "none"; return; }
+  document.querySelectorAll(`.tl [data-tl="${CSS.escape(el.dataset.tl)}"]`).forEach(n => n.classList.add("hi"));
+  if (el.dataset.tip) { tip.textContent = el.dataset.tip; tip.style.display = "block"; }
+});
+document.addEventListener("mousemove", ev => { if (tip.style.display === "block") { tip.style.left = Math.min(ev.clientX + 12, innerWidth - 300) + "px"; tip.style.top = ev.clientY + 14 + "px"; } });
+// On a phone there is no hover: a tap on a bar shows its tooltip until the next tap elsewhere.
+document.addEventListener("click", ev => { const b = ev.target.closest(".tl-track"); if (!b) return; tip.textContent = b.dataset.tip; tip.style.display = "block"; const r = b.getBoundingClientRect(); tip.style.left = Math.min(r.left, innerWidth - 300) + "px"; tip.style.top = r.bottom + 6 + "px"; });
+
+function renderConfig() {
+  CFG = state.config.find(d => d.id === "current") || {};
+  if (CFG.repo_url) REPO = `${CFG.repo_url}/blob/${CFG.branch || "main"}/`;
+  if (CFG.title) document.getElementById("b-title").textContent = CFG.title;
+  if (CFG.lede) document.getElementById("b-lede").innerHTML = md(CFG.lede, "");
+  const live = CFG.live || {};
+  if (live.label) { const tab = TABS.find(([k]) => k === "live"); tab[1] = live.label; renderTabs(); }
+  if (live.intro) document.getElementById("live-intro").textContent = live.intro;
+  // board.json `intros`: a project's own lead line for the Steering, Architecture and Review tabs.
+  for (const [k, v] of Object.entries(CFG.intros || {})) { const el = document.getElementById(k + "-intro"); if (el) el.textContent = v; }
+  subscribeLive(live.collection || "live");
+}
+let liveName = null;
+function subscribeLive(name) {
+  if (!db || liveName === name) return;
+  liveName = name;
+  db.collection(name).onSnapshot(snap => { state.live = snap.docs.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() })); renderLive(); renderTabs(); show(); },
+    err => { statusEl.textContent = `Lost the connection to the store (${err?.code}). Reload to retry.`; });
+}
+
+function renderWhere() {
+  const o = state.orientation.find(d => d.id === "current");
+  if (!o) return;
+  const links = (CFG.links || []).map(l => link(l.url, l.title)).join("");
+  document.getElementById("goals-wrap").hidden = !o.goals && !links;
+  document.getElementById("goals").innerHTML = o.goals ? md(o.goals, "docs/") : "";
+  document.getElementById("links").innerHTML = links;
+  document.getElementById("where").innerHTML = `<div class="here" id="where-here" data-comment-target>You are here: ${esc(o.here)} ${cbtn("where-here")}</div>
+    <div id="where-map" data-comment-target>${timeline(state.graph.find(g => g.id === "current")?.timeline || o.roadmap, state.graph.find(g => g.id === "current")?.rows)}<p class="refs">Green bar: a spec that is done (closed) · blue bar: being worked on (active) · dashed outline: planned (draft) · the thin blue line: today. Hover a row for its summary.</p></div>
+    <div class="cols"><div class="md" id="where-why" data-comment-target><h3>Why we are here</h3>${md(o.why, "docs/")}${cbtn("where-why")}</div><div class="md" id="where-next" data-comment-target><h3>What comes next</h3>${md(o.next, "docs/")}${cbtn("where-next")}</div></div>`;
+  drawDiagrams(document.getElementById("where"));
+}
+// One card per ACTIVE spec: what it is, how far along, and its open questions if any.
+function renderGlance() {
+  const active = state.specs.filter(s => s.status === "ACTIVE").sort((a, b) => a.id.localeCompare(b.id));
+  const qs = openQs();
+  const cards = active.map(s => {
+    const pct = s.tasks_total ? Math.round(100 * s.tasks_done / s.tasks_total) : 0;
+    const waiting = qs.filter(q => q.spec_ref === s.id).length;
+    return `<div class="card" id="glance-${sid(s.id)}" data-comment-target><span class="k">Spec ${esc(s.id.split("-")[0])}${waiting ? ` · ${waiting} question${waiting === 1 ? "" : "s"} for you` : ""}</span><span class="v"><a href="#specs/${esc(s.id)}">${esc(s.title)}</a></span>${s.next_task ? `<span class="next"><b>Next:</b> ${esc(s.next_task)}</span>` : `<span class="refs">${esc(s.summary)}</span>`}<div class="bar" aria-label="${pct}% of tasks done"><span style="width:${pct}%"></span></div><span class="refs">${s.tasks_done} of ${s.tasks_total} tasks done</span>${cbtn("glance-" + sid(s.id))}</div>`;
+  });
+  document.getElementById("glance").innerHTML = cards.length ? cards.join("") : '<p class="empty">No spec is active.</p>';
+}
+
+function qCard(q, draft) {
+  const d = draft["q-" + q.id] || {};
+  const pick = d.pick ?? (q.options || []).find(o => o.def)?.v;
+  const opts = (q.options || []).map((o, i) => `<label class="opt" for="q-${esc(q.id)}-${i}"><input type="radio" name="q-${esc(q.id)}" id="q-${esc(q.id)}-${i}" value="${esc(o.v)}" ${o.v === pick ? "checked" : ""}><span><b>${esc(o.label)}</b>${o.def ? '<span class="def">recommended</span>' : ""}<span class="cons">${esc(o.cons)}</span></span></label>`).join("");
+  return `<article class="q" id="q-${esc(q.id)}" data-comment-target>
+    <div class="qhead"><span class="qid">${esc(q.id)}</span><h3>${esc(q.title)}</h3>${cbtn("q-" + q.id)}</div>
+    ${q.why_owner ? `<p class="refs"><b>Why this is yours:</b> ${esc(q.why_owner)}</p>` : ""}<p>${esc(q.context)}</p>
+    <p class="refs">${[q.spec_ref ? `<a href="#specs/${esc(q.spec_ref)}">Spec ${esc(q.spec_ref)}</a>` : "", q.decision_file ? docLink(q.decision_file.split(" ")[0], "Read the full question: " + q.decision_file.split(" ")[0].split("/").pop()) : ""].filter(Boolean).join(" · ")}</p>
+    <fieldset><legend>${esc(q.title)}</legend>${opts}</fieldset>
+    <label for="q-${esc(q.id)}-note" class="refs">Note (optional)</label>
+    <textarea id="q-${esc(q.id)}-note" placeholder="Conditions, another option, or a reason">${esc(d.note ?? "")}</textarea>
+    <div class="actions"><button class="btn" type="button" data-q="${esc(q.id)}" ${db ? "" : "disabled"}>Save answer</button></div></article>`;
+}
+function renderQuestions() {
+  const el = document.getElementById("questions");
+  const open = openQs();
+  const draft = {};
+  el.querySelectorAll(".q").forEach(c => { draft[c.id] = { pick: c.querySelector("input:checked")?.value, note: c.querySelector("textarea")?.value }; });
+  const wasOpen = el.querySelector("details.more")?.open;
+  const first = open.slice(0, SHOWN), rest = open.slice(SHOWN);
+  el.innerHTML = !open.length ? '<p class="empty">Nothing waits on you.</p>'
+    : `<div class="qs">${first.map(q => qCard(q, draft)).join("")}</div>` + (rest.length ? `<details class="more" ${wasOpen ? "open" : ""}><summary>${rest.length} more question${rest.length === 1 ? "" : "s"}, less urgent</summary><div class="qs">${rest.map(q => qCard(q, draft)).join("")}</div></details>` : "");
+  el.querySelectorAll("button[data-q]").forEach(b => b.addEventListener("click", () => saveAnswer(b.dataset.q, b)));
+  const done = state.questions.filter(q => q.status === "answered").sort((a, b) => (b.answer?.at || "").localeCompare(a.answer?.at || ""));
+  if (done.length) document.getElementById("answered").innerHTML = done.map(q => {
+    const lab = (q.options || []).find(o => o.v === q.answer?.choice)?.label || q.answer?.choice;
+    return `<tr id="ans-${sid(q.id)}" data-comment-target><td class="id">${esc(q.id)}</td><td>${esc(q.title)}<span class="note"><b>${esc(lab)}</b>${q.answer?.note ? " · " + esc(q.answer.note) : ""}</span></td><td class="when">${esc(fmt(q.answer?.at))}</td><td class="c">${cbtn("ans-" + sid(q.id))}</td></tr>`;
+  }).join("");
+  renderGlance();
+}
+
+function renderDocs() {
+  document.querySelectorAll("[data-docs]").forEach(el => {
+    const tab = el.dataset.docs;
+    const docs = state.docs.filter(d => d.tab === tab).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    if (!docs.length) return;
+    const openIds = new Set([...el.querySelectorAll("details[open]")].map(d => d.id));
+    const first = el.querySelector("details") === null;
+    el.innerHTML = docs.map((d, i) => {
+      const id = "doc-" + sid(d.id);
+      const open = openIds.has(id) || (first && i === 0);
+      return `<details class="doc" id="${id}" data-comment-target ${open ? "open" : ""}><summary><h3>${esc(d.title)}</h3>${docLink(d.repo_path, "Read")}${cbtn(id)}${d.summary ? `<span class="sum">${esc(d.summary)}</span>` : ""}</summary><div class="md">${md(d.body, d.repo_path)}</div></details>`;
+    }).join("");
+    el.querySelectorAll("details").forEach(det => det.addEventListener("toggle", () => { if (det.open) drawDiagrams(det); }));
+    drawDiagrams(el);
+  });
+}
+
+function renderWorkgraph() {
+  const g = state.graph.find(d => d.id === "current");
+  const el = document.getElementById("workgraph");
+  if (!g || el.dataset.built === g.built_at) return;
+  el.dataset.built = g.built_at;
+  el.innerHTML = md("```mermaid\n" + g.workgraph + "\n```", "");
+  drawDiagrams(el);
+}
+function renderLibrary() {
+  const lib = (state.docs.find(d => d.id === "library")?.rows || []).map((r, i) => ({ id: "l" + i, ...r }));
+  if (!lib.length) return;
+  const kinds = [...new Set(lib.map(d => d.kind))];
+  if (docKind === null) docKind = kinds[0] || "";
+  document.getElementById("dockinds").innerHTML = ["", ...kinds].map(k => `<button type="button" data-kind="${esc(k)}" aria-pressed="${k === docKind}">${esc(k || "All")} <span class="refs">${k ? lib.filter(d => d.kind === k).length : lib.length}</span></button>`).join("");
+  document.querySelectorAll("#dockinds button").forEach(b => b.addEventListener("click", () => { docKind = b.dataset.kind; renderLibrary(); }));
+  const q = (document.getElementById("docfilter").value || "").toLowerCase();
+  const rows = lib.filter(d => (!docKind || d.kind === docKind) && (!q || (d.title + " " + d.repo_path + " " + (d.summary || "")).toLowerCase().includes(q)))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  document.getElementById("library").innerHTML = rows.map(d => `<tr id="lib-${sid(d.id)}" data-comment-target><td class="id">${esc(d.kind)}</td><td><b>${docLink(d.repo_path, d.title)}</b><span class="note">${esc(d.summary)}</span><span class="note"><code>${esc(d.repo_path)}</code></span></td><td class="when">${esc(d.date)}</td><td class="c">${cbtn("lib-" + sid(d.id))}</td></tr>`).join("") || '<tr><td colspan="4" class="empty">No document matches.</td></tr>';
+}
+document.getElementById("docfilter").addEventListener("input", () => renderLibrary());
+function renderReview() {
+  const rows = (state.docs.find(d => d.id === "review")?.rows || []).map((r, i) => ({ id: "r" + i, ...r })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  if (!rows.length) return;
+  const groups = [...new Set(rows.map(r => r.group))];
+  document.getElementById("review").innerHTML = groups.map(g => `<div>${g ? `<h2>${esc(g)}</h2>` : ""}<div class="tablewrap box"><table><thead><tr><th>File</th><th>Why read it</th><th></th></tr></thead><tbody>${
+    rows.filter(r => r.group === g).map(r => `<tr id="rev-${sid(r.id)}" data-comment-target><td><b>${docLink(r.repo_path, r.title)}</b><span class="note"><code>${esc(r.repo_path)}</code></span></td><td>${esc(r.why)}</td><td class="c">${cbtn("rev-" + sid(r.id))}</td></tr>`).join("")}</tbody></table></div></div>`).join("");
+}
+
+function renderSpecs(mode = "next") {
+  // "next": ACTIVE and DRAFT specs on the Specs next tab; "done": CLOSED specs on Specs done.
+  const tabKey = mode === "done" ? "done" : "specs";
+  const list = document.getElementById(mode === "done" ? "speclist-done" : "speclist"), view = document.getElementById(mode === "done" ? "specview-done" : "specview");
+  if (!state.specs.length) return;
+  const r = route();
+  const target = state.specs.find(s => s.id === r.spec);
+  // A link to a spec on the other tab moves there.
+  if (target && r.tab === tabKey && (target.status === "CLOSED") !== (mode === "done")) { location.hash = `${target.status === "CLOSED" ? "done" : "specs"}/${target.id}${r.sec ? "/" + r.sec : ""}`; return; }
+  // Top down in number order (Kun, 2026-10-24); the status chip says where each one stands.
+  const specs = [...state.specs].filter(s => (s.status === "CLOSED") === (mode === "done")).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+  if (!specs.length) return;
+  const cur = specs.find(s => s.id === r.spec) || specs.find(s => s.status === "ACTIVE") || (mode === "done" ? specs[specs.length - 1] : specs[0]);
+  const sections = cur.review || cur.review_doc ? [...SECTIONS, ["review", "Review"]] : SECTIONS;
+  const sec = sections.some(([k]) => k === r.sec) ? r.sec : "requirements";
+  const btn = s => mode !== "done" && s.status === "CLOSED" && s.id !== cur.id
+    ? `<button type="button" class="compact" data-spec="${esc(s.id)}" aria-pressed="false" title="${esc(s.title)}"><span class="sid">${esc(s.id.split("-")[0])}</span><b>${esc(s.title.replace(/^\d+ /, ""))}</b></button>`
+    : `<button type="button" data-spec="${esc(s.id)}" aria-pressed="${s.id === cur.id}"><span class="sid">${esc(s.id)}</span><b>${esc(s.title)}</b><span>${chip(s.status)} ${chip(s.closed_as)} ${reviewChip(s)} <span class="refs">${s.tasks_done}/${s.tasks_total} tasks</span></span></button>`;
+  list.innerHTML = specs.map(btn).join("");
+  list.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { location.hash = tabKey + "/" + b.dataset.spec; }));
+  const next = state.tasks.filter(t => t.spec === cur.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const nextBox = next.length && sec === "tasks" ? `<section class="box" aria-label="Next steps"><header><h3>Open issues tied to this spec</h3></header><div class="tablewrap"><table><tbody>${next.map(t => `<tr id="task-${sid(t.id)}" data-comment-target><td>${t.url ? link(t.url, t.title) : esc(t.title)}${t.note ? `<span class="note">${esc(t.note)}</span>` : ""}</td><td>${chip(t.status)}</td><td class="c">${cbtn("task-" + sid(t.id))}</td></tr>`).join("")}</tbody></table></div></section>` : "";
+  const body = cur[sec] || `*This spec has no ${sec} section.*`;
+  const secId = `spec-${sid(cur.id)}-${sec}`;
+  // Re-render only when something shown changed: the dossier is fetched over the network, and a
+  // store snapshot of another collection must not refetch it or wipe the sign-off note being typed.
+  const key = JSON.stringify([cur, sec, next, mode === "done", state.signoffs.find(s => s.id === cur.id) || null]);
+  if (view.dataset.key === key) return;
+  view.dataset.key = key;
+  view.innerHTML = `<div class="box"><header><h3>${esc(cur.id)} · ${esc(cur.title)}</h3>${chip(cur.status)}${chip(cur.closed_as)}${reviewChip(cur)}${docLink(cur.path, "Read spec.md")}</header>
+    <p class="sum">${esc(cur.summary)}</p>
+    <div class="md"><div class="meta"><span>since <b>${esc(cur.since)}</b></span><span>depends on <b>${esc(cur.depends_on)}</b></span><span>anchors <b>${esc(cur.anchors)}</b></span></div></div></div>
+    <div class="subtabs" role="group" aria-label="Spec sections">${sections.map(([k, label]) => `<button type="button" data-sec="${k}" aria-pressed="${k === sec}">${label}${k === "review" ? " " + reviewChip(cur) : ""}</button>`).join("")}</div>
+    ${nextBox}
+    ${sec === "review" ? renderReview(cur) : `<article class="doc" id="${secId}" data-comment-target><div class="md">${md(body, cur.path)}</div><div class="md">${cbtn(secId)}</div></article>`}`;
+  view.querySelectorAll(".subtabs button").forEach(b => b.addEventListener("click", () => { location.hash = `${tabKey}/${cur.id}/${b.dataset.sec}`; }));
+  document.getElementById("so-btn-" + sid(cur.id))?.addEventListener("click", ev => signOff(cur, ev.currentTarget));
+  drawDiagrams(view);
+}
+
+// A spec's review awaiting the owner is a Claude Doc (board.json `reviews`, spec-driven-dev, A spec's
+// review): the Review sub-tab leads with a card linking it. A spec whose review has not moved there
+// yet shows its older design dossier, read from disk by the seed into the `review` section and drawn
+// like Design. Either way the owner signs off here, and only then is anything folded into spec.md.
+function reviewState(s) {
+  const so = state.signoffs.find(x => x.id === s.id);
+  if (so) return { cls: "signed", text: "signed off " + String(so.at || "").slice(0, 10) };
+  const line = s.dossier_review || (s.review_doc ? "awaiting the owner" : "");
+  if (line && /awaiting/i.test(line)) return { cls: "awaiting", text: line };
+  return line ? { cls: "record", text: line } : null;
+}
+const reviewChip = s => { if (!s.review && !s.review_doc) return ""; const r = reviewState(s); return r ? `<span class="chip c-${r.cls}">${esc(r.text)}</span>` : ""; };
+function renderReview(spec) {
+  const so = state.signoffs.find(x => x.id === spec.id), id = `spec-${sid(spec.id)}-review`, d = spec.review_doc;
+  const card = d ? `<div class="card" id="review-doc-${sid(spec.id)}" data-comment-target><span class="k">Review in Claude Docs · comment there line by line</span><span class="v"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a></span><span>${reviewChip(spec)}</span></div>` : "";
+  const source = d ? "" : `<span class="refs">${docLink(spec.dossier, spec.dossier)} · last changed ${esc(spec.dossier_saved)}</span>`;
+  return `${card}<div class="signoff ${so ? "done" : ""}" id="signoff-${sid(spec.id)}">
+      <div class="actions">${d ? "" : reviewChip(spec) || '<span class="chip c-record">no review line</span>'}${source}</div>
+      ${so ? `<p><b>Signed off</b> ${esc(fmt(so.at))}${so.note ? ` · ${esc(so.note)}` : ""}. The docs session folds As Built and the Architect's Review into <code>spec.md</code>, then archives the review.</p>`
+        : `<p class="refs">Read the review${d ? " in Claude Docs" : " below"}. Signing off tells the manager to have As Built and the Architect's Review folded into <code>spec.md</code> and the review archived; until then it stays the review copy.</p>
+      <label class="refs" for="so-note-${sid(spec.id)}">Note (optional): conditions, or what to change first</label>
+      <textarea id="so-note-${sid(spec.id)}"></textarea>
+      <div class="actions"><button class="btn" type="button" id="so-btn-${sid(spec.id)}" ${db ? "" : "disabled"}>Sign off this review</button></div>`}
+    </div>
+    ${!d && spec.review ? `<article class="doc" id="${id}" data-comment-target><div class="md">${md(spec.review, spec.dossier)}</div><div class="md">${cbtn(id)}</div></article>` : ""}`;
+}
+// A sign-off is a db record (signoffs/<spec_id>) plus a worknote; the manager reads both and
+// assigns the fold. It names the dossier version read, so a later edit is visibly unreviewed.
+async function signOff(spec, btn) {
+  btn.disabled = true; btn.textContent = "Saving…";
+  const at = new Date().toISOString(), note = (document.getElementById("so-note-" + sid(spec.id))?.value || "").trim();
+  try {
+    const path = spec.review_doc?.url || spec.dossier, rec = { spec: spec.id, dossier: path, dossier_saved: spec.dossier_saved || "", review_line: spec.dossier_review || "", note, at };
+    if (me) rec.by = me;
+    await db.collection("signoffs").doc(spec.id).set(rec);
+    await db.collection("log").doc(`signoff-${spec.id}-${Date.parse(at)}`).set({ at, kind: "signoff", ref: spec.review_doc ? path : viewerHref(path),
+      text: `Owner signed off the spec ${spec.id.split("-")[0]} review (${spec.review_doc ? spec.review_doc.title : `${path}, last changed ${spec.dossier_saved || "?"}`})${note ? `: ${note}` : ""}. Manager: assign the docs session to fold it into spec.md (spec-driven-dev, a spec's review).` });
+    statusEl.textContent = "Signed off. The worknote tells the manager to have the review folded into spec.md.";
+  } catch (e) {
+    statusEl.textContent = "Not saved: " + (e?.message || "the store refused the write") + ". Only the board's editors can sign off.";
+    btn.disabled = false; btn.textContent = "Sign off this review";
+  }
+}
+
+// Decided records only: an open decision file's question is on Overview, so it is not listed twice.
+function renderDecisions() {
+  if (!state.decisions.length) return;
+  const rows = [...state.decisions].filter(d => d.status !== "open").sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const cutoff = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
+  const recent = rows.filter(d => d.date >= cutoff), older = rows.length - recent.length;
+  const row = d =>
+    `<tr id="decision-${sid(d.id)}" data-comment-target><td class="id">${esc(d.date)}</td><td>${d.path ? docLink(d.path, d.title) : esc(d.title)}<span class="note">${esc(d.summary)}</span></td><td>${chip(d.status)}</td><td class="c">${cbtn("decision-" + sid(d.id))}</td></tr>`;
+  const showAll = document.getElementById("decisions").dataset.all === "1";
+  document.getElementById("decisions").innerHTML = (showAll ? rows : recent).map(row).join("")
+    + (older && !showAll ? `<tr><td colspan="4"><button type="button" class="cbtn" id="dec-more">Show ${older} older decisions</button></td></tr>` : "");
+  document.getElementById("dec-more")?.addEventListener("click", () => { document.getElementById("decisions").dataset.all = "1"; renderDecisions(); });
+}
+
+// A Live group (seed.py: board.json `live.groups` filled from the facts ledger, or `live.command`)
+// may carry rows (a status table), stats (headline numbers), a table (columns and rows, cells under
+// `warn_below` marked) and shots (screenshots published beside the page, live or from a preview).
+function renderLive() {
+  if (!state.live.length) return;
+  document.getElementById("live").innerHTML = [...state.live].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(g => {
+    const rows = (g.rows || []).map((r, i) => `<tr id="lab-${sid(g.id)}-${i}" data-comment-target><td class="id">${esc(r.id ?? "")}</td><td><b>${esc(r.name)}</b><span class="note">${esc(r.detail)}</span></td><td class="num">${esc(r.mem ?? "")}</td><td>${chip(r.status)}</td><td class="c">${cbtn("lab-" + sid(g.id) + "-" + i)}</td></tr>`).join("");
+    const stats = (g.stats || []).map(s => `<div class="stat"><b>${esc(s.value)}</b><span>${esc(s.label)}</span></div>`).join("");
+    const t = g.table, low = v => t.warn_below != null && v !== "" && !isNaN(+v) && +v < t.warn_below;
+    const table = t ? `<div class="tablewrap"><table><thead><tr>${t.columns.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${
+      t.rows.map(r => `<tr>${r.map((v, i) => i ? `<td class="num${low(v) && t.warn_cols?.includes(i) ? " lowv" : ""}">${esc(v)}</td>` : `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>${t.note ? `<p class="sum" style="padding-bottom:12px">${esc(t.note)}</p>` : ""}` : "";
+    const shots = (g.shots || []).map(s => `<figure class="shot"><button type="button" data-zoom="${esc(s.src)}" aria-label="Open ${esc(s.title)} full size"><img src="${esc(s.src)}" alt="${esc(s.title)}" loading="lazy"></button><figcaption><span class="where ${s.where === "live" ? "live" : ""}">${s.where === "live" ? "dev Splunk, live" : "local preview, test data"} · ${esc(s.taken)}</span><b>${esc(s.title)}</b>${esc(s.caption)}</figcaption></figure>`).join("");
+    const stale = Date.now() - Date.parse(g.read_at) > (g.refresh_hours || 26) * 36e5;
+    return `<section class="box" aria-label="${esc(g.title)}"><header id="labhead-${sid(g.id)}" data-comment-target><h3>${esc(g.title)}</h3>${chip(g.state)}${stale ? chip("stale") : ""}<span class="when">read ${esc(fmt(g.read_at))}</span>${cbtn("labhead-" + sid(g.id))}</header>
+      <p class="sum">${esc(g.summary)}${g.how ? ` <code>${esc(g.how)}</code>` : ""}</p>${stats ? `<div class="stats">${stats}</div>` : ""}${table}${shots ? `<div class="shots">${shots}</div>` : ""}${rows ? `<div class="tablewrap"><table><thead><tr><th>Id</th><th>Name</th><th>${esc(g.value_label || "Value")}</th><th>State</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}</section>`;
+  }).join("");
+}
+document.addEventListener("click", ev => {
+  const z = ev.target.closest("[data-zoom]");
+  if (!z) return;
+  const box = Object.assign(document.createElement("div"), { className: "lightbox" });
+  box.innerHTML = `<img src="${esc(z.dataset.zoom)}" alt="">`;
+  box.addEventListener("click", () => box.remove());
+  document.body.append(box);
+});
+
+function renderLog() {
+  if (!state.log.length) return;
+  const at = l => l.at || l.date || "";
+  const sorted = [...state.log].sort((a, b) => String(at(b)).localeCompare(String(at(a))));
+  const short = (s, n) => (s = String(s || "")).length > n ? s.slice(0, n).replace(/\s+\S*$/, "") + "…" : s;
+  const li = (l, pre, n) => `<li id="${pre}-${sid(l.id)}" data-comment-target><span class="when">${esc(fmt(at(l)))}</span><span title="${esc(l.text)}">${esc(n ? short(l.text, n) : l.text)}${l.ref ? " " + link(l.ref, "→") : ""} ${cbtn(pre + "-" + sid(l.id))}</span></li>`;
+  document.getElementById("log").innerHTML = sorted.map(l => li(l, "note")).join("");
+  document.getElementById("recent").innerHTML = sorted.slice(0, 6).map(l => li(l, "recent", 200)).join("");
+}
+
+async function saveAnswer(id, btn) {
+  const card = document.getElementById("q-" + id);
+  const choice = card.querySelector("input:checked")?.value;
+  if (!choice) { statusEl.textContent = "Pick an option before saving."; return; }
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const answer = { choice, note: card.querySelector("textarea").value.trim(), at: new Date().toISOString() };
+    if (me) answer.by = me;
+    await db.collection("questions").doc(id).update({ answer, status: "answered" });
+    statusEl.textContent = "Saved. It leaves Needs you; the record is under Decisions.";
+  } catch (e) {
+    statusEl.textContent = "Not saved: " + (e?.message || "the store refused the write") + ". Only the board's editors can save answers.";
+    btn.disabled = false; btn.textContent = "Save answer";
+  }
+}
+
+const RENDER = { orientation: renderWhere, graph: () => { renderWhere(); renderWorkgraph(); }, questions: renderQuestions, docs: () => { renderDocs(); renderLibrary(); renderReview(); }, specs: () => { renderSpecs("next"); renderSpecs("done"); renderGlance(); }, tasks: () => { renderSpecs("next"); renderSpecs("done"); }, decisions: renderDecisions, live: renderLive, log: renderLog, config: renderConfig, signoffs: () => { renderSpecs("next"); renderSpecs("done"); } };
+
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest(".cbtn");
+  if (!b) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const el = document.getElementById(b.dataset.c);
+  if (!comments || !el) { statusEl.textContent = "Commenting from the page is not available in this view; use the comment button in the artifact's toolbar."; return; }
+  try { await comments.openComposer({ element: el }); }
+  catch (e) {
+    if (e?.code === "unavailable" || e?.code === "not_granted") { comments = null; document.body.classList.add("no-comments"); }
+    statusEl.textContent = e?.code === "rate_limited" ? "Too many comment boxes at once; wait a moment." : "Could not open the comment box here (" + (e?.code || "error") + ").";
+  }
+}, true);
+renderTabs(); show();
+window.addEventListener("hashchange", () => { renderTabs(); show(); });
+
+(async () => {
+  try { comments = window.claude ? await window.claude.use("comments") : null; } catch { comments = null; }
+  if (!comments) document.body.classList.add("no-comments");
+  db = window.claude ? await window.claude.use("db") : null;
+  if (!db) { statusEl.textContent = "The board's store is not available in this view. Open it in claude.ai while signed in."; return; }
+  try { const user = await window.claude.use("user"); me = user ? await user.id() : null; } catch { me = null; }
+  statusEl.textContent = "";
+  renderQuestions();
+  for (const name of Object.keys(state).filter(n => n !== "live")) {
+    db.collection(name).onSnapshot(snap => {
+      state[name] = snap.docs.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() }));
+      RENDER[name](); renderTabs(); show();
+    }, err => { statusEl.textContent = `Lost the connection to the store (${err?.code}). Reload to retry.`; });
+  }
+})();
+</script>

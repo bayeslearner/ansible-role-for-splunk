@@ -101,7 +101,7 @@ testing/
   molecule/
     download.yml                    tarball fetch
     infra/{molecule,create,prepare,verify,destroy}.yml
-    day0/{molecule,converge,verify,destroy}.yml + inventory/ (SSH overrides)
+    day0/{molecule,converge,verify,destroy}.yml + inventory/ (repeats common SSH settings)
     day1/{molecule,converge,verify}.yml
     environments/{common,small,dev,prod}/hosts.yml + group_vars/
 ```
