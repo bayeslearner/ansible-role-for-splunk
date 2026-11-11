@@ -23,13 +23,19 @@ vars:
   SECRETS_DIR: '{{.TASKFILE_DIR}}/.secrets'
   # Default environment - can be overridden via MOLECULE_ENV env var
   ENV: '{{.MOLECULE_ENV | default "small"}}'
+  # Engine socket on the host; point it at a separate Podman API service when the default store is unsuitable
+  DOCKER_SOCK: '{{.DOCKER_SOCK | default "/var/run/docker.sock"}}'
+  # Address published lab ports bind to; widen with LAB_BIND_ADDRESS=0.0.0.0
+  LAB_BIND_ADDRESS: '{{.LAB_BIND_ADDRESS | default "127.0.0.1"}}'
   # Common docker run args for molecule tasks (ENV resolved per-invocation)
   _DOCKER_ARGS: >-
     --cap-add NET_ADMIN
-    -v /var/run/docker.sock:/var/run/docker.sock
+    -v {{.DOCKER_SOCK}}:/var/run/docker.sock
     -v {{.PROJECT_ROOT}}:/workspace
     -w /workspace/testing
     -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}}
+    -e HOST_DOCKER_SOCK={{.DOCKER_SOCK}}
+    -e LAB_BIND_ADDRESS={{.LAB_BIND_ADDRESS}}
     -e MOLECULE_ENV={{.ENV}}
   # Disable veth checksum offloading before running molecule (prevents large file transfer corruption)
   _ETHTOOL_FIX: 'ethtool -K eth0 tx off rx off 2>/dev/null;'
@@ -82,18 +88,18 @@ tasks:
     cmds:
       - |
         echo "Checking/building Splunk testing framework images..."
-        docker images | grep -q splunk-base-almalinux9:latest || docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
-        docker images | grep -q splunk-base-ubuntu2204:latest || docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
-        docker images | grep -q splunk-ansible-controller:latest || docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
-        docker images | grep -q splunk-git-server:latest || docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
-        docker images | grep -q molecule-runner:latest || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+        docker image inspect splunk-base-almalinux9:latest >/dev/null 2>&1 || docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+        docker image inspect splunk-base-ubuntu2204:latest >/dev/null 2>&1 || docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+        docker image inspect splunk-ansible-controller:latest >/dev/null 2>&1 || docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+        docker image inspect splunk-git-server:latest >/dev/null 2>&1 || docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+        docker image inspect molecule-runner:latest >/dev/null 2>&1 || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
         echo "All images ready!"
     status:
-      - docker images | grep -q splunk-base-almalinux9:latest
-      - docker images | grep -q splunk-base-ubuntu2204:latest
-      - docker images | grep -q splunk-ansible-controller:latest
-      - docker images | grep -q splunk-git-server:latest
-      - docker images | grep -q molecule-runner:latest
+      - docker image inspect splunk-base-almalinux9:latest >/dev/null 2>&1
+      - docker image inspect splunk-base-ubuntu2204:latest >/dev/null 2>&1
+      - docker image inspect splunk-ansible-controller:latest >/dev/null 2>&1
+      - docker image inspect splunk-git-server:latest >/dev/null 2>&1
+      - docker image inspect molecule-runner:latest >/dev/null 2>&1
 
   setup:rebuild:
     desc: Force rebuild all Docker images

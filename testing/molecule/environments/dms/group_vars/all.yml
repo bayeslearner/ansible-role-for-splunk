@@ -1,0 +1,10 @@
+---
+# Data Management API environment overrides
+# Inherits common vars from environments/common/
+
+splunk_backup: false
+splunk_download_local: true
+
+# Splunk Enterprise 10.6 is the first release the Data Management API app supports
+splunk_package_version: 10.6.1.1
+build_id: b2ae2962645c

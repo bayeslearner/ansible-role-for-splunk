@@ -66,6 +66,17 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
     - Depends: 3.2, 3.3, 3.4, 3.6
     - Requirements: R10
+  - [x] 3.10 The engine socket is a variable: `DOCKER_SOCK` (default `/var/run/docker.sock`) is the socket the runner and the controller mount, so the lab can run against a Podman API service whose storage is not the host's default store (a shared host's `/var` may be too small for the lab)
+    - Requirements: R10, NFR Isolation
+    - Verification: with `DOCKER_SOCK` pointing at a separate Podman service, `MOLECULE_ENV=dms task infra:setup` creates every container in that service's storage and the default store is unchanged
+  - [x] 3.11 A `dms` environment: one all-in-one Splunk Enterprise 10.6.1.1 node (`splunk-dms`) plus the controller, for testing the Data Management API app (Edge Processor control plane, Splunk Enterprise 10.6 and later)
+    - Depends: 3.10
+    - Requirements: R10
+    - Verification: `MOLECULE_ENV=dms task day0:converge` and `day0:verify` pass; `splunk version` on `splunk-dms` reports 10.6.1.1
+  - [ ] 3.12 Lab images resolve on a Podman engine: `podman build -t name:latest` stores `localhost/name:latest`, while the Docker-compatible API that `community.docker` calls reads the short name as `docker.io/library/name:latest`, finds nothing and tries a pull (`500 ... connection refused`). Tag the images under both names in `setup:images`, or reference them by a name both engines resolve
+    - Depends: 3.10
+    - Requirements: R10
+    - Verification: `infra:create` on a Podman engine creates every container with no pull attempt
 
 - [ ] 4. Reproducibility
   - [ ] 4.1 Pin exact versions: base images by tag and digest, Gitea, ttyd (already 1.7.7), pip packages in the runner, Galaxy collections, go-task
@@ -80,3 +91,5 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
 - 2026-11-02: Merged `upstream/master` (`750c071`) into `feature/virtual-lab`. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged. Day0 and day1 converge pass `--syntax-check` against the merged role.
+- 2026-11-10: The pre-production host is `splunkapp-preprod02`; `splunkapp-preprod01` does not resolve. Added 3.10 (socket variable) and 3.11 (`dms` environment) for the first run there, and started 3.3 with the published-port bind address (Gitea registration still open). Kun asked for the run.
+- 2026-11-10: 3.10 and 3.11 verified on the pre-production host against a separate root Podman API service: infra created the controller and `splunk-dms`, day0 converge ran 61 tasks with none failed, day0 verify passed (its git-server check is ignored when no git server exists), `splunk version` reports 10.6.1.1 build b2ae2962645c, and the host's default container store gained nothing. The run needed the images tagged under `docker.io/library/` names on the host first, which is task 3.12.

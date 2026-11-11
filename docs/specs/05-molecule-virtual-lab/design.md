@@ -16,7 +16,7 @@
 
 ```mermaid
 flowchart TB
-  subgraph host["Lab host (Mac/OrbStack, pve2 VM, splunkapp-preprod01)"]
+  subgraph host["Lab host (Mac/OrbStack, pve2 VM, splunkapp-preprod02)"]
     task["Taskfile.yml<br/>single entry point"]
     sock[("/var/run/docker.sock")]
     repo[("repo bind-mounted<br/>at /workspace")]
@@ -207,7 +207,7 @@ Recorded runs: none. The work Mac has no lab images (`docker images`, 2026-11-02
 | Inside the lab | password `ansible:ansible` baked into images, `PermitEmptyPasswords yes`, PAM `account sufficient pam_permit.so` on AlmaLinux; host keys not checked |
 | Name resolution | lab hosts carry production-style names (`splunkapp-prod01`, `splunkshc-prod01`, …) that can match real hosts on a work network; a lab name with no running container falls through Docker's DNS to the host's resolver and its search domain |
 
-These are acceptable on a laptop and are the open questions for `splunkapp-preprod01` (tasks 3.x).
+These are acceptable on a laptop and are the open questions for `splunkapp-preprod02` (tasks 3.x).
 
 ## Decisions
 

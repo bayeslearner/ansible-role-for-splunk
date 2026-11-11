@@ -6,6 +6,9 @@
   vars:
     ansible_python_interpreter: /usr/local/bin/python3
     targets: "{{ groups['full'] | default([]) + groups['uf'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
+    # Host-side engine socket and bind address, passed in by the Taskfile
+    host_docker_sock: "{{ lookup('env', 'HOST_DOCKER_SOCK') | default('/var/run/docker.sock', true) }}"
+    lab_bind_address: "{{ lookup('env', 'LAB_BIND_ADDRESS') | default('127.0.0.1', true) }}"
 
   tasks:
     - name: Ensure Docker network exists
@@ -24,9 +27,9 @@
         networks:
           - name: splunk-test-network
         published_ports:
-          - "3000:3000"
+          - "{{ lab_bind_address }}:3000:3000"
         volumes:
-          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - "{{ host_docker_sock }}:/var/run/docker.sock:ro"
           - /sys/fs/cgroup:/sys/fs/cgroup:rw
           - "{{ lookup('env', 'HOST_PROJECT_DIRECTORY') }}:/workspace:rw"
           - "{{ lookup('env', 'HOST_PROJECT_DIRECTORY') }}/testing/.secrets:/workspace/testing/.secrets:ro"
@@ -70,8 +73,8 @@
         networks:
           - name: splunk-test-network
         published_ports:
-          - "2222:22"
-          - "8929:8929"
+          - "{{ lab_bind_address }}:2222:22"
+          - "{{ lab_bind_address }}:8929:8929"
         volumes:
           - ansible-splunk-test-gitea-data:/data:rw
         restart_policy: unless-stopped

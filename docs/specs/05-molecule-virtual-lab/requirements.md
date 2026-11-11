@@ -29,7 +29,7 @@ The Docker and Molecule harness under `testing/`: images, the Taskfile entry poi
 - **Node:** a systemd container (Ubuntu 22.04 or AlmaLinux 9) that receives Splunk.
 - **Topology:** one of `testing/molecule/environments/{small,prod,dev}`, chosen with `MOLECULE_ENV`.
 - **Scenario:** a Molecule scenario directory (`infra`, `day0`, `day1`), each a lifecycle stage.
-- **Lab host:** the Docker host the lab runs on: a Mac with OrbStack, the pve2 VM, or `splunkapp-preprod01`.
+- **Lab host:** the Docker host the lab runs on: a Mac with OrbStack, the pve2 VM, or `splunkapp-preprod02`.
 
 ## Mental Model And Invariants
 
@@ -89,11 +89,11 @@ WHEN the `prod` topology is up, THE lab SHALL run a Gitea server reachable as `g
 `task workflow:full` SHALL run infra, day0, day1 and destroy in order and stop at the first failure; `task workflow:quick` SHALL leave the lab running after day0; `task reset` SHALL remove every container, volume and network the lab created and nothing else.
 
 ### R10. Portability
-THE lab SHALL run unchanged on macOS with OrbStack, on a Linux x86_64 Docker host (the pve2 VM), and on `splunkapp-preprod01`.
+THE lab SHALL run unchanged on macOS with OrbStack, on a Linux x86_64 Docker host (the pve2 VM), and on `splunkapp-preprod02`.
 
 ## Non-Functional Requirements
 
-- **Isolation on a shared host:** on `splunkapp-preprod01` the lab must not give lab users control of the host, must not expose open services beyond what the operator chooses, and must not resolve lab names to real hosts.
+- **Isolation on a shared host:** on `splunkapp-preprod02` the lab must not give lab users control of the host, must not expose open services beyond what the operator chooses, and must not resolve lab names to real hosts.
 - **Reproducibility:** a fresh lab host builds the same images and toolchain on any day (pinned bases, packages and collections).
 - **Fidelity:** the Ansible version that runs the role from the controller matches the one Molecule uses, or the difference is stated.
 
