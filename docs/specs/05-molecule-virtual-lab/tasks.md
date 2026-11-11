@@ -36,7 +36,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R8
   - [ ] 2.4 Controller Ansible matches the runner: install `ansible-core` at the runner's pinned version in the controller image instead of Ubuntu's apt `ansible`, and print both versions in infra verify
     - Requirements: R6, NFR Fidelity
-  - [ ] 2.5 Image checks use `docker image inspect <name>` instead of `docker images | grep -q name:latest`, which fails on Docker CLIs that print repository and tag in separate columns
+  - [x] 2.5 Image checks use `docker image inspect <name>` instead of `docker images | grep -q name:latest`, which fails on Docker CLIs that print repository and tag in separate columns
     - Requirements: R1, R10
   - [ ] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
