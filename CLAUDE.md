@@ -12,9 +12,8 @@ Load at session start (also listed in `.claude/required-skills`): `house-rules`,
 
 ## The board
 
-- Board: https://claude.ai/artifact/WCbneMKxdKJJuiWAfcXAo2 (kit config in `docs/board/`; reseed with `python3 docs/board/seed.py --out .build/board`, republish the page with `python3 docs/board/seed.py page --out board/board.html`)
+- Board (Claude Doc shape): https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP. Generated tabs (Overview, Steering, Specs with one subtab per spec, Decisions, Worknotes) sit beside the hand-written "Learn Molecule through the lab" and "Review of spec 05". Regenerate with `python3 docs/board/seed.py doc --out .build/doc-board` and apply `plan.json` with the Docs connector (`spec-driven-dev`, Project Board); the minted ids are in `docs/board/doc-tabs.json`. Config: `docs/board/board.json`, `orientation.md`, `spec-summaries.json`.
 - Notes Viewer (ansible-role-for-splunk): https://claude.ai/artifact/LES4pcfC7J9giupJGLE6D2
-- Spec 05 review and Molecule teaching doc (Claude Doc): https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP
 
 ## Required reading on session start
 

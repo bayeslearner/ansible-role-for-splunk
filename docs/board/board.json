@@ -7,54 +7,90 @@
   "timeline_days": 30,
   "open_decision_days": 30,
   "docs": [
-    ["steering", "docs/steering/product.md", "Product: purpose, where the lab runs, invariants, pillars", 1],
-    ["architecture", "docs/specs/05-molecule-virtual-lab/design.md", "Virtual lab design as built", 1],
-    ["architecture", "docs/design/feature-matrix.md", "Feature matrix", 2],
-    ["architecture", "testing/README.md", "Operating the lab", 3]
+    [
+      "steering",
+      "docs/steering/product.md",
+      "Product: purpose, where the lab runs, invariants, pillars",
+      1
+    ],
+    [
+      "architecture",
+      "docs/specs/05-molecule-virtual-lab/design.md",
+      "Virtual lab design as built",
+      1
+    ],
+    [
+      "architecture",
+      "docs/design/feature-matrix.md",
+      "Feature matrix",
+      2
+    ],
+    [
+      "architecture",
+      "testing/README.md",
+      "Operating the lab",
+      3
+    ]
   ],
   "library": [
-    ["docs/specs/*/*.md", "Spec"],
-    ["docs/decisions/2*.md", "Decision"],
-    ["docs/steering/*.md", "Steering"],
-    ["docs/design/*.md", "Design"],
-    ["docs/history/*.md", "History"],
-    ["testing/molecule/*/molecule.yml", "Scenario"],
-    ["testing/Taskfile.yml", "Code"],
-    ["CLAUDE.md", "Orientation"]
+    [
+      "docs/specs/*/*.md",
+      "Spec"
+    ],
+    [
+      "docs/decisions/2*.md",
+      "Decision"
+    ],
+    [
+      "docs/steering/*.md",
+      "Steering"
+    ],
+    [
+      "docs/design/*.md",
+      "Design"
+    ],
+    [
+      "docs/history/*.md",
+      "History"
+    ],
+    [
+      "testing/molecule/*/molecule.yml",
+      "Scenario"
+    ],
+    [
+      "testing/Taskfile.yml",
+      "Code"
+    ],
+    [
+      "CLAUDE.md",
+      "Orientation"
+    ]
   ],
-  "links": [
-    {"title": "Review and Molecule teaching doc (Claude Doc)", "url": "https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP"}
-  ],
-  "reviews": {
-    "05-molecule-virtual-lab": {"url": "https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP", "title": "ansible-role-for-splunk review: spec 05 molecule-virtual-lab"}
-  },
   "viewer_url": "https://claude.ai/artifact/LES4pcfC7J9giupJGLE6D2",
   "viewer_project": "ansible-role-for-splunk",
   "repo_url": "https://github.com/bayeslearner/ansible-role-for-splunk",
   "branch": "feature/virtual-lab",
-  "decisions": ["docs/decisions/2*.md"],
-  "live": {
-    "collection": "live",
-    "label": "Lab",
-    "intro": "What the lab has run and where. Every result here comes from a verification record under docs/history/; none exists yet.",
-    "groups": [
-      {
-        "id": "runs",
-        "title": "Recorded lab runs",
-        "summary": "None yet. The work Mac holds none of the lab images (docker images, 2026-11-02), and no verification record exists. The first record comes from spec 05 tasks 1.1 and 1.2 (task workflow:full on the small topology).",
-        "how": "ls docs/history/verification-*-lab-*.md",
-        "read_at": "2026-11-02T23:30:00Z",
-        "refresh_hours": 168,
-        "state": "stale"
-      },
-      {
-        "id": "hosts",
-        "title": "Lab hosts",
-        "summary": "macOS with OrbStack: where the lab was built. The pve2 VM: next, facts not yet recorded (task 3.1). The pre-production host: after the isolation tasks 3.3 to 3.6.",
-        "how": "docs/steering/product.md, Where The Lab Runs",
-        "read_at": "2026-11-02T23:30:00Z",
-        "refresh_hours": 168
-      }
-    ]
+  "decisions": [
+    "docs/decisions/2*.md"
+  ],
+  "doc": {
+    "id": "6e1129f3-f476-4123-9e1f-8c8106ad9732",
+    "url": "https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP",
+    "tabs_file": "docs/board/doc-tabs.json",
+    "generated": [
+      "overview",
+      "steering",
+      "specs",
+      "decisions",
+      "worknotes"
+    ],
+    "orders": {
+      "overview": "a",
+      "steering": "a4",
+      "specs": "a5",
+      "decisions": "a6",
+      "worknotes": "a7"
+    },
+    "reseed": "python3 docs/board/seed.py doc"
   }
 }

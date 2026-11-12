@@ -15,7 +15,7 @@ anchors: []
 > [!note] Origin
 > Written as a Kiro requirements document under `.kiro/specs/day-2-operations/` before the harness became the virtual lab (commit `86a1a37`), and never committed. Moved here on 2026-11-02 unchanged below this note. It has no design or tasks yet; `/spec-plan 10-day-2-operations refine` reconciles it with the virtual lab as built (spec 05) before it can activate.
 
-# Requirements Document
+# Requirements: Day 2 operations
 
 ## Introduction
 

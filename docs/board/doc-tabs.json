@@ -1,0 +1,16 @@
+{
+ "doc_id": "6e1129f3-f476-4123-9e1f-8c8106ad9732",
+ "url": "https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP",
+ "built": "2026-11-12",
+ "tabs": {
+  "board-overview": {"file": "0544b64c-d14f", "body": "aac7c106-3443", "widgets": {"timeline": "6ef9180d-3316"}, "order": "a", "source": "docs/board/orientation.md, open decision files, spec Logs"},
+  "learn-molecule": {"file": "24fa1fdc-5c64", "body": "a7a0fc12-374e", "order": "a0", "source": "hand-written teaching tab; widgets 53a8eedd-a7a6, 90ff23e5-12a9, a984dc3e-56e4, d974c637-35f0"},
+  "review-05": {"file": "cf83d2e2-f62d", "body": "9d3d8c65-8e26", "order": "a1", "source": "hand-written review of spec 05, awaiting sign-off"},
+  "board-steering": {"file": "1949b036-63c5", "body": "68bc8d8b-5989", "order": "a4"},
+  "board-specs": {"file": "52d5082c-de21", "body": "d2ca679c-c284", "order": "a5"},
+  "spec-05-molecule-virtual-lab": {"file": "10f94370-fb98", "body": "a4244f0f-412b", "order": "b01", "subtab_of": "52d5082c-de21"},
+  "spec-10-day-2-operations": {"file": "76d62475-9c3e", "body": "b3e53317-112c", "order": "b02", "subtab_of": "52d5082c-de21"},
+  "board-decisions": {"file": "c2b02389-9705", "body": "99624373-0e1d", "order": "a6"},
+  "board-worknotes": {"file": "b0de357c-c4fa", "body": "c944eb3b-3d0a", "order": "a7"}
+ }
+}
