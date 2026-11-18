@@ -20,6 +20,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Verification: full log plus `docker ps` before destroy, in a verification record
   - [ ] 1.3 Same for `dev` and `prod`
     - `dev` passed infra, day0 and day1 on 2026-11-18 (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). `prod` is owed; see 2.1.
+    - For the `prod` run, also read back two things day0 sets through the role and no check covers yet: the forwarder `splunk-uf01` is a deployment client of `splunk-fwdmanager:8089` (the role writes `deploymentclient.conf` at install because the inventory sets `splunk_uri_ds` and `clientName`), and the deployer's `target_shc_group_name` resolves to the two search heads. The `dmc` group is a label only: nothing configures a monitoring console.
     - Depends: 1.2
     - Requirements: R2, R4
   - [x] 1.4 From the controller, `ansible all -m ping` and `ansible-playbook /workspace/testing/molecule/day0/verify.yml` run with no flags
@@ -64,7 +65,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - 2026-11-18: decided for the one engine tried (Docker on OrbStack, cgroup v2): nodes stay privileged. A node runs Splunk without `privileged` given the host cgroup namespace and `NET_ADMIN`, but the role's `disable-thp.service` then fails, so the node would no longer be the target the role is written for. Result and the shared-host consequence: `docs/history/research-2026-11-18-nodes-without-privileged.md`. The pve2 VM and the pre-production host still need the same check under 3.1.
     - Requirements: NFR Isolation
   - [x] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
-    - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; with the check, a collision cannot go unnoticed. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
+    - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; the check covers the moment a lab is built; a name that starts resolving later is not caught (design, Security). Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
     - Requirements: NFR Isolation
   - [ ] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host
     - Requirements: R10
@@ -125,6 +126,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 6.7 `day0/converge.yml` stops before any install when the container engine's disk cannot hold the pending installs plus a margin, with a message that says how much is free and how much is needed
     - Requirements: R4, R10
     - Verification: the check passing and failing on its own (done 2026-11-18, `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`); a whole day0 run with the check in front (owed: not run on the Mac, whose engine disk is shared with other work)
+  - [x] 6.8 sshd on the node images accepts keys only (it accepted password logins, and the `ansible` user's password is a fixed word with passwordless sudo behind it)
+    - Requirements: R3, R10
+    - Verification: the methods each node offers before and after, and `prod` infra test, in `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -155,3 +159,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 3.12 fix landed and proven in a probe on Podman; the lab's own run on Podman is owed. The spec's requirements, design and tasks were also corrected in eleven places where one line contradicted another (found while the Board tab was regenerated).
 - 2026-11-18: The search head cluster half of 2.1 is verified: with Splunk's free-disk floor lowered for the test, day0 verify reports both members Up, and fails when one is stopped (`docs/history/verification-2026-11-18-cluster-formation.md`). 2.1 stays open only for the two clusters together in a full `prod` run.
 - 2026-11-18: The day's larger runs filled the container engine's disk on the Mac, which is shared with other work. Added 6.7: day0 now checks free disk before any install. No more Splunk installs are run on this Mac for the lab; `prod`, 5.5 and the whole-day0 check for 6.7 go to a machine with its own engine. The lab's `software/`, `.runs/` and `.build/` folders are marked to stay out of Dropbox sync on this checkout. Also corrected seven more lines where the spec contradicted itself, and day0 verify's indexer report now says so when a topology has a manager and no indexers.
+- 2026-11-18: 6.8: node images no longer accept SSH password logins; `prod`'s infra scenario passes on the rebuilt images. Two owner questions are written up as `docs/decisions/2026-11-18-03-host-name-and-site-names.md` (open). Notes added for the owed `prod` run: read back the forwarder's deployment-client setting and the deployer's target group.

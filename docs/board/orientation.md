@@ -38,10 +38,7 @@ The fork exists to turn the upstream role's Molecule harness into a virtual lab:
 
 ## Next
 
-- **Needs you:**
-    - Whether the pre-production host's name may stay in this public repository (five files and one commit subject).
-    - Whether the indexer site names removed from `prod`'s inventory should come back as a planned item.
-    - Sign off the review (the "Review of spec 05" tab).
+- **Needs you:** two questions (the Needs you panel above, `docs/decisions/2026-11-18-03-host-name-and-site-names.md`) and the sign-off on the review (the "Review of spec 05" tab).
 - **Next run, on a machine with its own container engine and about 40 GB free:** `prod` end to end (2.1, 1.3), a whole day0 behind the new disk check (6.7), and memory and CPU per topology (5.5).
 - **Then, on the lab hosts:** the pve2 VM's facts and a run there (3.1, 3.2); the lab on Podman with the new image names (3.12); the pre-production host (3.9).
 - **Design work with no run needed:** two labs on one engine (3.7).

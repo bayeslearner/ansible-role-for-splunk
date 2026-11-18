@@ -15,9 +15,12 @@ RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do \
           /lib/systemd/system/sockets.target.wants/*initctl* \
           /lib/systemd/system/basic.target.wants/*
 
+# SSH takes keys only. The ansible user's password is a fixed word baked into this image, and that user
+# has passwordless sudo, so a password login would give root to anything that can reach the node.
 RUN mkdir /var/run/sshd && \
     ssh-keygen -A && \
-    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config && \
+    echo 'KbdInteractiveAuthentication no' >> /etc/ssh/sshd_config && \
     sed -i 's/^UsePAM no$/#UsePAM no/' /etc/ssh/sshd_config && \
     sed -i 's/session\s*required\s*pam_loginuid.so/session optional pam_loginuid.so/g' /etc/pam.d/sshd
 

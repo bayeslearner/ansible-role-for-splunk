@@ -63,6 +63,22 @@ On the tree at `4a8e2cd`. Checksum offload on a container's `eth0` can corrupt l
 
 Not shown: the corruption itself with offload left on. The fix predates this session and that failure was not reproduced.
 
+## SSH takes keys only
+
+On the tree at `bafd60d`. Both node images set the `ansible` user's password to the word "ansible", gave that user passwordless sudo, and let sshd accept password logins (the AlmaLinux image also allowed empty passwords). Anything that could reach a node's port 22 could become root on it. Nothing in the lab logs in over SSH with a password: Molecule and the controller use the lab key, and the web terminal has its own generated password.
+
+`ssh -o PreferredAuthentications=none -o PubkeyAuthentication=no` from the controller makes a server list the methods it accepts:
+
+| Node | Before | After |
+|---|---|---|
+| `splunkapp-prod01` (Ubuntu) | `publickey,password` | `publickey` |
+| `splunkapp-prod02` (AlmaLinux) | `publickey,gssapi-keyex,gssapi-with-mic,password` | `publickey,gssapi-keyex,gssapi-with-mic` |
+| `ansible-controller` (after only) | | `publickey` |
+
+After the change, with all images rebuilt: `MOLECULE_ENV=prod task infra:test` exit 0, "The controller reached every node over SSH as ansible", and the web terminal answers 200 with its password (`pw-prod-infra-test.log`).
+
+AlmaLinux still lists the GSSAPI methods, which its distribution default turns on. They need a Kerberos setup the lab does not have, so they admit nobody. The fixed password itself is still set in the images; it no longer opens SSH.
+
 ## Memory, infra only
 
 One `docker stats` reading with all eleven containers up and no Splunk installed: each node about 30 MiB, `ansible-controller` 70 MiB, `git-server` 186 MiB.

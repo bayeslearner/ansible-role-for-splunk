@@ -7,7 +7,7 @@
 1. `infra:setup` → `infra:create` → `setup` (`Taskfile.yml:47`): secrets, images, `download:splunk` (runs `molecule/download.yml` in a throwaway runner, writes `testing/software/splunk-9.4.2-…tgz`), network. (`mol-run`, the persistent runner, starts only when `task runner:shell` is used.)
 2. `molecule create -s infra` in a `--rm` runner with the host Docker socket and the repo at `/workspace` (`_MOL`, `Taskfile.yml:36`). `infra/create.yml` starts `ansible-controller`, then one container per host in `full` and `uf` from that host's `docker_image`, each with a named volume `ansible-splunk-test-<host>-data` on `/opt`.
 3. `molecule prepare -s infra`: `infra/prepare.yml` reads the key and password inside the runner, then over the **docker** connection as root writes `authorized_keys`, creates the `splunk` user with sudo, clears `/run/nologin`, and configures the controller (keys, `ansible.cfg`, ttyd unit, nginx).
-4. `day0:test` → `molecule test -s day0` in a runner joined to `splunk-test-network` (`_MOL_NET`), so names like `splunkapp-prod01` resolve to containers. `day0/converge.yml` applies the role with `deployment_task: check_splunk.yml` over **SSH** as `ansible`, then, on a topology that has a `clustermanager` or `shdeployer` group, runs the role's cluster tasks (manager, peers, search heads, deployer, search head cluster members, captain). Because `splunk_download_local: true`, the role's `download_and_unarchive.yml` finds the tarball already in `splunk_package_path` on localhost (the runner), copies it to each node and unpacks it.
+4. `day0:test` → `molecule test -s day0` in a runner joined to `splunk-test-network` (`_MOL_NET`), so names like `splunkapp-prod01` resolve to containers. `day0/converge.yml` first checks that the engine's disk can hold the pending installs plus a margin and stops if not, then applies the role with `deployment_task: check_splunk.yml` over **SSH** as `ansible`, then, on a topology that has a `clustermanager` or `shdeployer` group, runs the role's cluster tasks (manager, peers, search heads, deployer, search head cluster members, captain). Because `splunk_download_local: true`, the role's `download_and_unarchive.yml` finds the tarball already in `splunk_package_path` on localhost (the runner), copies it to each node and unpacks it.
 5. `day0/verify.yml` asserts that the `Splunkd`/`SplunkForwarder` unit is active and ports 8089/8000 answer, waits for every indexer to be an Up peer of the manager and every search head cluster member to be Up where those groups exist, and reports whether Gitea answers (informational).
 6. `day1:test` applies the role twice (`splunk_restart.yml`, `check_splunk_status.yml`); `day1/verify.yml` asserts the service is `active`.
 7. `infra:destroy` removes the controller, the nodes with their `/opt` data volumes, and git-server. The Gitea volume and the network stay until `task reset`.
@@ -115,7 +115,9 @@ flowchart TD
   C -->|missing| C1[create them] --> D
   C -->|present| D[molecule create -s infra]
   D --> E[molecule prepare -s infra<br/>docker connection, root]
-  E --> F[day0: converge over SSH<br/>role check_splunk.yml]
+  E --> E2{day0: enough disk<br/>for the installs?}
+  E2 -->|no| X
+  E2 -->|yes| F[day0: converge over SSH<br/>role check_splunk.yml]
   F --> F2[day0: form clusters<br/>only with a clustermanager / shdeployer group]
   F2 --> G{day0 verify:<br/>unit active, ports open,<br/>cluster members Up?}
   G -->|no| X
@@ -196,7 +198,7 @@ if installed before this run and installed version < splunk_package_version:
 
 ## Verification
 
-Recorded runs: `small` and `dev` on the Mac and the cluster halves of `prod`, 2026-11-18 (`docs/history/verification-2026-11-18-*.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). `prod` as a whole has not run. Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
+Recorded runs: `small`, `dev` and `dms` in full, `prod` through infra, and the two cluster halves of `prod`, all on the Mac, 2026-11-18 (`docs/history/verification-2026-11-18-*.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). `prod` as a whole has not run. Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
 
 ## Security
 
@@ -206,7 +208,7 @@ Recorded runs: `small` and `dev` on the Mac and the cluster halves of `prod`, 20
 | Controller → host | privileged container (it runs systemd) with no Docker socket since 2026-11-18; `ansible` has NOPASSWD sudo, so the ttyd password grants root inside a privileged container, which can still reach the host's devices (task 3.5) |
 | Nodes → host | privileged, `cgroupns_mode: host`, `/sys/fs/cgroup` rw. Privileged is kept on purpose (decision 7 of 2026-11-18): without it the role's huge-pages unit fails. With it, that unit changes the setting for the whole host |
 | Network → Gitea | `127.0.0.1:8929` and `:2222` unless `LAB_BIND_ADDRESS` widens them; sign-up refused; one owner created by infra |
-| Inside the lab | password `ansible:ansible` baked into images, `PermitEmptyPasswords yes`, PAM `account sufficient pam_permit.so` on AlmaLinux; host keys not checked |
+| Inside the lab | sshd on the nodes and the controller accepts keys only (since 2026-11-18). The `ansible` user's password is still the fixed word baked into the images, and that user has passwordless sudo, so a shell on a node is root on it; host keys are not checked between lab hosts |
 | Name resolution | lab hosts carry production-style names (`splunkapp-prod01`, `splunkshc-prod01`, …). `infra/create.yml` refuses to build the lab when any of those names already resolves outside it. Inside a running lab, a name whose container is down still falls through Docker's DNS to the host's resolver, so the refusal covers the start of a lab, not a network that begins answering for a lab name later |
 
 These are acceptable on a laptop and are the open questions for `splunkapp-preprod02` (tasks 3.x).
@@ -224,9 +226,9 @@ Reconstructed from the code, compared with the README and requirements:
 | R1 setup | As specified. Images are checked with `docker image inspect`, built under `localhost/<name>:latest`, and every base and tool is pinned; a second `task setup` skips every step | ✅ run on the Mac; a first run on a host that never had the lab is owed |
 | R2 topologies | `small` 2 nodes, `dev` 1, `dms` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ `small`, `dev`, `dms` run in full; `prod` through infra |
 | R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small`, `dev`, `dms` and `prod` (nine nodes) |
-| R4 day0 | Installs and starts Splunk and verify fails on a fault (run on `small` and `dev`). Cluster formation is written: the indexer cluster ran in a three-node half and the search head cluster in a four-node half, each verified healthy and shown to fail on a stopped member; `prod` as a whole has not run. The cluster is single-site (the role's manager task sets no multisite options, and the inventory no longer names sites). No licence file is installed: `splunk-license` is a plain node in the licence-manager group and every node runs on a trial licence | 🟡 |
-| R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small` and `dev` |
-| R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small` and `dev` |
+| R4 day0 | Installs and starts Splunk and verify fails on a fault (run on `small`, `dev` and `dms`); day0 checks free disk before installing. Cluster formation is written: the indexer cluster ran in a three-node half and the search head cluster in a four-node half, each verified healthy and shown to fail on a stopped member; `prod` as a whole has not run. The cluster is single-site (the role's manager task sets no multisite options, and the inventory no longer names sites). No licence file is installed: `splunk-license` is a plain node in the licence-manager group and every node runs on a trial licence. The role makes `splunk-uf01` a deployment client of `splunk-fwdmanager` at install; that has not been read back, because `prod`'s day0 has not run. The `dmc` group is a label only | 🟡 |
+| R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small`, `dev` and `dms` |
+| R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small`, `dev`, `dms` and `prod` infra |
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | As specified: infra creates the owner, installs the lab key, and creates and seeds one repository per app in `git_apps`; infra verify reads each from the controller | ✅ infra run on `prod` |
 | R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
