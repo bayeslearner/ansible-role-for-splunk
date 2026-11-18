@@ -34,7 +34,6 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 
 ## Known limits, recorded and not fixed
 
-- Two labs running day0 at the same moment has not been tried.
 - Once in about a dozen `prod` infra runs, prepare failed on one node with "failed to transfer file … AnsiballZ_systemd.py"; the next attempt passed unchanged and the cause was not found (`verification-2026-11-18-prod-end-to-end.md`, last section). If it recurs, make it a task.
 - On an ARM machine under Podman the infra prepare step fails: the amd64 Docker client in the runner crashes under emulation. It works on x86_64 Podman.
 - day0's Git server report is informational by decision; infra verify asserts the repositories.

@@ -97,8 +97,22 @@ With an unnamed `dev` lab up beside it, lab C was built with `LAB_NAME=c LAB_POR
 
 The second result is why a named lab's volumes use the stem `ansible-splunk-lab-<name>-` and the name allows no hyphen: no lab's stem is part of another lab's volume names, so one lab's `reset` cannot remove another's volumes.
 
+## Two labs running day0 at the same moment
+
+On the second Mac at `1c8221f`, after one `task setup` so that neither lab builds images or downloads while the other does. Raw output: `~/lab-runs/2026-11-18-concurrent/`.
+
+| Step | Result |
+|---|---|
+| `MOLECULE_ENV=dev task workflow:quick` and `LAB_NAME=b LAB_PORT_OFFSET=300 MOLECULE_ENV=small task workflow:quick`, started together | exit 0 each, both finished within five minutes of the start; six "Executed: Successful" in each log, no failed or unreachable host; Splunk unpacked on one node in the first lab and on two in the second |
+| both labs up | five containers: `ansible-controller`, `splunk-dev`, and `b-ansible-controller`, `b-splunk-license`, `b-splunkapp-prod01` |
+| `task day1:test` in both labs, started together | exit 0 each, two "Executed: Successful" in each log |
+| `LAB_NAME=b … task reset`, then `MOLECULE_ENV=dev task day0:verify` on the other lab | exit 0 each: "Splunkd is active on splunk-dev" |
+| `MOLECULE_ENV=dev task reset` | exit 0; no lab container left |
+
+Two labs started from one checkout share `testing/software/` and `testing/.secrets/` and nothing else: each stage runs in its own throwaway runner container, which keeps Molecule's state inside it.
+
 ## Not covered
 
-- Two labs running day0 at the same moment. Here they ran one after another.
+- `task setup` in two labs at the same moment (two image builds or downloads at once); the test above ran it once first.
 - Two labs started from two different checkouts.
 - `task infra:destroy` leaves a lab's network in place, named or not; `task reset` removes it.
