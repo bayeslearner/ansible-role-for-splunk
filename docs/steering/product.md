@@ -4,7 +4,7 @@
 
 A fork of `splunk/ansible-role-for-splunk`, the Ansible role that installs, configures and upgrades Splunk Enterprise and Universal Forwarders. The fork lives at `bayeslearner/ansible-role-for-splunk` (formerly `kundeng/ansible-role-for-splunk`; GitHub redirects the old name). `upstream` is the Splunk repository.
 
-The fork carries one product of its own: the **virtual lab** under `testing/`, a Docker and Molecule harness that stands up a multi-node Splunk topology from systemd containers and deploys it with this role over SSH, the way production is deployed. Its first version merged upstream as PR #252 (`555beec`); `feature/virtual-lab` continues it.
+The fork carries one product of its own: the **virtual lab** under `testing/`, a Docker and Molecule harness that stands up a multi-node Splunk topology from systemd containers and deploys it with this role over SSH, the way production is deployed. Its first version merged upstream as PR #252 (`555beec`); `main` (the fork's default branch, `feature/virtual-lab` until 2026-11-18) continues it.
 
 ## Audience
 

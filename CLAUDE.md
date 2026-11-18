@@ -22,11 +22,11 @@ Load at session start (also listed in `.claude/required-skills`): `house-rules`,
 3. The ACTIVE spec under `docs/specs/` (lowest-numbered non-CLOSED spec when none is ACTIVE).
 4. `docs/decisions/` — the decision timeline.
 5. `testing/README.md` — how the lab is operated.
-6. `git log --oneline -10` on `feature/virtual-lab`, and `git log --oneline origin/feature/virtual-lab..upstream/master` for upstream role changes not yet tested in the lab.
+6. `git log --oneline -10` on `main`, and `git log --oneline origin/main..upstream/master` for upstream role changes not yet tested in the lab.
 
 ## Git
 
-- Work branch: `feature/virtual-lab`. `master` mirrors `upstream/master`. `archive/docker-molecule-testing-v1` is frozen history; never rewrite it.
+- Work branch: `main`, the GitHub default (renamed from `feature/virtual-lab` on 2026-11-18). `master` mirrors `upstream/master` and stays the base for upstream pull requests. `archive/docker-molecule-testing-v1` is frozen history; never rewrite it.
 - Git metadata lives outside Dropbox at `~/.local/share/project-git/ansible-role-for-splunk.git` (this checkout's `.git` is a pointer file). Other machines need their own.
 - Remotes: `origin` = the fork, `upstream` = `splunk/ansible-role-for-splunk`.
 - Commit trailers: `Spec:`, `Task:`, `Issue:`, `Evidence:` (`spec-driven-dev`, Evidence Anchors).

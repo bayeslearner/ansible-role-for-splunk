@@ -1,6 +1,6 @@
 {
   "title": "ansible-role-for-splunk virtual lab",
-  "lede": "A fork of `splunk/ansible-role-for-splunk` whose own product is the **virtual lab** under `testing/`: a Docker and Molecule harness that builds a multi-node Splunk estate and deploys it with the role over SSH, from a controller you log into as in production. Specs, decisions and design live in the repo on `feature/virtual-lab`; answers saved here are copied into their decision files.",
+  "lede": "A fork of `splunk/ansible-role-for-splunk` whose own product is the **virtual lab** under `testing/`: a Docker and Molecule harness that builds a multi-node Splunk estate and deploys it with the role over SSH, from a controller you log into as in production. Specs, decisions and design live in the repo on `main`; answers saved here are copied into their decision files.",
   "specs_root": "docs/specs",
   "orientation": "docs/board/orientation.md",
   "summaries": "docs/board/spec-summaries.json",
@@ -69,7 +69,7 @@
   "viewer_url": "https://claude.ai/artifact/LES4pcfC7J9giupJGLE6D2",
   "viewer_project": "ansible-role-for-splunk",
   "repo_url": "https://github.com/bayeslearner/ansible-role-for-splunk",
-  "branch": "feature/virtual-lab",
+  "branch": "main",
   "decisions": [
     "docs/decisions/2*.md"
   ],
