@@ -4,11 +4,11 @@ The Board's "Where we are" panel, read by `docs/board/seed.py`. Redraw it when a
 
 ## Here
 
-The lab has run for the first time, on the pre-production host with Podman, as the one-node `dms` topology; the multi-node topologies and the pve2 VM have not run yet.
+The lab runs and checks itself on three of its four topologies; the fourth, `prod`, passes its infrastructure stage and has both clusters verified in half-size tests, but its eleven containers have never run together. That run needs a machine with about 40 GB of free container disk; the work Mac's shared disk filled during the attempts on 2026-11-18, so no more Splunk installs run there.
 
 - **Spec 05, the virtual lab as built: ACTIVE.** Reconstructed from the code on 2026-11-02. Its review (the "Review of spec 05" tab) awaits your sign-off. On 2026-11-10 and 11-11 infra, day0 converge (61 tasks, none failed) and day0 verify passed on the pre-production host (spec 05 Log; tasks 2.5, 3.10, 3.11 done).
 - **Upstream merged.** `upstream/master` (`750c071`) is merged into the lab branch, now `main` and the fork's default branch. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged.
-- **First runs on the Mac, 2026-11-18.** `small` (full workflow, twice in a row) and `dev` pass; each new check was shown to fail on its fault; a teardown bug and a regression were found and fixed by the runs. Records: `docs/history/verification-2026-11-18-*.md`.
+- **2026-11-18, on the Mac.** `small`, `dev` and `dms` pass full workflows; every stage's check was shown to fail on its fault; `prod` passes infra with a working Git server; day0 forms the indexer cluster and the search head cluster (each verified in a half-size lab). 11 of spec 05's tasks remain open, all needing another machine, more disk or an answer from you. Records: `docs/history/verification-2026-11-18-*.md`; the day's decisions: `docs/decisions/2026-11-18-02-lab-behaviour-changes.md`.
 - **Spec 10, day 2 operations: DRAFT.** It waits for spec 05.
 
 ## Goals
@@ -38,9 +38,11 @@ The fork exists to turn the upstream role's Molecule harness into a virtual lab:
 
 ## Next
 
-- **Now, spec 05:**
+- **Needs you:**
+    - Whether the pre-production host's name may stay in this public repository (five files and one commit subject).
+    - Whether the indexer site names removed from `prod`'s inventory should come back as a planned item.
     - Sign off the review (the "Review of spec 05" tab).
-    - Write the pre-production runs up as verification records under `docs/history/` (tasks 1.1, 1.2).
-    - Cheap correctness fixes: tasks 2.2, 2.6, 3.8.
-- **Then:** record the pve2 VM's facts and run there (3.1, 3.2); isolation before the pre-production host (3.3, 3.4, 3.6, 3.9).
-- **Then:** clusters and Gitea (2.1, 2.3), which spec 10 needs.
+- **Next run, on a machine with its own container engine and about 40 GB free:** `prod` end to end (2.1, 1.3), a whole day0 behind the new disk check (6.7), and memory and CPU per topology (5.5).
+- **Then, on the lab hosts:** the pve2 VM's facts and a run there (3.1, 3.2); the lab on Podman with the new image names (3.12); the pre-production host (3.9).
+- **Design work with no run needed:** two labs on one engine (3.7).
+- **After spec 05:** spec 10, day 2 operations, which can now use the Git server's repositories.
