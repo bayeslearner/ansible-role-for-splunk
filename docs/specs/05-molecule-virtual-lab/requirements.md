@@ -56,8 +56,8 @@ The Docker and Molecule harness under `testing/`: images, the Taskfile entry poi
 | `splunk_download_local`, `splunk_package_path` | deploy-time | topology | `small`, `dev` group_vars; common sets `/workspace/testing/software` |
 | Cluster keys and factors | deploy-time | topology | `prod/group_vars/all.yml` |
 | Published ports 3000, 2222, 8929 | devtime | `infra/create.yml` | base port numbers fixed in the playbook; `LAB_PORT_OFFSET` is added to each |
-| `LAB_PLATFORM` | runtime | Taskfile | default `linux/amd64`: the platform every lab image is built and run as, since the role downloads x86_64 Splunk packages |
-| `LAB_RUNNER_ARGS` | runtime | Taskfile | default empty: extra arguments for the runner container (`--security-opt label=disable` where SELinux is enforcing) |
+| `LAB_PLATFORM` | runtime | Taskfile | shell environment or `.env`, default `linux/amd64`: the platform every lab image is built and run as, since the role downloads x86_64 Splunk packages |
+| `LAB_RUNNER_ARGS` | runtime | Taskfile | shell environment or `.env`, default empty: extra arguments for the runner container (`--security-opt label=disable` where SELinux is enforcing) |
 | `LAB_NAME`, `LAB_PORT_OFFSET` | runtime | Taskfile | shell environment or `.env`, default empty and 0: a name prefixes the lab's containers and gives it its own network (`splunk-test-network-<name>`) and volumes; the offset moves its published ports |
 | `LAB_BIND_ADDRESS` | runtime | Taskfile | shell environment or `.env`, default `127.0.0.1`: the address those ports bind to |
 | `DOCKER_SOCK` | runtime | Taskfile | shell environment or `.env`, default `/var/run/docker.sock`: the engine socket the runner mounts |

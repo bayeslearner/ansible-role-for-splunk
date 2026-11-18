@@ -82,6 +82,10 @@ With an unnamed `dev` lab up beside it, lab C was built with `LAB_NAME=c LAB_POR
 | `MOLECULE_ENV=prod task infra:test` (create, prepare, verify, destroy) | | exit 0 |
 | `MOLECULE_ENV=prod task infra:destroy` with nothing to remove | | exit 0, `ok=4 failed=0 ignored=0` |
 
+## A named lab's Git server
+
+`LAB_NAME=c LAB_PORT_OFFSET=200 MOLECULE_ENV=prod task infra:test` on the second Mac: exit 0, six "Executed: Successful". Its verify step printed "The controller reached every node over SSH as ansible" and passed "Assert every app repository has a main branch the lab key can read", so inside a named lab the controller clones from `git-server` by that name. `task reset` then left no `c-` container and no `c` network.
+
 ## Not covered
 
 - Two labs running day0 at the same moment. Here they ran one after another.

@@ -4,8 +4,8 @@
 
 `task workflow:full` with `MOLECULE_ENV=small`, traced through the code:
 
-1. `infra:setup` → `infra:create` → `setup` (`Taskfile.yml:47`): secrets, images, `download:splunk` (runs `molecule/download.yml` in a throwaway runner, writes `testing/software/splunk-9.4.2-…tgz`), network. (`mol-run`, the persistent runner, starts only when `task runner:shell` is used.)
-2. `molecule create -s infra` in a `--rm` runner with the host Docker socket and the repo at `/workspace` (`_MOL`, `Taskfile.yml:36`). `infra/create.yml` starts `ansible-controller`, then one container per host in `full` and `uf` from that host's `docker_image`, each with a named volume `ansible-splunk-test-<host>-data` on `/opt`.
+1. `infra:setup` → `infra:create` → `setup` (the `setup` task in `Taskfile.yml`): secrets, images, `download:splunk` (runs `molecule/download.yml` in a throwaway runner, writes `testing/software/splunk-9.4.2-…tgz`), network. (`mol-run`, the persistent runner, starts only when `task runner:shell` is used.)
+2. `molecule create -s infra` in a `--rm` runner with the host Docker socket and the repo at `/workspace` (the `_MOL` variable in `Taskfile.yml`). `infra/create.yml` starts `ansible-controller`, then one container per host in `full` and `uf` from that host's `docker_image`, each with a named volume `ansible-splunk-test-<host>-data` on `/opt`.
 3. `molecule prepare -s infra`: `infra/prepare.yml` reads the key and password inside the runner, then over the **docker** connection as root writes `authorized_keys`, creates the `splunk` user with sudo, clears `/run/nologin`, and configures the controller (keys, `ansible.cfg`, ttyd unit, nginx).
 4. `day0:test` → `molecule test -s day0` in a runner joined to `splunk-test-network` (`_MOL_NET`), so names like `splunkapp-prod01` resolve to containers. `day0/converge.yml` first checks that the engine's disk can hold the pending installs plus a margin and stops if not, then applies the role with `deployment_task: check_splunk.yml` over **SSH** as `ansible`, then, on a topology that has a `clustermanager` or `shdeployer` group, runs the role's cluster tasks (manager, peers, search heads, deployer, search head cluster members, captain). Because `splunk_download_local: true`, the role's `download_and_unarchive.yml` finds the tarball already in `splunk_package_path` on localhost (the runner), copies it to each node and unpacks it.
 5. `day0/verify.yml` asserts that the `Splunkd`/`SplunkForwarder` unit is active and ports 8089/8000 answer, waits for every indexer to be an Up peer of the manager and every search head cluster member to be Up where those groups exist, and reports whether Gitea answers (informational).
@@ -59,7 +59,7 @@ flowchart TB
 | `task setup:secrets` / `setup:images` / `setup:rebuild` / `download:splunk` / `network:create` | — | the setup steps one by one | `setup` |
 | `task infra:test` | `MOLECULE_ENV` | `molecule test -s infra` (destroy, create, prepare, verify, destroy) | operator |
 | `task infra:create` / `infra:prepare` / `infra:setup` / `infra:destroy` | `MOLECULE_ENV` | one infra stage; `setup` = create + prepare; `create` runs `lab:ports` first | operator, workflows |
-| `task lab:ports` | `LAB_NAME`, `LAB_PORT_OFFSET`, `MOLECULE_ENV` | stops when the web terminal's port, or on a topology with a Git server one of its two ports, is already in use and this lab's own container is not the one holding it | `infra:create`, operator |
+| `task lab:ports` | `LAB_NAME`, `LAB_PORT_OFFSET`, `MOLECULE_ENV` | stops when the web terminal's port, or on a topology with a Git server one of its two ports, is already in use and this lab's own container for that port does not exist yet | `infra:create`, operator |
 | `task day0:test` / `day0:converge` / `day0:verify` | `MOLECULE_ENV` | install stage | operator, workflows |
 | `task day1:test` / `day1:converge` / `day1:verify` | `MOLECULE_ENV` | operations stage | operator, `workflow:full` |
 | `task workflow:full` / `workflow:quick` | `MOLECULE_ENV` | chained stages | operator |
@@ -155,7 +155,7 @@ Operator path from the controller (R6): operator → `:3000/ttyd` (nginx → tty
 
 ## Algorithms
 
-Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when the lab's controller does not exist yet and the web terminal's port, or one of the Git server's two ports on a topology that has one, is already in use on the machine:
+Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when a port the lab would publish is already in use on the machine and the lab's own container for that port (the controller for the web terminal, the Git server for its two ports) does not exist yet:
 
 ```text
 targets = groups.full + groups.uf + groups.git_server + groups.ansible_controller
@@ -240,7 +240,7 @@ Reconstructed from the code, compared with the README and requirements:
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | As specified: infra creates the owner, installs the lab key, and creates and seeds one repository per app in `git_apps`; infra verify reads each from the controller | ✅ infra run on `prod` |
 | R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab; `task reset` removes a lab whichever topology built it and leaves another lab on the engine alone | ✅ run on two Macs |
-| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 the containers are created on Podman with today's code, but no full run yet on a Linux Docker host or on the pre-production host (3.2, 3.9) |
+| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 with today's code the containers are created on Podman, but neither a Linux Docker host nor the pre-production host has had a full run of today's code (3.2, 3.9) |
 
 ## Architect's Review
 

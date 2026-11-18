@@ -70,7 +70,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; the check covers the moment a lab is built; a name that starts resolving later is not caught (design, Security). Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
     - Requirements: NFR Isolation
   - [x] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host (three ran at once)
-    - 2026-11-18: `LAB_NAME` and `LAB_PORT_OFFSET`; unset, nothing changes. Three labs ran side by side, two with Splunk installed (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). `infra:create` refuses a web-terminal port that is already in use.
+    - 2026-11-18: `LAB_NAME` and `LAB_PORT_OFFSET`; unset, nothing changes. Three labs ran side by side, two with Splunk installed (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). `infra:create` refuses a web-terminal port that is already in use (through `task lab:ports`, which 6.12 extended to the Git server's ports).
     - Requirements: R10
     - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`
   - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
@@ -90,7 +90,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - 2026-11-18, later: the check itself: on a Podman engine, `infra:create` created the two `dev` containers and all eleven `prod` containers from the `localhost/…` images with no pull (`docs/history/verification-2026-11-18-lab-on-podman.md`). The prepare step that follows could not run on that ARM machine (the amd64 Docker client crashes under emulation there); it ran on the x86_64 pre-production host under Podman on 2026-11-10.
     - Depends: 3.10
     - Requirements: R10
-    - Verification: `infra:create` on a Podman engine creates every container with no pull attempt
+    - Verification: `infra:create` on a Podman engine creates every container with no pull attempt: `docs/history/verification-2026-11-18-lab-on-podman.md`
 
 - [ ] 4. Reproducibility
   - [x] 4.1 Pin exact versions: base images by tag and digest, Gitea, ttyd (already 1.7.7), pip packages in the runner, Galaxy collections, go-task
@@ -99,7 +99,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 5. Polish and docs
   - [ ] 5.1 `testing/README.md` matches the code after 2.x and 3.x (topology names, what `prod` forms, ports, host requirements)
-    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. The measured memory and disk table went in with 5.5. Stays open for 3.x.
+    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. The measured memory and disk table went in with 5.5. On 2026-11-18 the README also gained `LAB_NAME`, `LAB_PORT_OFFSET`, `LAB_PLATFORM`, `LAB_RUNNER_ARGS`, the per-stage commands and the cleanup note, each checked against the Taskfile. Stays open for what the lab-host runs change (3.2, 3.9).
   - [x] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
     - 2026-11-18, first half done: `day0/destroy.yml` was not unused. `molecule test` ran it whenever day0 failed, deleting the lab and leaving its node volumes. It is removed, and `day0:test` and `day1:test` pass `--destroy=never`. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`. Second half done the same day: `setup` no longer starts `mol-run`; `task runner:shell` starts it on demand and `runner:stop` removes it.
   - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
