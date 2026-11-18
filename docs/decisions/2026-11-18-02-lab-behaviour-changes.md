@@ -68,3 +68,11 @@ Five choices made while closing spec 05 tasks. Each is technical, inside the ste
 - **Choice:** add `.github/workflows/lint.yml`: `pre-commit run --all-files` and `python3 scripts/spec_lint.py`, read-only permissions, no secrets, no lab build. It runs on GitHub's free runners for a public repository.
 - **Not done:** a lab run in CI. The lab needs privileged systemd containers, the Splunk packages and 10 GB or more of disk; whether to run `dev` there is a separate question.
 - **Reversal:** delete the workflow file.
+
+## 9. A lab is named by two variables, and unnamed by default (`5838a1d`)
+
+- **Context:** task 3.7 asks that two labs can share a Docker host. Every container name, the network, the volumes and three published ports were fixed.
+- **Options:** rename the hosts in a copied inventory per lab; or prefix the container names and keep the inventory names as network aliases; or run each lab on its own engine.
+- **Choice:** `LAB_NAME` prefixes container names and gives the lab its own network and volumes, while each container keeps its inventory name as hostname and network alias, so one inventory serves every lab. `LAB_PORT_OFFSET` moves the published ports. Both default to empty, so an existing lab keeps its names. A named lab's volumes use a different stem (`ansible-splunk-lab-<name>-`), so `task reset` on one lab cannot match another's volumes; that is also why the name allows no hyphen.
+- **Consequence:** every command for a named lab needs the same two variables. Forgetting them addresses the unnamed lab.
+- **Reversal:** revert the commit; labs created with a name must be removed first (`LAB_NAME=<name> task reset`).
