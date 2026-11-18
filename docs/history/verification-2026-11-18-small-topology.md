@@ -50,6 +50,10 @@ The first `task workflow:full` after the runs above failed at day0 converge (`fu
 
 One reading is not a requirement figure; task 5.5 owns that.
 
+## Against task 1.2's wording
+
+Task 1.2 asks for the full log plus `docker ps` before the destroy. The logs are kept locally as stated above. No `docker ps` was captured before the destroy in the full runs; the containers that were up are shown by the `docker stats` reading taken after `workflow:quick` (the three names in the memory table) and by each scenario's play recap, which lists every host it reached.
+
 ## What this does not cover
 
 - `dev` and `prod` were not run. `dms` has its own record in the spec Log from the pre-production host.
