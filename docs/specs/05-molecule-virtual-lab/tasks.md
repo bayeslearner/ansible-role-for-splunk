@@ -8,7 +8,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 ## Tasks
 
-- [ ] 1. Foundation: verify what is built
+- [x] 1. Foundation: verify what is built
   - [x] 1.1 `task setup` from a clean lab host creates secrets, images, tarballs and the network, and a second run skips every step
     - Second run skips every step: shown 2026-11-18.
     - 2026-11-18, later: the first run on a machine that never had the lab built all five images, downloaded both packages and created the network, and a second run there skipped (`docs/history/verification-2026-11-18-lab-setup.md`). Assembled from two machines: that checkout already held the secrets through a file sync, so their generation is shown in an empty directory; and the base images were pulled before the run there.
@@ -30,7 +30,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 1.5 Web terminal login at `:3000/ttyd` works with the generated password and refuses a wrong one
     - Requirements: R7
 
-- [ ] 2. Core: close the gaps between the docs and the code
+- [x] 2. Core: close the gaps between the docs and the code
   - [x] 2.1 `prod` forms the clusters its inventory describes: run the role's indexer-cluster and search-head-cluster deployment (`playbooks/splunk_idxc_deploy.yml`, `playbooks/splunk_shc_deploy.yml` or their task files) in a scenario, and make day0 verify report a real cluster state
     - Requirements: R4
     - Code landed 2026-11-18: day0 converge runs the role's manager, peer, search-head, deployer, member and captain tasks on the cluster groups, guarded so it can run twice; `prod` sets `splunk_uri_cm`, replication and search factor 2, and `splunk_mgmt_uri`; day0 verify waits for every indexer and every search head cluster member to be Up. Indexer half verified. Search head half verified on a third attempt the same day: verify passes on the healthy two-member cluster and fails when a member is stopped. Evidence: `docs/history/verification-2026-11-18-cluster-formation.md`. Closed by the full `prod` run with both clusters in one lab (`docs/history/verification-2026-11-18-prod-end-to-end.md`), run as `workflow:quick`, `day1:test` and `infra:destroy` so the clusters could be read back between the stages.
@@ -93,7 +93,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R10
     - Verification: `infra:create` on a Podman engine creates every container with no pull attempt: `docs/history/verification-2026-11-18-lab-on-podman.md`
 
-- [ ] 4. Reproducibility
+- [x] 4. Reproducibility
   - [x] 4.1 Pin exact versions: base images by tag and digest, Gitea, ttyd (already 1.7.7), pip packages in the runner, Galaxy collections, go-task
     - 2026-11-18, part done: the runner's pip packages and both images' ansible-core and Galaxy collections are pinned to exact versions (`docs/history/verification-2026-11-18-same-ansible-on-controller.md`). Completed the same day: base images by tag and digest, Gitea 28.4.0, go-task v3.54.0, uv by digest, controller Python 3.12.11. Operating-system packages from `apt` and `dnf` are not pinned.
     - Requirements: NFR Reproducibility
@@ -114,7 +114,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 5.6 `pre-commit run --all-files` passes: the `ansible-lint` hook is pinned to v24.9.2, which crashes on import against the ansible-core its environment now installs (`ModuleNotFoundError: No module named 'ansible.parsing.yaml.constructor'`), so no Ansible lint runs; and the hook covers `roles/ playbooks/ environments/` but not `testing/molecule/`. Bump the hook, add the lab's playbooks, fix what it reports. `.pre-commit-config.yaml` is upstream's file, so the bump is also an upstream fix.
     - Found 2026-11-18. `end-of-file-fixer`, `trailing-whitespace` and `yamllint` pass on the fork's own files after this commit; `roles/splunkupgrader/templates/local_config_102.j2` (upstream's) failed the first two; it is now excluded from them and left as upstream ships it.
 
-- [ ] 6. Last mile: what PR 252 cut and the review found
+- [x] 6. Last mile: what PR 252 cut and the review found
   - [x] 6.1 `day0/verify.yml` fails when a node's Splunk unit is not active or its management or web port is closed (it used `ignore_errors` on every check). The cluster plays became asserting with 2.1 and the Git server report stays informational; at the time of this task both were informational until 2.1 and 2.3.
     - Requirements: R4
     - Verification: a day0 run that passes, and one with Splunk stopped on a node that fails at the assert
@@ -158,6 +158,10 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.15 A failed cluster check in `day0/verify.yml` says what the manager or the member answered: the expected members, the HTTP status and each listed peer with its status (it printed only that the output was hidden, because the call carries the admin password)
     - Requirements: R4
     - Verification: `docs/history/verification-2026-11-18-prod-end-to-end.md`, "Later still"
+  - [ ]* 6.16 Find why infra prepare once failed to copy a module into one container ("failed to transfer file … AnsiballZ_systemd.py" at "Start SSH service" on one `prod` node; once in about a dozen `prod` infra runs on 2026-11-18, the next attempt passed unchanged). Optional: nothing to work on unless it recurs; then capture the engine's log at that moment
+    - Requirements: R3
+    - Evidence so far: `docs/history/verification-2026-11-18-prod-end-to-end.md`, last section
+
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -199,3 +203,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 3.1 and 3.2 wait for a VM that does not exist yet as far as this session can tell (the check and its answer are on 3.2). A request for it, with the measured memory, disk and port needs, is left for the session that owns that hardware; 3.1 waits on the same VM for its half.
 - 2026-11-18: A second full `prod` lab, to show the cluster checks failing in the full lab and not only the half-size one: with a wrong cluster key on one indexer, then on one search head (each still running), day0 verify failed at the indexer cluster check and at the search head cluster check, and passed again after each was restored (`docs/history/verification-2026-11-18-prod-end-to-end.md`). With a node stopped, the service check on that node and the cluster check on another host both fail. (An earlier wording of this line and of commit `1dc3650` said a stopped node fails only at the service check; that was a misreading of the log.)
 - 2026-11-18: 6.15: a failed cluster check now names the peer that is not Up and what the manager answered; shown on a third full `prod` lab (`docs/history/verification-2026-11-18-prod-end-to-end.md`). That lab's first attempt failed once in infra prepare with a file transfer into one container; cause not found, noted in the record.
+- 2026-11-18: Group headers 1, 2, 4 and 6 marked done, as every required task under them is; groups 3 and 5 stay open for 3.1, 3.2, 3.9 and 5.1. The one unexplained infra failure of the day is now optional task 6.16.

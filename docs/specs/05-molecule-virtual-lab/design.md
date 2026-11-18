@@ -233,7 +233,7 @@ Reconstructed from the code, compared with the README and requirements:
 |---|---|---|
 | R1 setup | As specified. Images are checked with `docker image inspect`, built under `localhost/<name>:latest`, and every base and tool is pinned; a second `task setup` skips every step | ✅ run on both Macs, the second of which had never had the lab |
 | R2 topologies | `small` 2 nodes, `dev` 1, `dms` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ all four run in full |
-| R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small`, `dev`, `dms` and `prod` (nine nodes) |
+| R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small`, `dev`, `dms` and `prod` (nine nodes); prepare failed once on one `prod` node with a file transfer the next attempt did not repeat (6.16) |
 | R4 day0 | As specified. Checks free disk, installs Splunk, forms a two-peer indexer cluster and a two-member search head cluster where the topology has them, and verify fails on a fault. The cluster is single-site and no licence file is installed (every node runs on a trial licence); `splunk-uf01` is a deployment client of `splunk-fwdmanager`, read back from both ends | ✅ run on `small`, `dev`, `dms` and `prod` |
 | R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small`, `dev`, `dms` and `prod` |
 | R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small`, `dev`, `dms` and `prod` infra |
