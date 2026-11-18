@@ -41,7 +41,16 @@ dms             = single all-in-one node on a newer Splunk + controller
 ```
 
 ## Prereqs
-- Docker, with free disk for the topology. Every node keeps Splunk on the container engine's own disk: about 2.7 GB per Splunk Enterprise node once installed, plus 1.1 GB while its package unpacks. day0 checks before it installs and stops if the installs plus a 6 GB margin do not fit: `dev` and `dms` need 10 GB free, `small` 14 GB, `prod` 39 GB. Measured on one full `prod` run: 35 GB of engine disk, and 6.0 to 6.6 GiB of memory across its eleven containers with no data and no searches (650 to 960 MiB per Splunk Enterprise node). Give the engine well above that; figures for the other topologies are owed (spec 05, task 5.5).
+- Docker, with free disk for the topology. Every node keeps Splunk on the container engine's own disk: about 2.7 GB per Splunk Enterprise node once installed, plus 1.1 GB while its package unpacks. day0 checks before it installs and stops if the installs plus a 6 GB margin do not fit: `dev` and `dms` need 10 GB free, `small` 14 GB, `prod` 39 GB.
+- Memory for the topology. Measured on a freshly installed lab with no data and no searches ([record](../docs/history/verification-2026-11-18-memory-and-disk-per-topology.md)); a Splunk 9.4.2 node rests at 640 to 810 MiB and about one core, Splunk 10.6.1.1 (`dms`) at twice the memory. The suggested figure is about twice the resting one, rounded up, a rule of thumb that no run has tested at the limit:
+
+  | Topology | Lab memory at rest | Suggested engine memory | Engine disk used | Free disk day0 asks for |
+  |---|---|---|---|---|
+  | `dev` | 0.7 GiB | 2 GiB | 3.3 GB | 10 GB |
+  | `dms` | 1.5 GiB | 4 GiB | 4.2 GB | 10 GB |
+  | `small` | 1.4 to 1.7 GiB | 4 GiB | 6.3 GB | 14 GB |
+  | `prod` | 6.0 to 6.6 GiB | 16 GiB | 35 GB | 39 GB |
+
 - 🚨 On a machine that runs other containers, the lab shares the engine's disk with them. A full engine disk fails the lab and can take the other workloads down. Run the larger topologies on an engine of their own.
 - `testing/software/` (the Splunk packages, 1 to 4 GB) and `testing/.runs/` are ignored by git. If the checkout lives in a synced folder such as Dropbox, keep them out of the sync too (`xattr -w com.dropbox.ignored 1 testing/software` on macOS).
 - [Task](https://taskfile.dev/) (go-task) on the host

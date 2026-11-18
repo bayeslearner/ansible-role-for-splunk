@@ -30,7 +30,16 @@ Pick a topology with `MOLECULE_ENV`:
 | `dms` | 2 | one all-in-one node on a newer Splunk, the controller |
 | `prod` | 11 | manager, license manager, two indexers, two search heads, deployer, forwarder manager, a forwarder, a Git server, the controller |
 
-What has and has not been verified, per capability: [docs/design/feature-matrix.md](docs/design/feature-matrix.md). The plan and its open tasks: [docs/specs/05-molecule-virtual-lab](docs/specs/05-molecule-virtual-lab/). On `prod`, day0 also forms a two-peer indexer cluster and a two-member search head cluster, the smallest that exercise the role's cluster tasks. The full eleven-container `prod` has a recorded run with both clusters healthy; it took 35 GB of engine disk and about 6.5 GiB of memory with no data. day0 checks free disk before it installs: `prod` needs 39 GB on the container engine, `small` 14 GB, `dev` and `dms` 10 GB.
+What has and has not been verified, per capability: [docs/design/feature-matrix.md](docs/design/feature-matrix.md). The plan and its open tasks: [docs/specs/05-molecule-virtual-lab](docs/specs/05-molecule-virtual-lab/). On `prod`, day0 also forms a two-peer indexer cluster and a two-member search head cluster, the smallest that exercise the role's cluster tasks. The full eleven-container `prod` has a recorded run with both clusters healthy. day0 checks free disk before it installs.
+
+What each topology took on a freshly installed lab with no data ([record](docs/history/verification-2026-11-18-memory-and-disk-per-topology.md)); the suggested memory is about twice the measured figure, rounded up, a rule of thumb:
+
+| Topology | Lab memory at rest | Suggested engine memory | Engine disk used | Free disk day0 asks for |
+|---|---|---|---|---|
+| `dev` | 0.7 GiB | 2 GiB | 3.3 GB | 10 GB |
+| `dms` | 1.5 GiB | 4 GiB | 4.2 GB | 10 GB |
+| `small` | 1.4 to 1.7 GiB | 4 GiB | 6.3 GB | 14 GB |
+| `prod` | 6.0 to 6.6 GiB | 16 GiB | 35 GB | 39 GB |
 
 ----
 
