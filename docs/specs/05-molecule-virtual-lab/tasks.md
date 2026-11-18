@@ -10,6 +10,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 1. Foundation: verify what is built
   - [ ] 1.1 `task setup` from a clean lab host creates secrets, images, tarballs, network and runner, and a second run skips every step
+    - Second run skips every step: shown 2026-11-18. Still owed: the first run on a host that has never had the lab.
     - Built in: `555beec`, `55426a6`
     - Requirements: R1
     - Verification: run twice on a clean host; record both outputs in `docs/history/verification-<date>-lab-setup.md`
@@ -18,12 +19,13 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R2, R3, R4, R5, R9
     - Verification: full log plus `docker ps` before destroy, in a verification record
   - [ ] 1.3 Same for `dev` and `prod`
+    - `dev` passed infra, day0 and day1 on 2026-11-18 (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). `prod` is owed; see 2.1.
     - Depends: 1.2
     - Requirements: R2, R4
-  - [ ] 1.4 From the controller, `ansible all -m ping` and `ansible-playbook /workspace/testing/molecule/day0/verify.yml` run with no flags
+  - [x] 1.4 From the controller, `ansible all -m ping` and `ansible-playbook /workspace/testing/molecule/day0/verify.yml` run with no flags
     - Built in: `86a1a37`
     - Requirements: R6
-  - [ ] 1.5 Web terminal login at `:3000/ttyd` works with the generated password and refuses a wrong one
+  - [x] 1.5 Web terminal login at `:3000/ttyd` works with the generated password and refuses a wrong one
     - Requirements: R7
 
 - [ ] 2. Core: close the gaps between the docs and the code
@@ -40,7 +42,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R6, NFR Fidelity
   - [x] 2.5 Image checks use `docker image inspect <name>` instead of `docker images | grep -q name:latest`, which fails on Docker CLIs that print repository and tag in separate columns
     - Requirements: R1, R10
-  - [ ] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
+  - [x] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
   - [ ] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
     - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). A lab run is still owed.
@@ -87,7 +89,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - [ ] 5. Polish and docs
   - [ ] 5.1 `testing/README.md` matches the code after 2.x and 3.x (topology names, what `prod` forms, ports, host requirements)
   - [ ] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
-  - [ ] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
+  - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
   - [ ] 5.4 Remove the Twingate block from `.env.example`, or implement it under a spec
   - [ ] 5.5 `testing/README.md` and the root README state the RAM and CPU each topology needs, measured and not estimated: after day0 on `small`, `dev`, `dms` and `prod` (with clusters formed, 2.1), record `docker stats --no-stream` per container and the engine's total, and give a minimum and a comfortable figure per topology
     - Depends: 1.2, 1.3, 2.1
@@ -118,3 +120,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: The lab branch is `main` and the fork's default branch (`docs/decisions/2026-11-18-01-main-default-branch.md`). Added group 6 from the Board's "Code tour and last mile" tab and wrote the code for 2.2 and 6.1 to 6.4; all five playbooks pass `ansible-playbook --syntax-check` on ansible-core 2.18.1. Lab runs are still owed for each.
 - 2026-11-18: First recorded runs on the Mac, `small` topology: setup, infra, day0, day1 and two consecutive `workflow:full` runs pass, and each new check (2.2, 6.1, 6.2, 6.4) was shown to fail on its fault. Evidence: `docs/history/verification-2026-11-18-small-topology.md`. Closes 1.2, 2.2 and 6.1 to 6.5. Open from this run: `dev` and `prod` (1.3), the second `task setup` run (1.1), and the runner's unpinned ansible-core, 2.21.6 on this build (4.1).
 - 2026-11-18: 2.1 written and run in two halves on the Mac (`docs/history/verification-2026-11-18-cluster-formation.md`). The whole `prod` topology does not fit this Mac's Docker disk: the install failed with "No space left on device" on all eight Enterprise nodes. Disk is now a stated requirement to measure with memory in 5.5.
+- 2026-11-18: `234c8aa` broke day0 on `small`, `dev` and `dms`, whose standalone `indexer` group was sent to join a missing manager; fixed by requiring a `clustermanager` group, and `small` (full) and `dev` (infra, day0, day1) pass again. Also closed 1.4, 1.5, 2.6 and 5.3 with evidence in `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.

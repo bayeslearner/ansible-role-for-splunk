@@ -21,12 +21,12 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 | Feature | Taskfile | runner | infra | day0 | day1 | controller | git-server | Verified | Spec | Tasks |
 |---|---|---|---|---|---|---|---|---|---|---|
 | lab-setup | ✅ | ✅ download.yml | — | — | — | — | — | one run: Mac, 2026-11-18 (same record); the second, skip-everything run of 1.1 is not recorded | 05 | 1.1, 2.6 |
-| lab-topologies | ✅ `MOLECULE_ENV` | ✅ | ✅ small/dev/prod | ✅ | ✅ | ✅ | — | no recorded run | 05 | 1.3 |
+| lab-topologies | ✅ `MOLECULE_ENV` | ✅ | ✅ small/dev/dms/prod | ✅ | ✅ | ✅ | — | `small` and `dev` run on the Mac 2026-11-18; `dms` on the pre-production host 2026-11-10; `prod` not run | 05 | 1.3 |
 | lab-infra | ✅ | ✅ | ✅ prepare stops on a missing secret; verify checks systemd and SSH from the controller | — | — | ✅ | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); both checks also shown to fail | 05 | 1.2, 2.2, 6.2 |
 | lab-day0-install | ✅ | ✅ | — | 🟡 installs, then forms the indexer cluster and search head cluster on a clustered topology; verify fails on a dead unit, a closed port or a missing cluster member; `prod` as a whole not yet run | — | ✅ runnable | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); verify also shown to fail; indexer cluster formed in a three-node half ([record](../history/verification-2026-11-18-cluster-formation.md)) | 05 | 1.2, 2.1, 6.1 |
 | lab-day1-ops | ✅ | ✅ | — | — | ✅ restart, status, licence; verify asserts active and prints diagnostics on failure | — | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); verify also shown to fail | 05 | 1.2, 6.3, 6.4 |
-| lab-controller | — | — | ✅ prepare | — | — | 🟡 apt Ansible differs from runner | — | no recorded run | 05 | 1.4, 2.4 |
-| lab-web-terminal | ✅ diag:terminal | — | ✅ | — | — | ✅ ttyd + nginx; 🟡 open on all interfaces | — | no recorded run | 05 | 1.5, 3.3 |
+| lab-controller | — | — | ✅ prepare | — | — | 🟡 works with no flags; apt Ansible differs from runner | — | run: Mac, `dev`, 2026-11-18 ([record](../history/verification-2026-11-18-dev-topology-and-operator-path.md)) | 05 | 1.4, 2.4 |
+| lab-web-terminal | ✅ diag:terminal | — | ✅ | — | — | ✅ ttyd + nginx, password checked; 🟡 open on all interfaces | — | login 200 / 401: Mac, `dev`, 2026-11-18 (same record) | 05 | 1.5, 3.3 |
 | lab-git-server | — | — | ✅ starts | 🟡 probes only | — | — | ❌ no repos, users or key | no recorded run | 05 | 2.3 |
 | lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | 🟡 destroy.yml unused | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
 

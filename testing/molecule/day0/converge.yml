@@ -17,8 +17,10 @@
     deployment_task: check_splunk.yml
 
 # ---------------------------------------------------------------------------
-# Cluster formation. These plays target groups that only a clustered topology
-# has (prod), so on small, dev and dms they match no host and do nothing.
+# Cluster formation. An indexer cluster needs a `clustermanager` group and a
+# search head cluster needs `shcluster` and `shdeployer`. A topology without
+# them (small, dev, dms) may still have an `indexer` group for a standalone
+# indexer, so the peer play also checks that a manager exists.
 #
 # The role's cluster tasks run a `splunk edit` or `splunk init` command that
 # fails on a node already configured. Each play first checks the node, so
@@ -47,7 +49,9 @@
         name: ../../../roles/splunk
       vars:
         deployment_task: configure_idxc_member.yml
-      when: lab_clustering_stanza.rc != 0
+      when:
+        - groups['clustermanager'] | default([]) | length > 0
+        - lab_clustering_stanza.rc != 0
 
 - name: Point the search heads at the indexer cluster
   hosts: shcluster
@@ -64,7 +68,9 @@
         name: ../../../roles/splunk
       vars:
         deployment_task: configure_idxc_sh.yml
-      when: lab_clustering_stanza.rc != 0
+      when:
+        - groups['clustermanager'] | default([]) | length > 0
+        - lab_clustering_stanza.rc != 0
 
 - name: Configure the search head cluster deployer
   hosts: shdeployer

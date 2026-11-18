@@ -232,30 +232,26 @@ tasks:
   # === Diagnostics ===
 
   diag:terminal:
-    desc: "Check web terminal (ttyd/nginx) health"
+    desc: "Check web terminal (ttyd/nginx) health; exits non-zero when it is down"
     cmds:
       - |
-          echo "Checking http://localhost:3000/ttyd"
-          curl -sS -o /dev/null -w 'HTTP %{http_code}\n' http://localhost:3000/ttyd 2>/dev/null || echo "Not accessible"
-          docker exec ansible-controller bash -c '
-            echo "=== Service Status ==="
-            systemctl is-active ttyd nginx 2>/dev/null || true
-            echo "=== Port 3000 ==="
-            ss -ltnp 2>/dev/null | grep ":3000" || true
-          ' 2>/dev/null || echo "ansible-controller not running"
+          set -e
+          docker exec ansible-controller true 2>/dev/null || { echo "ansible-controller is not running - run: task infra:setup"; exit 1; }
+          echo "=== Service status (ttyd, nginx) ==="
+          docker exec ansible-controller systemctl is-active ttyd nginx
+          echo "=== http://localhost:3000/ttyd/ without a password (401 expected) ==="
+          code=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/ttyd/ || true)
+          echo "HTTP $code"
+          [ "$code" = "401" ] || { echo "Expected 401 from the password prompt, got $code"; exit 1; }
 
   diag:ssh:
-    desc: "Test SSH connectivity to hosts (uses current MOLECULE_ENV)"
+    desc: "Ping every node from the controller over SSH (uses the controller's ansible.cfg); exits non-zero on failure"
     cmds:
-      - echo "Testing SSH connectivity for env={{.ENV}}"
       - |
-        docker exec -u ansible ansible-controller bash -c '
-          echo "=== SSH Keys ==="
-          ls -la ~/.ssh/ 2>/dev/null || echo "No SSH keys found"
-          echo ""
-          echo "=== Ansible Ping (full group) ==="
-          ansible -i /workspace/testing/molecule/environments/{{.ENV}}/ full -m ping 2>/dev/null || echo "Ping failed - check inventory"
-        ' 2>/dev/null || echo "ansible-controller not running - run ./run-tests.sh infra:setup first"
+          set -e
+          docker exec ansible-controller true 2>/dev/null || { echo "ansible-controller is not running - run: task infra:setup"; exit 1; }
+          docker exec -u ansible -e ANSIBLE_CONFIG=/home/ansible/ansible.cfg ansible-controller \
+            ansible 'all:!git_server:!ansible_controller' -m ansible.builtin.ping -o
 
   # === Utilities ===
 

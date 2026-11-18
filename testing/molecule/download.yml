@@ -5,7 +5,7 @@
   vars_files:
     - ../../roles/splunk/defaults/main.yml
     - environments/common/group_vars/all.yml
-    - environments/{{ lookup('env', 'MOLECULE_ENV') | default('small') }}/group_vars/all.yml
+    - environments/{{ lookup('env', 'MOLECULE_ENV') | default('small', true) }}/group_vars/all.yml
   tasks:
     - name: Create software directory
       ansible.builtin.file:
