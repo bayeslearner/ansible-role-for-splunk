@@ -154,7 +154,7 @@ Operator path from the controller (R6): operator → `:3000/ttyd` (nginx → tty
 
 ## Algorithms
 
-Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when the lab's controller does not exist yet and the web terminal's port is already in use on the machine:
+Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when the lab's controller does not exist yet and a port the lab is about to publish is already in use on the machine:
 
 ```text
 targets = groups.full + groups.uf + groups.git_server + groups.ansible_controller
@@ -195,7 +195,7 @@ if installed before this run and installed version < splunk_package_version:
 
 - A failed stage stops the workflow and leaves containers up for debugging; `task infra:destroy` or `task reset` cleans up.
 - `infra:destroy` removes the hosts of the topology `MOLECULE_ENV` names when it runs. A lab built as `prod` and destroyed as `small` keeps its other nodes; `task reset` removes them, because it clears whatever is left on the lab's network.
-- The container engine publishes a port that another program already holds without an error, and that program then answers on it. `task lab:ports` catches this for the web terminal's port before the lab is created; the Git server's two ports are not probed.
+- The container engine publishes a port that another program already holds without an error, and that program then answers on it. `task lab:ports` catches this for the web terminal's port before the lab is created; on a topology with a Git server it probes that server's two ports as well.
 - Destroy steps use `ignore_errors`, so a partly created lab still tears down.
 - The veth offload fix is applied once per runner command, and on every node and the controller by a systemd unit at each boot, so it survives a container or host restart.
 - Download retries 3 times, 10 s apart.

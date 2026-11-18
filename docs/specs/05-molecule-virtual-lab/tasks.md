@@ -142,6 +142,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.11 `task reset` removes a lab whichever topology built it: `infra:destroy` only knows the hosts of the topology `MOLECULE_ENV` names now, so a `prod` lab reset as `small` kept seven containers (found reconciling R9 against the code)
     - Requirements: R9
     - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`, "Reset under another topology"
+  - [x] 6.12 `infra/destroy.yml` no longer ignores errors when it removes containers, and `task lab:ports` also probes the Git server's two ports on a topology that has one
+    - Requirements: R9, R10
+    - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`, "Later the same day"
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -177,3 +180,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 5.5 closed: `small`, `dev` and `dms` each ran setup, day0, day1 and teardown on the second Mac with memory, CPU and disk read at three points (`docs/history/verification-2026-11-18-memory-and-disk-per-topology.md`). At rest a Splunk 9.4.2 node takes 640 to 810 MiB and Splunk 10.6.1.1 twice that. Both READMEs now carry the table.
 - 2026-11-18: 3.7 closed: a lab can be named (`LAB_NAME`, `LAB_PORT_OFFSET`), and three labs ran on one engine at once without seeing each other (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). The run found that the engine publishes a port another program already holds without an error, so `infra:create` now checks the web terminal's port first.
 - 2026-11-18: Reconciled the requirements and design with named labs (configuration table, R1, R3, R7, the defaults note, the port check) and R9 with the code. R9 did not hold: `task reset` under a different `MOLECULE_ENV` than the lab was built with left containers behind. Fixed (6.11) and shown before and after on a second lab beside an untouched one (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`).
+- 2026-11-18: 6.12: destroy reports a removal that fails (it ignored all three), and the port check covers the Git server's ports. The "Learn Molecule" and "Code tour" tabs on the Board were checked against today's code and corrected where stale.

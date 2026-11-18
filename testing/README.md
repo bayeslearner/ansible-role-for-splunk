@@ -106,7 +106,7 @@ task day0:test        # converge + verify; day0:converge and day0:verify run one
 task day1:test        # converge + verify; day1:converge and day1:verify run one half
 ```
 
-`task infra:create` first runs `task lab:ports`, which stops when the web terminal's port is already in use on this machine.
+`task infra:create` first runs `task lab:ports`, which stops when a port the lab would publish is already in use on this machine.
 
 On `prod`, infra also prepares the Git server: one repository per app the inventory names under `git_apps`, at `ssh://git@git-server/test/<app>`, each with a minimal Splunk app, readable with the lab key. The owner is `test`, with the lab's generated Splunk admin password; the web UI is at `http://localhost:8929`.
 
@@ -164,7 +164,7 @@ Both `diag:` targets exit non-zero when something is wrong.
 - The lab's images are named `localhost/<name>:latest` (`localhost/molecule-runner:latest` and so on). Docker and Podman both resolve that form to the local image.
 - `DOCKER_SOCK` (default `/var/run/docker.sock`) is the engine socket the runner mounts. The controller does not get the socket: it reaches the nodes over SSH only. Set it to use another engine, such as a Podman API socket.
 - `LAB_BIND_ADDRESS` (default `127.0.0.1`) is the address the lab's published ports bind to: 3000 (web terminal), 2222 and 8929 (Git server). Set `LAB_BIND_ADDRESS=0.0.0.0` to reach them from another machine.
-- `LAB_NAME` and `LAB_PORT_OFFSET` run a second lab on the same engine. `LAB_NAME=b LAB_PORT_OFFSET=100 MOLECULE_ENV=small task workflow:quick` creates containers named `b-<host>` on the network `splunk-test-network-b`, with volumes named `ansible-splunk-lab-b-…` and the three ports moved to 3100, 2322 and 9029. Inside the lab every host keeps its inventory name, so playbooks and the controller work unchanged. Give the same two variables to every later command for that lab (`task shell -- ansible-controller`, `task diag:ssh`, `task reset`). `LAB_NAME` holds lower-case letters and digits only. `task infra:create` stops when the web terminal's port is already in use on the machine.
+- `LAB_NAME` and `LAB_PORT_OFFSET` run a second lab on the same engine. `LAB_NAME=b LAB_PORT_OFFSET=100 MOLECULE_ENV=small task workflow:quick` creates containers named `b-<host>` on the network `splunk-test-network-b`, with volumes named `ansible-splunk-lab-b-…` and the three ports moved to 3100, 2322 and 9029. Inside the lab every host keeps its inventory name, so playbooks and the controller work unchanged. Give the same two variables to every later command for that lab (`task shell -- ansible-controller`, `task diag:ssh`, `task reset`). `LAB_NAME` holds lower-case letters and digits only. `task infra:create` stops when a port the lab would publish is already in use on the machine.
 
 ## Cleanup
 ```bash

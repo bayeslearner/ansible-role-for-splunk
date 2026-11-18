@@ -166,7 +166,7 @@ tasks:
       - echo "Infrastructure scenario complete!"
 
   lab:ports:
-    desc: "Refuse to start when the web terminal's port already answers and this lab's controller is not the one answering"
+    desc: "Stop when a port the lab is about to publish is already in use on this machine"
     preconditions:
       - sh: '{{._LAB_NAME_OK}}'
         msg: "LAB_NAME may hold only lower-case letters and digits (got '{{.LAB_NAME}}')"
@@ -175,6 +175,14 @@ tasks:
           # curl exits 7 when nothing listens; any other result means something answered or held the port
           if curl -s -o /dev/null --max-time 3 http://127.0.0.1:{{._WEB_PORT}}/; then exit 1; else [ $? -eq 7 ]; fi
         msg: "Port {{._WEB_PORT}} on this machine is already in use, so the lab's web terminal would not be reachable there. Pick another LAB_PORT_OFFSET (now {{.LAB_PORT_OFFSET}}); it also moves the Git server's ports {{add 2222 (atoi .LAB_PORT_OFFSET)}} and {{add 8929 (atoi .LAB_PORT_OFFSET)}}."
+      - sh: |
+          # Only a topology with a Git server publishes these two ports
+          grep -q "git_server:" molecule/environments/{{.ENV}}/hosts.yml || exit 0
+          docker inspect {{._PFX}}git-server >/dev/null 2>&1 && exit 0
+          for p in {{add 2222 (atoi .LAB_PORT_OFFSET)}} {{add 8929 (atoi .LAB_PORT_OFFSET)}}; do
+            if curl -s -o /dev/null --max-time 3 http://127.0.0.1:$p/; then exit 1; else [ $? -eq 7 ] || exit 1; fi
+          done
+        msg: "Port {{add 2222 (atoi .LAB_PORT_OFFSET)}} or {{add 8929 (atoi .LAB_PORT_OFFSET)}} on this machine is already in use, so the lab's Git server would not be reachable there. Pick another LAB_PORT_OFFSET (now {{.LAB_PORT_OFFSET}})."
 
   infra:create:
     desc: "Create infrastructure containers"

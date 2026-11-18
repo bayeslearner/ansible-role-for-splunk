@@ -63,9 +63,27 @@ With an unnamed `dev` lab up beside it, lab C was built with `LAB_NAME=c LAB_POR
 | the unnamed lab | both containers still up; `task diag:ssh` exit 0 |
 | `MOLECULE_ENV=small task reset` on the unnamed `dev` lab | exit 0; no lab container, network member or lab volume left |
 
+## Later the same day: the Git ports, and destroy's ignored errors
+
+`task lab:ports` now also probes the Git server's two ports when the topology has a `git_server` group and this lab's Git server does not exist yet. On the first Mac, with test listeners:
+
+| Case | Result |
+|---|---|
+| `prod`, the Git HTTP port held by an HTTP server | stops: "Port 2777 or 9484 on this machine is already in use…" |
+| `small`, same offset (no Git server in the topology) | exit 0 |
+| `prod`, the Git SSH port held by a listener that speaks no HTTP | stops with the same message |
+| `prod`, all three ports free | exit 0 |
+
+`infra/destroy.yml` ignored every error from removing a container. Removing a container that is already gone is not an error, so nothing needed ignoring, and a removal that really failed went unreported unless a later task happened to fail too. The three `ignore_errors` are gone. On the second Mac:
+
+| Case | Before | After |
+|---|---|---|
+| `molecule destroy -s infra` with no engine behind the socket | exit 2, but only at the fourth task: `failed=1 ignored=2` | exit 2 at the first task: `failed=1 ignored=0` |
+| `MOLECULE_ENV=prod task infra:test` (create, prepare, verify, destroy) | | exit 0 |
+| `MOLECULE_ENV=prod task infra:destroy` with nothing to remove | | exit 0, `ok=4 failed=0 ignored=0` |
+
 ## Not covered
 
-- The check looks at the web terminal's port only. The two Git ports are not probed; an occupied one would show the same symptom on a topology with a Git server.
 - Two labs running day0 at the same moment. Here they ran one after another.
 - Two labs started from two different checkouts.
 - `task infra:destroy` leaves a lab's network in place, named or not; `task reset` removes it.
