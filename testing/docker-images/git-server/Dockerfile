@@ -8,7 +8,8 @@ ENV USER_UID=1000
 ENV USER_GID=1000
 
 # Create initial admin user
-ENV GITEA__admin__DISABLE_REGISTRATION=false
+# Nobody can sign up through the web UI; infra prepare creates the one owner with the gitea CLI.
+ENV GITEA__service__DISABLE_REGISTRATION=true
 # The lab's SSH key is RSA 2048 (testing/.secrets/id_rsa, never rotated). Gitea refuses RSA keys
 # under 3071 bits unless this check is off; the server is reachable only on the lab network.
 ENV GITEA__ssh__MINIMUM_KEY_SIZE_CHECK=false

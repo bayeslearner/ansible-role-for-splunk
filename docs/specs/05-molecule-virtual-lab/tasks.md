@@ -56,7 +56,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 3.2 `MOLECULE_ENV=small task workflow:full` passes on the pve2 VM
     - Depends: 1.2, 3.1
     - Requirements: R10
-  - [ ] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
+  - [x] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
     - Requirements: NFR Isolation
   - [ ] 3.4 Remove the Docker socket from the controller, or document why the operator path needs it (nothing in the scenarios uses it from the controller)
     - Requirements: NFR Isolation
@@ -137,3 +137,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 2.3 closed: the Git server placeholder is replaced by a bootstrap (owner, lab key, one repository per app in `git_apps`, a seed app in each), `prod`'s Git settings now form the address the role clones, and infra verify lists every repository from the controller. `prod`'s infra stage passes with eleven containers. The run found that the AlmaLinux nodes had no `scp` (6.6, fixed). Evidence: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`.
 - 2026-11-18: `infra` names its destroy sequence, which removes a false "Missing playbook" warning Molecule printed on every infra destroy (5 times in the day's logs); `dev` infra test and destroy now print none.
 - 2026-11-18: 4.1 closed: every base image is pinned by tag and digest, and Gitea, go-task, uv and the controller's Python have exact versions. All five images rebuild and `small` passes a full workflow on them. `prod`'s infra scenario also passes on them.
+- 2026-11-18: 3.3 closed: the lab's published ports bind to `127.0.0.1` unless `LAB_BIND_ADDRESS` widens them (in place since 3.10), and the Git server now refuses sign-up (HTTP 403) while the bootstrap still creates its owner. Evidence: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`.

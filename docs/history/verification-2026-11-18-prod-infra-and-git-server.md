@@ -36,6 +36,19 @@ All commands run from `testing/` with `MOLECULE_ENV=prod`.
 2. **A rejected key looked like a duplicate.** Gitea answers 422 both for a key it already has and for one it refuses, and the first draft accepted 422. The play now lists the keys, adds the lab key only when it is absent, and accepts only 201.
 3. **The seed file had literal `\n` in it.** The app.conf text is now a YAML block in the play's vars.
 
+## Sign-up off, and where the ports bind (task 3.3)
+
+On the tree at `a7e70cb`, with the Git server image rebuilt and its volume removed first:
+
+| Check | Result |
+|---|---|
+| `task infra:setup` then `molecule verify -s infra` | both exit 0; six repositories listed for the owner (`reg-infra-setup.log`, `reg-verify.log`) |
+| Gitea's `app.ini` | `[service] DISABLE_REGISTRATION = true` |
+| `POST /user/sign_up` with a new user | HTTP 403; the sign-up page says "Registration is disabled"; the user does not exist afterwards (404) |
+| `docker port git-server` | `22/tcp -> 127.0.0.1:2222`, `8929/tcp -> 127.0.0.1:8929` |
+
+The image used to set `GITEA__admin__DISABLE_REGISTRATION=false`, a key in the wrong section that left sign-up open. The owner is created by the `gitea` command inside the container, which does not need sign-up.
+
 ## Memory, infra only
 
 One `docker stats` reading with all eleven containers up and no Splunk installed: each node about 30 MiB, `ansible-controller` 70 MiB, `git-server` 186 MiB.
