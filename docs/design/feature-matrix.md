@@ -20,15 +20,15 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 
 | Feature | Taskfile | runner | infra | day0 | day1 | controller | git-server | Verified | Spec | Tasks |
 |---|---|---|---|---|---|---|---|---|---|---|
-| lab-setup | 🟡 image check depends on Docker CLI format | ✅ download.yml | — | — | — | — | — | no recorded run | 05 | 1.1, 2.5, 2.6 |
+| lab-setup | ✅ | ✅ download.yml | — | — | — | — | — | one run: Mac, 2026-11-18 (same record); the second, skip-everything run of 1.1 is not recorded | 05 | 1.1, 2.6 |
 | lab-topologies | ✅ `MOLECULE_ENV` | ✅ | ✅ small/dev/prod | ✅ | ✅ | ✅ | — | no recorded run | 05 | 1.3 |
-| lab-infra | ✅ | ✅ | 🟡 verify skips SSH | — | — | ✅ | — | no recorded run | 05 | 1.2, 2.2 |
-| lab-day0-install | ✅ | ✅ | — | 🟡 installs only; no clusters; verify cannot fail | — | ✅ runnable | — | no recorded run | 05 | 1.2, 2.1 |
-| lab-day1-ops | ✅ | ✅ | — | — | ✅ asserts active | — | — | no recorded run | 05 | 1.2 |
+| lab-infra | ✅ | ✅ | ✅ prepare stops on a missing secret; verify checks systemd and SSH from the controller | — | — | ✅ | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); both checks also shown to fail | 05 | 1.2, 2.2, 6.2 |
+| lab-day0-install | ✅ | ✅ | — | 🟡 installs only; no clusters; verify fails on a dead unit or closed port | — | ✅ runnable | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); verify also shown to fail | 05 | 1.2, 2.1, 6.1 |
+| lab-day1-ops | ✅ | ✅ | — | — | ✅ restart, status, licence; verify asserts active and prints diagnostics on failure | — | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); verify also shown to fail | 05 | 1.2, 6.3, 6.4 |
 | lab-controller | — | — | ✅ prepare | — | — | 🟡 apt Ansible differs from runner | — | no recorded run | 05 | 1.4, 2.4 |
 | lab-web-terminal | ✅ diag:terminal | — | ✅ | — | — | ✅ ttyd + nginx; 🟡 open on all interfaces | — | no recorded run | 05 | 1.5, 3.3 |
 | lab-git-server | — | — | ✅ starts | 🟡 probes only | — | — | ❌ no repos, users or key | no recorded run | 05 | 2.3 |
-| lab-cleanup | ✅ reset | — | ✅ destroy | 🟡 destroy.yml unused | — | — | ✅ | no recorded run | 05 | 5.2 |
+| lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | 🟡 destroy.yml unused | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
 
 > [!warning] Built, not verified
 > Every row above. No lab run has a recorded result, and the work Mac has none of the lab images (2026-11-02). Tasks 1.1–1.5 produce the first records.

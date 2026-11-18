@@ -24,6 +24,17 @@
         label: "{{ item }}"
       ignore_errors: true
 
+    # A node keeps Splunk under /opt in a named volume, but its systemd unit lives in the container.
+    # A volume that outlives its container makes the next day0 fail the role's boot-start check,
+    # so a destroyed node takes its volume with it. The Git server's data volume is kept.
+    - name: Remove the Splunk nodes' data volumes
+      community.docker.docker_volume:
+        name: "ansible-splunk-test-{{ item }}-data"
+        state: absent
+      loop: "{{ targets | reject('equalto', 'git-server') | list }}"
+      loop_control:
+        label: "{{ item }}"
+
     - name: Stop and remove git-server
       community.docker.docker_container:
         name: git-server

@@ -25,3 +25,6 @@
 Thumbs.db
 
 software
+
+# Raw output of recorded lab runs (prints generated public keys)
+.runs/

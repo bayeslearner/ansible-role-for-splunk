@@ -1,5 +1,39 @@
 # ansible-role-for-splunk: An Ansible role for Splunk admins
 
+## This fork: the role plus a virtual lab
+
+This repository is two things:
+
+- **Splunk's Ansible role**, unchanged, from [splunk/ansible-role-for-splunk](https://github.com/splunk/ansible-role-for-splunk) (Apache-2.0). Its README starts at [Purpose](#purpose) below. The `master` branch here mirrors upstream.
+- **A virtual lab** under [`testing/`](testing/README.md): a Docker and Molecule harness that builds a small Splunk estate out of systemd containers and deploys it with the role over SSH, from an Ansible controller you log into, the way a real deployment is run. Its first version was merged upstream as [pull request 252](https://github.com/splunk/ansible-role-for-splunk/pull/252); this branch continues it.
+
+![One task target starts one runner, which drives one scenario against the lab network](docs/diagrams/lab-map.svg)
+
+Molecule builds and tears down the containers. The role installs Splunk on them over SSH, and a check after each stage fails the run when a node is not healthy.
+
+### Try it
+
+Needs Docker and [go-task](https://taskfile.dev). Run from `testing/`:
+
+```bash
+task setup            # secrets, images, Splunk downloads, network
+task workflow:full    # build the lab, install Splunk, restart and check it, tear it down
+task workflow:quick   # the same without the teardown; then: task shell -- ansible-controller
+```
+
+Pick a topology with `MOLECULE_ENV`:
+
+| Topology | Containers | What it is |
+|---|---|---|
+| `small` (default) | 3 | one Splunk Enterprise node, a license manager, the controller |
+| `dev` | 2 | one all-in-one Splunk node, the controller |
+| `dms` | 2 | one all-in-one node on a newer Splunk, the controller |
+| `prod` | 11 | manager, license manager, two indexers, two search heads, deployer, forwarder manager, a forwarder, a Git server, the controller |
+
+What has and has not been verified, per capability: [docs/design/feature-matrix.md](docs/design/feature-matrix.md). The plan and its open tasks: [docs/specs/05-molecule-virtual-lab](docs/specs/05-molecule-virtual-lab/). The `prod` topology installs its nodes but does not join them into clusters yet.
+
+----
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)&nbsp;
 [![GitHub release](https://img.shields.io/github/v/tag/splunk/ansible-role-for-splunk?sort=semver&label=Version)](https://github.com/splunk/ansible-role-for-splunk/releases)
 

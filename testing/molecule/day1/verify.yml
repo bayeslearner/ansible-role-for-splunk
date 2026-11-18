@@ -51,6 +51,24 @@
       failed_when: false
       become: true
 
+    # Shown only for a node that is about to fail, so the cause is in the run's output.
+    - name: Collect diagnostics when the service is not active
+      ansible.builtin.shell: |
+        echo "== processes"; ps -eo pid,user,etime,args | grep -E '[s]plunkd' || echo "no splunkd process"
+        echo "== last errors in splunkd.log"
+        grep -Ei 'error|fatal' {{ splunk_home }}/var/log/splunk/splunkd.log 2>/dev/null | tail -20 || echo "no splunkd.log"
+        echo "== unit"; systemctl status {{ splunk_service }} --no-pager -n 15 2>&1 || true
+      register: splunk_diagnostics
+      changed_when: false
+      failed_when: false
+      become: true
+      when: splunk_service_status.stdout | trim != 'active'
+
+    - name: Display diagnostics
+      ansible.builtin.debug:
+        var: splunk_diagnostics.stdout_lines
+      when: splunk_diagnostics.stdout_lines is defined
+
     - name: Confirm operational status
       ansible.builtin.assert:
         that:

@@ -15,3 +15,22 @@
     - ../../../roles/splunk
   vars:
     deployment_task: check_splunk_status.yml
+
+
+# A restarted node must come back without stopping at the licence prompt.
+# `splunk status` with these flags records acceptance; it is harmless when already accepted,
+# and a node whose Splunk is down is caught by verify.yml, so this task never fails the run.
+- name: Day 1 Splunk Operations - License Acceptance
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: false
+  vars:
+    # This play does not load the role, so it cannot use the role's splunk_home.
+    lab_splunk_home: "{{ '/opt/splunkforwarder' if 'uf' in group_names else '/opt/splunk' }}"
+  tasks:
+    - name: Accept the Splunk licence
+      ansible.builtin.command: "{{ lab_splunk_home }}/bin/splunk status --accept-license --answer-yes --no-prompt"
+      register: splunk_license_result
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: "{{ splunk_nix_user | default('splunk') }}"

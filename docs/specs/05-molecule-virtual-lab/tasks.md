@@ -13,7 +13,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Built in: `555beec`, `55426a6`
     - Requirements: R1
     - Verification: run twice on a clean host; record both outputs in `docs/history/verification-<date>-lab-setup.md`
-  - [ ] 1.2 `MOLECULE_ENV=small task workflow:full` passes on the Mac
+  - [x] 1.2 `MOLECULE_ENV=small task workflow:full` passes on the Mac
     - Built in: `555beec`, `86a1a37`
     - Requirements: R2, R3, R4, R5, R9
     - Verification: full log plus `docker ps` before destroy, in a verification record
@@ -30,7 +30,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 2.1 `prod` forms the clusters its inventory describes: run the role's indexer-cluster and search-head-cluster deployment (`playbooks/splunk_idxc_deploy.yml`, `playbooks/splunk_shc_deploy.yml` or their task files) in a scenario, and make day0 verify report a real cluster state
     - Requirements: R4
     - Note: until then, the README must not call the `prod` nodes a cluster
-  - [ ] 2.2 `infra/verify.yml` checks SSH from the controller to every node as `ansible`, so a broken key fails infra instead of day0
+    - Priority: first of the last-mile work. The owner confirmed on the Board (2026-11-18) that `prod` is meant to form the smallest valid clusters, two indexers and two search heads, to exercise the role's cluster tasks.
+  - [x] 2.2 `infra/verify.yml` checks SSH from the controller to every node as `ansible`, so a broken key fails infra instead of day0
     - Requirements: R3
   - [ ] 2.3 Git server: create the Gitea admin, the `test/splunk_apps` repository with the apps `prod` names, and the deploy key at `git_key`, or remove `git_apps` from `prod` until day 2 needs them
     - Requirements: R8
@@ -87,6 +88,25 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
   - [ ] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
   - [ ] 5.4 Remove the Twingate block from `.env.example`, or implement it under a spec
+  - [ ] 5.5 `testing/README.md` and the root README state the RAM and CPU each topology needs, measured and not estimated: after day0 on `small`, `dev`, `dms` and `prod` (with clusters formed, 2.1), record `docker stats --no-stream` per container and the engine's total, and give a minimum and a comfortable figure per topology
+    - Depends: 1.2, 1.3, 2.1
+    - Requirements: R10
+    - Verification: the `docker stats` output in a verification record
+
+- [ ] 6. Last mile: what PR 252 cut and the review found
+  - [x] 6.1 `day0/verify.yml` fails when a node's Splunk unit is not active or its management or web port is closed (it used `ignore_errors` on every check). The cluster and Git server plays stay informational until 2.1 and 2.3.
+    - Requirements: R4
+    - Verification: a day0 run that passes, and one with Splunk stopped on a node that fails at the assert
+  - [x] 6.2 `infra/prepare.yml` stops at its first task with the command to run when a lab secret is missing (cut in PR 252)
+    - Requirements: R1, R3
+    - Verification: an infra run with `.secrets/ansible_password` moved aside
+  - [x] 6.3 `day1/converge.yml` accepts the Splunk licence after the restart (cut in PR 252)
+    - Requirements: R5
+  - [x] 6.4 `day1/verify.yml` prints processes, the last `splunkd.log` errors and the unit status for a node whose service is not active, before its assert (cut in PR 252)
+    - Requirements: R5
+  - [x] 6.5 `infra/destroy.yml` removes each node's data volume with the node, so a lab built after a destroy starts clean (found by the first full run: a leftover `/opt` volume with no systemd unit failed the role's boot-start check)
+    - Requirements: R9
+    - Verification: two `task workflow:full` runs in a row
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -94,3 +114,5 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-10: The pre-production host is `splunkapp-preprod02`; `splunkapp-preprod01` does not resolve. Added 3.10 (socket variable) and 3.11 (`dms` environment) for the first run there, and started 3.3 with the published-port bind address (Gitea registration still open). Kun asked for the run.
 - 2026-11-10: 3.10 and 3.11 verified on the pre-production host against a separate root Podman API service: infra created the controller and `splunk-dms`, day0 converge ran 61 tasks with none failed, day0 verify passed (its git-server check is ignored when no git server exists), `splunk version` reports 10.6.1.1 build b2ae2962645c, and the host's default container store gained nothing. The run needed the images tagged under `docker.io/library/` names on the host first, which is task 3.12.
 - 2026-11-11: On the pre-production host, root Podman's default store now lives on `/app` (`/var/lib/containers` links to `/app/var/lib/containers`), and the lab runs on it through the stock `podman.socket` with `DOCKER_SOCK=/run/podman/podman.sock`; the separate Podman service and store used on 2026-11-10 are retired. Rebuilt there: infra, day0 converge (61 ok, 0 failed) and verify pass. `infra:destroy` cannot remove `mol-run`, the container it runs in; remove it afterwards.
+- 2026-11-18: The lab branch is `main` and the fork's default branch (`docs/decisions/2026-11-18-01-main-default-branch.md`). Added group 6 from the Board's "Code tour and last mile" tab and wrote the code for 2.2 and 6.1 to 6.4; all five playbooks pass `ansible-playbook --syntax-check` on ansible-core 2.18.1. Lab runs are still owed for each.
+- 2026-11-18: First recorded runs on the Mac, `small` topology: setup, infra, day0, day1 and two consecutive `workflow:full` runs pass, and each new check (2.2, 6.1, 6.2, 6.4) was shown to fail on its fault. Evidence: `docs/history/verification-2026-11-18-small-topology.md`. Closes 1.2, 2.2 and 6.1 to 6.5. Open from this run: `dev` and `prod` (1.3), the second `task setup` run (1.1), and the runner's unpinned ansible-core, 2.21.6 on this build (4.1).

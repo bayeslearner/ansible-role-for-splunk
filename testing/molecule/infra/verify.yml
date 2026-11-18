@@ -23,3 +23,35 @@
         that:
           - pid1_comm.stdout | trim == 'systemd'
         fail_msg: "Expected PID 1 to be systemd, got: {{ pid1_comm.stdout | trim | default('') }}"
+
+
+# The lab's point is that the controller reaches every node over SSH as `ansible`.
+# Check it here, so a broken key or sshd fails infra and not day0.
+- name: Verify SSH from the controller to every node
+  hosts: ansible_controller
+  gather_facts: false
+  vars:
+    ansible_connection: docker
+    ansible_user: root
+  tasks:
+    - name: Ping every node from the controller as the ansible user
+      ansible.builtin.command:
+        argv:
+          - su
+          - "-"
+          - ansible
+          - "-c"
+          - "ANSIBLE_CONFIG=/home/ansible/ansible.cfg ansible 'all:!git_server:!ansible_controller' -m ansible.builtin.ping -o"
+      register: controller_ping
+      changed_when: false
+      failed_when: false
+
+    - name: Assert every node answered over SSH
+      ansible.builtin.assert:
+        that:
+          - controller_ping.rc == 0
+        success_msg: "The controller reached every node over SSH as ansible"
+        fail_msg: |
+          The controller could not reach every node over SSH as ansible:
+          {{ controller_ping.stdout }}
+          {{ controller_ping.stderr }}

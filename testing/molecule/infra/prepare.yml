@@ -8,6 +8,24 @@
   hosts: localhost
   gather_facts: false
   tasks:
+    - name: Check that the lab secrets exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /workspace/testing/.secrets/id_rsa
+        - /workspace/testing/.secrets/id_rsa.pub
+        - /workspace/testing/.secrets/ansible_password
+      register: secrets_stat
+
+    - name: Stop with the fix when a secret is missing
+      ansible.builtin.assert:
+        that:
+          - secrets_stat.results | rejectattr('stat.exists') | list | length == 0
+        fail_msg: |
+          Missing lab secrets: {{ secrets_stat.results | rejectattr('stat.exists') | map(attribute='item') | join(', ') }}
+          Create them with:  task setup   (run from testing/)
+        quiet: true
+
     - name: Slurp SSH keys and password
       ansible.builtin.slurp:
         src: "{{ item }}"
