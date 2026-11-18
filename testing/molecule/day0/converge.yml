@@ -15,3 +15,109 @@
     - ../../../roles/splunk
   vars:
     deployment_task: check_splunk.yml
+
+# ---------------------------------------------------------------------------
+# Cluster formation. These plays target groups that only a clustered topology
+# has (prod), so on small, dev and dms they match no host and do nothing.
+#
+# The role's cluster tasks run a `splunk edit` or `splunk init` command that
+# fails on a node already configured. Each play first checks the node, so
+# `task day0:converge` can be run again on a lab that is already clustered.
+# ---------------------------------------------------------------------------
+
+- name: Configure the indexer cluster manager
+  hosts: clustermanager
+  roles:
+    - ../../../roles/splunk
+  vars:
+    deployment_task: configure_idxc_manager.yml
+
+- name: Join the indexers to the cluster as peers
+  hosts: indexer
+  tasks:
+    - name: Check whether this node already has a clustering stanza
+      ansible.builtin.command: grep -q '^\[clustering\]' {{ splunk_home }}/etc/system/local/server.conf
+      register: lab_clustering_stanza
+      changed_when: false
+      failed_when: false
+      become: true
+
+    - name: Join the indexer cluster
+      ansible.builtin.include_role:
+        name: ../../../roles/splunk
+      vars:
+        deployment_task: configure_idxc_member.yml
+      when: lab_clustering_stanza.rc != 0
+
+- name: Point the search heads at the indexer cluster
+  hosts: shcluster
+  tasks:
+    - name: Check whether this node already has a clustering stanza
+      ansible.builtin.command: grep -q '^\[clustering\]' {{ splunk_home }}/etc/system/local/server.conf
+      register: lab_clustering_stanza
+      changed_when: false
+      failed_when: false
+      become: true
+
+    - name: Join the indexer cluster as a search head
+      ansible.builtin.include_role:
+        name: ../../../roles/splunk
+      vars:
+        deployment_task: configure_idxc_sh.yml
+      when: lab_clustering_stanza.rc != 0
+
+- name: Configure the search head cluster deployer
+  hosts: shdeployer
+  roles:
+    - ../../../roles/splunk
+  vars:
+    deployment_task: configure_shc_deployer.yml
+
+# Each member restarts at the end of this play (the role's handler), which the
+# captain bootstrap in the next play needs.
+- name: Initialise the search head cluster members
+  hosts: shcluster
+  tasks:
+    - name: Check whether this member is already initialised
+      ansible.builtin.command: grep -q '^\[shclustering\]' {{ splunk_home }}/etc/system/local/server.conf
+      register: lab_shc_stanza
+      changed_when: false
+      failed_when: false
+      become: true
+
+    - name: Initialise this search head cluster member
+      ansible.builtin.include_role:
+        name: ../../../roles/splunk
+      vars:
+        deployment_task: configure_shc_members.yml
+      when: lab_shc_stanza.rc != 0
+
+- name: Bootstrap the search head cluster captain
+  hosts: shcluster
+  tasks:
+    - name: Wait for splunkd on every member after its restart
+      ansible.builtin.wait_for:
+        port: 8089
+        timeout: 300
+
+    - name: Check whether the cluster already has a captain
+      # This play does not load the role, so the role's default admin user name is spelled out.
+      ansible.builtin.command: "{{ splunk_home }}/bin/splunk show shcluster-status -auth {{ splunk_admin_username | default('admin') }}:{{ splunk_admin_password }}"
+      register: lab_shc_status
+      changed_when: false
+      failed_when: false
+      no_log: true
+      become: true
+      become_user: "{{ splunk_nix_user }}"
+      run_once: true
+
+    - name: Bootstrap the captain
+      ansible.builtin.include_role:
+        name: ../../../roles/splunk
+      vars:
+        deployment_task: configure_shc_captain.yml
+      # The status command exits 0 on a member that has not joined a cluster yet, so read its words too.
+      when: >-
+        lab_shc_status.rc != 0 or
+        'not part of any cluster' in (lab_shc_status.stdout ~ lab_shc_status.stderr)
+

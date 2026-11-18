@@ -35,12 +35,13 @@ Host (macOS / Linux)
         +-- git-server                   Gitea (app repos)
 
 Topology shown: prod (MOLECULE_ENV=prod)
-small (default) = splunk-master + splunkapp-prod01 + controller
+small (default) = splunk-license + splunkapp-prod01 + controller
 dev             = single all-in-one node + controller
+dms             = single all-in-one node on a newer Splunk + controller
 ```
 
 ## Prereqs
-- Docker
+- Docker, with free disk for the topology: each Splunk Enterprise node took 2.7 GB once installed, plus 1.1 GB while its package unpacks. `small` fits in about 8 GB; `prod` needs about 30 GB. Measured memory and CPU figures are owed (spec 05, task 5.5).
 - [Task](https://taskfile.dev/) (go-task) on the host
 
 ## Quick start
@@ -67,7 +68,8 @@ task setup:rebuild
 Select a topology via `MOLECULE_ENV`:
 - `small` (default): 2 Splunk nodes + controller
 - `dev`: 1 Splunk node + controller
-- `prod`: 9 Splunk nodes + controller (+ git-server)
+- `dms`: 1 Splunk node on a newer Splunk + controller
+- `prod`: 8 Splunk Enterprise nodes + 1 Universal Forwarder + controller + git-server
 
 Examples:
 ```bash
@@ -83,7 +85,8 @@ After `task infra:setup`, the ansible-controller is a self-sufficient deployment
 
 # from inside the controller — no --inventory flags needed:
 ansible all -m ping
-ansible-playbook /workspace/playbooks/splunk_install.yml
+ansible-playbook /workspace/testing/molecule/day0/converge.yml
+ansible-playbook /workspace/testing/molecule/day0/verify.yml
 ```
 
 The controller has an `ansible.cfg` pre-configured with the correct inventory sources and roles path.
