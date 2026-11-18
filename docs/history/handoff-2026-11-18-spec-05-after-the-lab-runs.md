@@ -8,6 +8,7 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 
 ## State on `main`
 
+- `prod` ran in full three times on 2026-11-18; both cluster checks were shown to fail in the full lab, and a failed one names the member that is not Up.
 - All four topologies have a full recorded run; `prod` forms a two-peer indexer cluster and a two-member search head cluster. Every stage's check has been shown to fail on its fault.
 - A lab can be named (`LAB_NAME`, `LAB_PORT_OFFSET`), so several share one engine. The Taskfile sets the amd64 platform itself. CI runs lint, the spec lint and a Taskfile dry-run.
 - Records of the day, each with its commands and results: `docs/history/verification-2026-11-18-*.md`. Decisions the agent made: `docs/decisions/2026-11-18-02-lab-behaviour-changes.md` (nine items).
@@ -25,6 +26,7 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 ## Do not repeat
 
 - **Never install Splunk on a machine whose container disk is shared with other work.** It filled such a disk on 2026-11-18 and took another project's database down. Image builds under emulation also take about 10 GB while they run. Check free disk first and tell whoever else depends on that machine.
+- **Read a failing run's play recap before saying which check failed.** A stopped node fails two checks on two hosts; reading only the first lines of the log gave a wrong conclusion that had to be corrected in the record.
 - **Never run `image prune -a` or `system prune` on an engine you did not create.** Remove what you made by name.
 - **Regenerate the Board files once per reseed pass**, and commit the applied hashes in `docs/board/doc-tabs.json` afterwards.
 - **After changing a file the Board's two teaching tabs quote** (`Taskfile.yml`, the infra playbooks, the Dockerfiles), check those tabs against the code.
@@ -33,6 +35,7 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 ## Known limits, recorded and not fixed
 
 - Two labs running day0 at the same moment has not been tried.
+- Once in about a dozen `prod` infra runs, prepare failed on one node with "failed to transfer file … AnsiballZ_systemd.py"; the next attempt passed unchanged and the cause was not found (`verification-2026-11-18-prod-end-to-end.md`, last section). If it recurs, make it a task.
 - On an ARM machine under Podman the infra prepare step fails: the amd64 Docker client in the runner crashes under emulation. It works on x86_64 Podman.
 - day0's Git server report is informational by decision; infra verify asserts the repositories.
 
