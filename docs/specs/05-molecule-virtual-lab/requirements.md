@@ -19,7 +19,7 @@ anchors: []
 
 ## Scope
 
-The Docker and Molecule harness under `testing/`: images, the Taskfile entry point, the `infra`, `day0` and `day1` Molecule scenarios, the `small`, `prod` and `dev` topologies, the controller with its web terminal, and the Gitea server. This sprint makes the harness verified and portable to the two hosts it will run on (`docs/steering/product.md`, Where The Lab Runs). Day 2 operations are `10-day-2-operations`.
+The Docker and Molecule harness under `testing/`: images, the Taskfile entry point, the `infra`, `day0` and `day1` Molecule scenarios, the `small`, `dev`, `dms` and `prod` topologies, the controller with its web terminal, and the Gitea server. This sprint makes the harness verified and portable to the two hosts it will run on (`docs/steering/product.md`, Where The Lab Runs). Day 2 operations are `10-day-2-operations`.
 
 ## Glossary
 

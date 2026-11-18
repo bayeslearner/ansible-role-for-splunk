@@ -44,9 +44,9 @@ flowchart TB
 |---|---|---|
 | Taskfile | Entry point, ordering, Docker run flags, veth fix in the runner | `testing/Taskfile.yml` |
 | molecule-runner | Runs Molecule; creates containers through the host socket; runs the role in scenarios | `docker-images/molecule-runner/Dockerfile` |
-| Node images | systemd PID 1, sshd, user `ansible` with NOPASSWD sudo | `docker-images/{ubuntu2204,almalinux9}-systemd-sshd/` |
+| Node images | systemd PID 1, sshd and scp, user `ansible` with NOPASSWD sudo | `docker-images/{ubuntu2204,almalinux9}-systemd-sshd/` |
 | Controller image | Node image plus ansible-core 2.21.6 in a Python 3.12 virtualenv (the runner's version and collections), ttyd 1.7.7 (built from source), nginx proxy on 3000 | `docker-images/ansible-controller/Dockerfile` |
-| git-server | Gitea on SQLite, port 8929 | `docker-images/git-server/Dockerfile` |
+| git-server | Gitea 28.4.0 on SQLite, port 8929; infra prepare creates an owner, the lab key and one seeded repository per app in `git_apps` | `docker-images/git-server/Dockerfile` |
 | Topologies | Hosts, groups, versions, cluster vars | `molecule/environments/*` |
 | Secrets | Lab key, ttyd password, Splunk admin password, Gitea key | generated in `testing/.secrets/` |
 
@@ -93,7 +93,7 @@ testing/
   run-tests.sh                      forwards to task
   requirements.yml                  galaxy collections (ranges)
   docker-images/
-    molecule-runner/Dockerfile      python:3.12-slim + molecule 25.12.0 + unpinned tools
+    molecule-runner/Dockerfile      python 3.12.16-slim (by digest) + molecule 25.12.0 + ansible-core 2.21.6, all pinned
     ubuntu2204-systemd-sshd/        node base
     almalinux9-systemd-sshd/        node base + sshd/PAM overrides for containers
     ansible-controller/             node base + pinned ansible-core + ttyd 1.7.7 + nginx
@@ -185,7 +185,7 @@ if installed before this run and installed version < splunk_package_version:
 | `testing/software/` | `download.yml` | derived | role via `splunk_package_path` | until deleted | yes, from download.splunk.com |
 | volumes `ansible-splunk-test-<host>-data` | role on nodes | lab state | nodes | removed with their node by `infra:destroy` (a volume without its container's systemd unit fails the role's boot-start check) | rebuilt by day0 |
 | `ansible-splunk-test-gitea-data` | Gitea | lab state | Gitea | same | empty on rebuild |
-| images `*:latest` | `setup:images` | derived | Docker | until `setup:rebuild` | no: bases and tools unpinned |
+| images `*:latest` | `setup:images` | derived | Docker | until `setup:rebuild` | yes for bases, Python packages, collections and tools (pinned by tag and digest or exact version); operating-system packages from `apt` and `dnf` are not pinned |
 
 ## Failure And Recovery
 
