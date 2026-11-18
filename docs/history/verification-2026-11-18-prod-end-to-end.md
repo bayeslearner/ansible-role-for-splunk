@@ -65,9 +65,9 @@ A second full `prod` lab on the same machine, at `1e666c3`: `MOLECULE_ENV=prod t
 
 | Fault | `task day0:verify` | Which check failed |
 |---|---|---|
-| `systemctl stop Splunkd` on `splunkshc-prod02` | exit 201 | the service check: "Splunkd is inactive on splunkshc-prod02" |
+| `systemctl stop Splunkd` on `splunkshc-prod02` | exit 201 | two: the service check on that node ("Splunkd is inactive on splunkshc-prod02"), and the search head cluster check on `splunkshc-prod01`, which failed after 30 attempts |
 | service started again | exit 0, both clusters reported Up | |
-| `systemctl stop Splunkd` on `splunkapp-prod02` | failed | the service check, as above |
+| `systemctl stop Splunkd` on `splunkapp-prod02` | failed | two: the service check on that node, and the indexer cluster check on `splunk-master`, which failed after 30 attempts |
 | service started again | exit 0 | |
 | `splunkapp-prod02` given a wrong `pass4SymmKey` under `[clustering]` and restarted; its service is `active` | exit 201 | the indexer cluster check: "Wait until every indexer is an Up peer of the manager" ran out of retries |
 | the saved `server.conf` put back, restarted | exit 0 | |
@@ -75,7 +75,7 @@ A second full `prod` lab on the same machine, at `1e666c3`: `MOLECULE_ENV=prod t
 | the saved `server.conf` put back, restarted | exit 0: "splunkapp-prod01, splunkapp-prod02 are Up peers of splunk-master" and "splunkshc-prod01, splunkshc-prod02 are Up members of the search head cluster" | |
 | `task reset` | exit 0; no lab container or volume left; engine disk back to 30.6 GB used |
 
-A stopped node never reaches the cluster checks, because the service check comes first and fails. The wrong-key faults are the ones that exercise the cluster checks: the node runs, its ports answer, and it is not a member. The result of the stopped-indexer verify was read from its log; the script that would have written its exit code was stopped at that point so the lab could be kept for the wrong-key faults.
+With a stopped node both kinds of check fail, on different hosts: the service check on the stopped node and the cluster check on the manager or the other member. The wrong-key faults isolate the cluster checks: the node runs, its service check passes, and only the cluster check fails. (This record first said a stopped node never reaches the cluster checks. That was wrong: it came from reading only the first lines of the log, and was corrected after reading the play recaps.) The result of the stopped-indexer verify was read from its log; the script that would have written its exit code was stopped at that point so the lab could be kept for the wrong-key faults.
 
 ## Not covered
 
