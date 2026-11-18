@@ -30,6 +30,15 @@ vars:
   DOCKER_SOCK: '{{.DOCKER_SOCK | default "/var/run/docker.sock"}}'
   # Address published lab ports bind to; widen with LAB_BIND_ADDRESS=0.0.0.0
   LAB_BIND_ADDRESS: '{{.LAB_BIND_ADDRESS | default "127.0.0.1"}}'
+  # The lab's images are built and run as linux/amd64 on every host, because the role downloads
+  # Splunk's x86_64 packages. On an ARM machine (Apple Silicon) the engine runs them emulated.
+  # Without this, an ARM host builds arm64 images: the runner image then fails to build and
+  # Splunk could not run in the node images.
+  LAB_PLATFORM: '{{.LAB_PLATFORM | default "linux/amd64"}}'
+  # Extra arguments for the runner container. On a host where SELinux is enforcing, a container may
+  # not open the engine socket mounted into it; LAB_RUNNER_ARGS='--security-opt label=disable' lifts
+  # that for the runner only.
+  LAB_RUNNER_ARGS: '{{.LAB_RUNNER_ARGS | default ""}}'
   # A second lab on the same engine: LAB_NAME=<letters and digits> prefixes every container, gives
   # the lab its own network and volumes, and LAB_PORT_OFFSET moves its three published ports.
   # Empty (the default) keeps the names the lab has always used.
@@ -43,6 +52,7 @@ vars:
   # Common docker run args for molecule tasks (ENV resolved per-invocation)
   _DOCKER_ARGS: >-
     --cap-add NET_ADMIN
+    {{.LAB_RUNNER_ARGS}}
     -v {{.DOCKER_SOCK}}:/var/run/docker.sock
     -v {{.PROJECT_ROOT}}:/workspace
     -w /workspace/testing
@@ -55,8 +65,8 @@ vars:
     -e LAB_PORT_OFFSET={{.LAB_PORT_OFFSET}}
   # Disable veth checksum offloading before running molecule (prevents large file transfer corruption)
   _ETHTOOL_FIX: 'ethtool -K eth0 tx off rx off 2>/dev/null;'
-  _MOL: 'docker run --rm {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
-  _MOL_NET: 'docker run --rm --network {{._NET}} {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
+  _MOL: 'docker run --rm --platform {{.LAB_PLATFORM}} {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
+  _MOL_NET: 'docker run --rm --platform {{.LAB_PLATFORM}} --network {{._NET}} {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
 
 tasks:
   default:
@@ -110,11 +120,11 @@ tasks:
     cmds:
       - |
         echo "Checking/building Splunk testing framework images..."
-        docker image inspect localhost/splunk-base-almalinux9:latest >/dev/null 2>&1 || docker build -t localhost/splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
-        docker image inspect localhost/splunk-base-ubuntu2204:latest >/dev/null 2>&1 || docker build -t localhost/splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
-        docker image inspect localhost/splunk-ansible-controller:latest >/dev/null 2>&1 || docker build -t localhost/splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
-        docker image inspect localhost/splunk-git-server:latest >/dev/null 2>&1 || docker build -t localhost/splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
-        docker image inspect localhost/molecule-runner:latest >/dev/null 2>&1 || docker build -t localhost/molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+        docker image inspect localhost/splunk-base-almalinux9:latest >/dev/null 2>&1 || docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+        docker image inspect localhost/splunk-base-ubuntu2204:latest >/dev/null 2>&1 || docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+        docker image inspect localhost/splunk-ansible-controller:latest >/dev/null 2>&1 || docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+        docker image inspect localhost/splunk-git-server:latest >/dev/null 2>&1 || docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+        docker image inspect localhost/molecule-runner:latest >/dev/null 2>&1 || docker build --platform {{.LAB_PLATFORM}} -t localhost/molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
         echo "All images ready!"
     status:
       - docker image inspect localhost/splunk-base-almalinux9:latest >/dev/null 2>&1
@@ -126,18 +136,18 @@ tasks:
   setup:rebuild:
     desc: Force rebuild all Docker images
     cmds:
-      - docker build -t localhost/splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
-      - docker build -t localhost/splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
-      - docker build -t localhost/splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
-      - docker build -t localhost/splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
-      - docker build -t localhost/molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+      - docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+      - docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+      - docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+      - docker build --platform {{.LAB_PLATFORM}} -t localhost/splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+      - docker build --platform {{.LAB_PLATFORM}} -t localhost/molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
       - echo "All images rebuilt!"
 
   download:splunk:
     desc: "Download Splunk binaries using version from environment group_vars (idempotent)"
     cmds:
       - |
-        docker run --rm \
+        docker run --rm --platform {{.LAB_PLATFORM}} \
           -v {{.PROJECT_ROOT}}:/workspace \
           -w /workspace/testing \
           -e MOLECULE_ENV={{.ENV}} \
@@ -321,7 +331,7 @@ tasks:
           echo "Molecule runner already running"
         else
           docker rm -f {{._PFX}}mol-run 2>/dev/null || true
-          docker run -d --name {{._PFX}}mol-run --network {{._NET}} \
+          docker run -d --platform {{.LAB_PLATFORM}} --name {{._PFX}}mol-run --network {{._NET}} \
             {{._DOCKER_ARGS}} \
             localhost/molecule-runner:latest sleep infinity
           echo "Molecule runner started (use: task runner:shell)"

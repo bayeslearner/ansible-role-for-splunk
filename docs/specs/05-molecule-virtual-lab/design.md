@@ -14,7 +14,7 @@
 
 ## Components And Boundaries
 
-Names in this document are those of the unnamed lab, the default. A lab started with `LAB_NAME=<name>` has the same parts under its own names: containers `<name>-<host>`, the network `splunk-test-network-<name>`, volumes `ansible-splunk-lab-<name>-…`, and its three published ports moved by `LAB_PORT_OFFSET`. Inside its network every container keeps its inventory name as hostname and alias, so everything below holds for a named lab as written (task 3.7).
+Names in this document are those of the unnamed lab, the default. A lab started with `LAB_NAME=<name>` has the same parts under its own names: containers `<name>-<host>`, the network `splunk-test-network-<name>`, volumes `ansible-splunk-lab-<name>-…` (the stem is `lab-<name>`, not `test`, so one lab's `task reset` cannot match another's volumes), and its three published ports moved by `LAB_PORT_OFFSET`. Inside its network every container keeps its inventory name as hostname and alias, so everything below holds for a named lab as written (task 3.7).
 
 ```mermaid
 flowchart TB
@@ -58,7 +58,8 @@ flowchart TB
 | `task setup` | env `MOLECULE_ENV` | secrets, images, downloads, network | operator; `infra:test`, `infra:create` |
 | `task setup:secrets` / `setup:images` / `setup:rebuild` / `download:splunk` / `network:create` | — | the setup steps one by one | `setup` |
 | `task infra:test` | `MOLECULE_ENV` | `molecule test -s infra` (destroy, create, prepare, verify, destroy) | operator |
-| `task infra:create` / `infra:prepare` / `infra:setup` / `infra:destroy` | `MOLECULE_ENV` | one infra stage; `setup` = create + prepare | operator, workflows |
+| `task infra:create` / `infra:prepare` / `infra:setup` / `infra:destroy` | `MOLECULE_ENV` | one infra stage; `setup` = create + prepare; `create` runs `lab:ports` first | operator, workflows |
+| `task lab:ports` | `LAB_NAME`, `LAB_PORT_OFFSET`, `MOLECULE_ENV` | stops when the web terminal's port, or on a topology with a Git server one of its two ports, is already in use and this lab's own container is not the one holding it | `infra:create`, operator |
 | `task day0:test` / `day0:converge` / `day0:verify` | `MOLECULE_ENV` | install stage | operator, workflows |
 | `task day1:test` / `day1:converge` / `day1:verify` | `MOLECULE_ENV` | operations stage | operator, `workflow:full` |
 | `task workflow:full` / `workflow:quick` | `MOLECULE_ENV` | chained stages | operator |
@@ -90,7 +91,7 @@ Each store has one writer: `.secrets/` is written only by `setup:secrets` (creat
 
 ```text
 testing/
-  Taskfile.yml                      entry point (304 lines)
+  Taskfile.yml                      entry point (about 360 lines)
   run-tests.sh                      forwards to task
   requirements.yml                  galaxy collections (ranges)
   docker-images/
@@ -154,7 +155,7 @@ Operator path from the controller (R6): operator → `:3000/ttyd` (nginx → tty
 
 ## Algorithms
 
-Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when the lab's controller does not exist yet and a port the lab is about to publish is already in use on the machine:
+Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when the lab's controller does not exist yet and the web terminal's port, or one of the Git server's two ports on a topology that has one, is already in use on the machine:
 
 ```text
 targets = groups.full + groups.uf + groups.git_server + groups.ansible_controller
@@ -196,7 +197,7 @@ if installed before this run and installed version < splunk_package_version:
 - A failed stage stops the workflow and leaves containers up for debugging; `task infra:destroy` or `task reset` cleans up.
 - `infra:destroy` removes the hosts of the topology `MOLECULE_ENV` names when it runs. A lab built as `prod` and destroyed as `small` keeps its other nodes; `task reset` removes them, because it clears whatever is left on the lab's network.
 - The container engine publishes a port that another program already holds without an error, and that program then answers on it. `task lab:ports` catches this for the web terminal's port before the lab is created; on a topology with a Git server it probes that server's two ports as well.
-- Destroy steps use `ignore_errors`, so a partly created lab still tears down.
+- Destroy removes containers with `state: absent`, which passes when a container is already gone, so a partly created lab still tears down; a removal that really fails now fails the destroy (it was ignored before 2026-11-18).
 - The veth offload fix is applied once per runner command, and on every node and the controller by a systemd unit at each boot, so it survives a container or host restart.
 - Download retries 3 times, 10 s apart.
 
@@ -239,7 +240,7 @@ Reconstructed from the code, compared with the README and requirements:
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | As specified: infra creates the owner, installs the lab key, and creates and seeds one repository per app in `git_apps`; infra verify reads each from the controller | ✅ infra run on `prod` |
 | R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab; `task reset` removes a lab whichever topology built it and leaves another lab on the engine alone | ✅ run on two Macs |
-| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 no run yet on a Linux Docker host or on the pre-production host with today's code (3.2, 3.9, 3.12) |
+| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 the containers are created on Podman with today's code, but no full run yet on a Linux Docker host or on the pre-production host (3.2, 3.9) |
 
 ## Architect's Review
 

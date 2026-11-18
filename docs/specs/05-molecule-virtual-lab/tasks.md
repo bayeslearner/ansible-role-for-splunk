@@ -14,8 +14,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - 2026-11-18, later: the first run on a machine that never had the lab built all five images, downloaded both packages and created the network, and a second run there skipped (`docs/history/verification-2026-11-18-lab-setup.md`). Assembled from two machines: that checkout already held the secrets through a file sync, so their generation is shown in an empty directory; and the base images were pulled before the run there.
     - Built in: `555beec`, `55426a6`
     - Requirements: R1
-    - Verification: run twice on a clean host; `docs/history/verification-2026-11-18-lab-setup.md`
-  - [x] 1.2 `MOLECULE_ENV=small task workflow:full` passes on the Mac
+    - Verification: `docs/history/verification-2026-11-18-lab-setup.md` (two runs on a machine that never had the lab, plus the secrets step in an empty directory)
+  - [x] 1.2 `MOLECULE_ENV=small task workflow:full` passes on the Mac (the first of the two Macs used on 2026-11-18)
     - Built in: `555beec`, `86a1a37`
     - Requirements: R2, R3, R4, R5, R9
     - Verification: full log plus `docker ps` before destroy, in a verification record
@@ -68,7 +68,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
     - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; the check covers the moment a lab is built; a name that starts resolving later is not caught (design, Security). Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
     - Requirements: NFR Isolation
-  - [x] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host
+  - [x] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host (three ran at once)
     - 2026-11-18: `LAB_NAME` and `LAB_PORT_OFFSET`; unset, nothing changes. Three labs ran side by side, two with Splunk installed (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). `infra:create` refuses a web-terminal port that is already in use.
     - Requirements: R10
     - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`
@@ -84,8 +84,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Depends: 3.10
     - Requirements: R10
     - Verification: `MOLECULE_ENV=dms task day0:converge` and `day0:verify` pass; `splunk version` on `splunk-dms` reports 10.6.1.1
-  - [ ] 3.12 Lab images resolve on a Podman engine: `podman build -t name:latest` stores `localhost/name:latest`, while the Docker-compatible API that `community.docker` calls reads the short name as `docker.io/library/name:latest`, finds nothing and tries a pull (`500 ... connection refused`). Tag the images under both names in `setup:images`, or reference them by a name both engines resolve
-    - 2026-11-18: fix landed: the five images are named `localhost/<name>:latest`, which both engines resolve. Reproduced and shown fixed on Podman 6.0.2 with the same module and a probe image; the lab passes on Docker with the new names (`docs/history/verification-2026-11-18-image-names-docker-and-podman.md`). Stays open for its own check: `infra:create` of the lab on a Podman engine.
+  - [x] 3.12 Lab images resolve on a Podman engine: `podman build -t name:latest` stores `localhost/name:latest`, while the Docker-compatible API that `community.docker` calls reads the short name as `docker.io/library/name:latest`, finds nothing and tries a pull (`500 ... connection refused`). Tag the images under both names in `setup:images`, or reference them by a name both engines resolve
+    - 2026-11-18: fix landed: the five images are named `localhost/<name>:latest`, which both engines resolve. Reproduced and shown fixed on Podman 6.0.2 with the same module and a probe image; the lab passes on Docker with the new names (`docs/history/verification-2026-11-18-image-names-docker-and-podman.md`).
+    - 2026-11-18, later: the check itself: on a Podman engine, `infra:create` created the two `dev` containers and all eleven `prod` containers from the `localhost/…` images with no pull (`docs/history/verification-2026-11-18-lab-on-podman.md`). The prepare step that follows could not run on that ARM machine (the amd64 Docker client crashes under emulation there); it ran on the x86_64 pre-production host under Podman on 2026-11-10.
     - Depends: 3.10
     - Requirements: R10
     - Verification: `infra:create` on a Podman engine creates every container with no pull attempt
@@ -146,6 +147,12 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.12 `infra/destroy.yml` no longer ignores errors when it removes containers, and `task lab:ports` also probes the Git server's two ports on a topology that has one
     - Requirements: R9, R10
     - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`, "Later the same day"
+  - [x] 6.13 The Taskfile builds and runs the lab's images as `linux/amd64` itself (`LAB_PLATFORM`): until now that came from a `DOCKER_DEFAULT_PLATFORM` variable set outside the lab on both Macs, and without it an ARM host builds arm64 images and the runner image fails to build
+    - Requirements: R1, R10
+    - Verification: `docs/history/verification-2026-11-18-lab-on-podman.md`: five images built as amd64 under Podman with the variable unset
+  - [x] 6.14 `LAB_RUNNER_ARGS` adds arguments to the runner container, for a host where SELinux stops a container opening the engine socket (`--security-opt label=disable`)
+    - Requirements: R10
+    - Verification: `docs/history/verification-2026-11-18-lab-on-podman.md`: the socket request refused without it and answered with it
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -183,3 +190,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: Reconciled the requirements and design with named labs (configuration table, R1, R3, R7, the defaults note, the port check) and R9 with the code. R9 did not hold: `task reset` under a different `MOLECULE_ENV` than the lab was built with left containers behind. Fixed (6.11) and shown before and after on a second lab beside an untouched one (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`).
 - 2026-11-18: 6.12: destroy reports a removal that fails (it ignored all three), and the port check covers the Git server's ports. The "Learn Molecule" and "Code tour" tabs on the Board were checked against today's code and corrected where stale.
 - 2026-11-18: 1.1 closed from the day's runs on the second Mac, which had never had the lab, plus a secrets run in an empty directory (`docs/history/verification-2026-11-18-lab-setup.md`). The record says where this falls short of one unbroken run on one clean host. Noted there: a checkout shared through a file sync shares its lab secrets between machines.
+- 2026-11-18: 3.12 closed: the lab's containers were created on a Podman engine with no pull (`docs/history/verification-2026-11-18-lab-on-podman.md`). The attempt found that the images' amd64 platform came from a shell variable outside the lab (6.13, fixed in the Taskfile) and that SELinux blocks the runner from the engine socket (6.14, a new setting). The spec's design lines on destroy, the port check and the Taskfile's size were also corrected.
