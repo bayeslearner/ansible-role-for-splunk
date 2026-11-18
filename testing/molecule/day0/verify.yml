@@ -86,7 +86,7 @@
         validate_certs: false
       register: lab_shc_members
       no_log: true
-      run_once: true
+      run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
       until: >-
         lab_shc_members.status | default(0) == 200 and
         (lab_shc_members.json.entry | selectattr('content.status', 'equalto', 'Up') | list | length)
@@ -97,7 +97,7 @@
     - name: Report the search head cluster
       ansible.builtin.debug:
         msg: "{{ lab_shc_members.json.entry | map(attribute='content.label') | list | sort | join(', ') }} are Up members of the search head cluster"
-      run_once: true
+      run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
 
 # Informational until the Git server is bootstrapped (spec 05, task 2.3).
 - name: Report whether the Git server answers (informational)

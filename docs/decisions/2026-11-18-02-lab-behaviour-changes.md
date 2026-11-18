@@ -60,4 +60,3 @@ Five choices made while closing spec 05 tasks. Each is technical, inside the ste
 - **Choice:** keep `privileged`. The lab's purpose is to exercise the role as it behaves on a real host.
 - **Consequence to weigh on a shared host:** a privileged node lets the role change transparent huge pages for the whole machine. If the lab is to share a host with other workloads, this choice should be revisited for that host.
 - **Reversal:** set `privileged: false` and add `capabilities: [NET_ADMIN]` on the nodes in `infra/create.yml`.
-

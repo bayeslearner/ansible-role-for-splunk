@@ -64,4 +64,3 @@ On the tree at `b38171c`, on the `dev` lab's infrastructure: the controller's `a
 |---|---|
 | `ansible [core 2.10.8]` | exit 2: "Runner runs ansible-core 2.21.6; the controller reports: ansible [core 2.10.8]" (`ver-neg.log`) |
 | the real command restored | exit 0 (`ver-ok.log`) |
-

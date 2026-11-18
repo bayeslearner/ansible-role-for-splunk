@@ -103,4 +103,3 @@ On the tree at `de7cf83`. The lab reaches its hosts by container name, and sever
 | `task infra:test` with no such name | exit 0; 6 steps "Executed: Successful" (`names-ok.log`) |
 
 The lookup uses the resolver of the container the runner starts in, which takes its DNS servers and search domains from the engine's host. It was tried with a hosts-file entry, not on a network whose DNS answers for a lab name.
-

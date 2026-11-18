@@ -115,7 +115,7 @@
       no_log: true
       become: true
       become_user: "{{ splunk_nix_user }}"
-      run_once: true
+      run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
 
     - name: Bootstrap the captain
       ansible.builtin.include_role:

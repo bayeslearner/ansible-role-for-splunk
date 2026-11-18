@@ -18,3 +18,11 @@ skip_list:
 
 enable_list:
   - fqcn # opt-in
+
+# The lab's infra playbooks use community.docker, which is installed in the molecule-runner image
+# and not in the lint environment (the hook runs with --offline). Mocking the modules lets the
+# rest of those playbooks be checked.
+mock_modules:
+  - community.docker.docker_container
+  - community.docker.docker_network
+  - community.docker.docker_volume

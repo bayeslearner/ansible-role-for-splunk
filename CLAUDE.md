@@ -44,7 +44,7 @@ task shell -- ansible-controller   # operate the lab from the controller
 task reset                         # remove containers, test volumes and network
 ```
 
-Lint (repo root): `pre-commit run --all-files` (yamllint, ansible-lint on `roles/ playbooks/ environments/`). Spec lint: `python3 scripts/spec_lint.py`.
+Lint (repo root): `pre-commit run --all-files` (yamllint, ansible-lint on `roles/ playbooks/ environments/ testing/molecule/`); `uvx pre-commit run --all-files` works without installing it. Spec lint: `python3 scripts/spec_lint.py`.
 
 ## Layout
 

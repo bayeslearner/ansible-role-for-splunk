@@ -3,15 +3,18 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      # Upstream's template is left byte for byte as upstream ships it.
       - id: end-of-file-fixer
+        exclude: ^roles/splunkupgrader/templates/local_config_102\.j2$
       - id: trailing-whitespace
-        exclude: ^README.md
+        exclude: ^(README\.md|roles/splunkupgrader/templates/local_config_102\.j2)$
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
     hooks:
       - id: yamllint
   - repo: https://github.com/ansible/ansible-lint.git
-    rev: v24.9.2
+    # v24.9.2 crashed on import against the ansible-core its environment installs.
+    rev: v26.11.0
     hooks:
       - id: ansible-lint
-        entry: ansible-lint --offline roles/ playbooks/ environments/
+        entry: ansible-lint --offline roles/ playbooks/ environments/ testing/molecule/
