@@ -35,6 +35,7 @@ import sys
 from pathlib import Path
 
 VALID_STATUS = {"DRAFT", "ACTIVE", "CLOSED"}
+CONFLICT_MARKER = re.compile(r"^(<{7}|>{7})( |$)")
 VALID_CLOSED_AS = {"SHIPPED", "FORK-FORWARD", "RETRACTED", "SUPERSEDED"}
 NULLISH = {"", "null", "~", "none", "nil", "[]", "{}"}
 
@@ -119,6 +120,12 @@ def main() -> int:
     fms: dict[str, dict] = {}
 
     for d in dirs:
+        # A merge that leaves its conflict markers in a spec passes every frontmatter check.
+        # "=======" alone is not checked: it is also a setext heading underline.
+        for md in sorted(d.glob("*.md")):
+            for n, line in enumerate(md.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                if CONFLICT_MARKER.match(line):
+                    errors.append(f"{d.name}: {md.name}:{n}: merge conflict marker")
         text = spec_text(d)
         if not text:
             continue  # no frontmatter'd spec file here; skip
