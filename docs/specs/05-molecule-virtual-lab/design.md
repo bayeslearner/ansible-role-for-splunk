@@ -43,7 +43,7 @@ flowchart TB
 
 | Component | Responsibility | Defined in |
 |---|---|---|
-| Taskfile | Entry point, ordering, Docker run flags, veth fix in the runner | `testing/Taskfile.yml` |
+| Taskfile | Entry point, ordering, Docker run flags, veth fix in the runner. Builds and runs every lab image as `linux/amd64` (`LAB_PLATFORM`), because the role downloads x86_64 Splunk packages; passes `LAB_RUNNER_ARGS` to the runner; derives a named lab's prefix, network, volume stem and ports | `testing/Taskfile.yml` |
 | molecule-runner | Runs Molecule; creates containers through the host socket; runs the role in scenarios | `docker-images/molecule-runner/Dockerfile` |
 | Node images | systemd PID 1, `ps`, sshd and scp, user `ansible` with NOPASSWD sudo, a boot-time unit that turns checksum offload off on `eth0` | `docker-images/{ubuntu2204,almalinux9}-systemd-sshd/` |
 | Controller image | Node image plus ansible-core 2.21.6 in a Python 3.12 virtualenv (the runner's version and collections), ttyd 1.7.7 (built from source), nginx proxy on 3000 | `docker-images/ansible-controller/Dockerfile` |
