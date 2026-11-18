@@ -6,7 +6,7 @@ decided_by: the agent; the owner may reverse
 
 # Lab behaviour changed on 2026-11-18
 
-Five choices made while closing spec 05 tasks. Each is technical, inside the steering (a lab you operate like production, with checks you can trust), and reversible by reverting its commit. Evidence for each is a verification record under `docs/history/`.
+Nine choices made while closing spec 05 tasks (five at first, four added later the same day). Each is technical, inside the steering (a lab you operate like production, with checks you can trust), and reversible by reverting its commit. Evidence for each is a verification record under `docs/history/`.
 
 ## 1. A destroyed node takes its data volume with it (`115e63d`)
 
