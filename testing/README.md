@@ -83,7 +83,7 @@ Each stage ends with a check, and a failed check fails the run.
 | Stage | Does | Fails when |
 |---|---|---|
 | `infra` | starts one systemd container per inventory host plus the controller; installs the lab SSH key, the `ansible` user and the controller's `ansible.cfg` over the Docker connection | a lab secret is missing; PID 1 on a node is not systemd; the controller cannot reach a node over SSH as `ansible` |
-| `day0` | installs Splunk on every node with the role, over SSH; on a topology with a `clustermanager` group it then joins the indexers to the manager, and with `shcluster` and `shdeployer` groups it forms the search head cluster | the Splunk unit is not active; port 8089 (or 8000 on search heads) is closed; an indexer or a search head cluster member is not Up |
+| `day0` | installs Splunk on every node with the role, over SSH; on a topology with a `clustermanager` group it then joins the indexers to the manager, and with `shcluster` and `shdeployer` groups it forms the search head cluster | the Splunk unit is not active (it prints the node's processes, last log errors and unit status first); port 8089 (or 8000 on search heads) is closed; an indexer or a search head cluster member is not Up |
 | `day1` | restarts Splunk through the role, runs the role's status check, accepts the licence | the Splunk unit is not active (it prints the node's processes, last log errors and unit status first) |
 
 On `prod`, infra also prepares the Git server: one repository per app the inventory names under `git_apps`, at `ssh://git@git-server/test/<app>`, each with a minimal Splunk app, readable with the lab key. The owner is `test`, with the lab's generated Splunk admin password; the web UI is at `http://localhost:8929`.

@@ -19,6 +19,13 @@
       changed_when: false
       failed_when: false
 
+    - name: Show why the service is not active
+      ansible.builtin.include_tasks: ../tasks/splunk_diagnostics.yml
+      vars:
+        diag_unit: "{{ splunk_unit }}"
+        diag_home: "{{ '/opt/splunkforwarder' if 'uf' in group_names else '/opt/splunk' }}"
+      when: splunk_unit_state.stdout | trim != 'active'
+
     - name: Assert the Splunk service is active
       ansible.builtin.assert:
         that:

@@ -64,3 +64,19 @@ Found after the runs above, on the tree at `9735f35`, and fixed in the commit th
 | after | `MOLECULE_ENV=dev task workflow:full` | exit 0; 10 Molecule steps "Executed: Successful"; no lab container left (`dev-full-after-fix.log`) |
 
 The fix: `day0:test` and `day1:test` pass `--destroy=never`, and `day0/destroy.yml` is deleted. Removing containers stays with `task infra:destroy`.
+
+## Diagnostics on a failed day0 too
+
+On the tree at `05f3ef7`. day1 verify printed diagnostics for a node that is down; day0 verify only said the unit was inactive. Both now include one shared task file, `testing/molecule/tasks/splunk_diagnostics.yml`.
+
+| Step on `dev` | Result |
+|---|---|
+| `task workflow:quick` | exit 0 |
+| `systemctl stop Splunkd` on `splunk-dev`, then `task day0:verify` | exit 201; before the assert it printed "no splunkd process", the last `splunkd.log` errors and `Active: inactive (dead)` (`diag2-day0-neg.log`) |
+| the same stopped node, `task day1:verify` | exit 201 with the same diagnostics (`diag-day1-neg.log`, from the first draft of the shared file) |
+| Splunk started again, `task day0:verify` and `task day1:test` | exit 0 |
+
+Two defects in the earlier diagnostics were fixed on the way. The process list used `ps` piped to `grep`, which listed its own shell command as a Splunk process; and the AlmaLinux node image has neither `ps` nor `pgrep`, so on those nodes it would always have said no process. The list now reads `/proc` directly: with Splunk running on `splunk-dev` it printed the two `splunkd` processes, and the same loop was tried in both node images.
+
+Not run: the diagnostics on an AlmaLinux node with Splunk installed (those nodes exist only in `prod`).
+

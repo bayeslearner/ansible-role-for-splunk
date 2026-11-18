@@ -103,6 +103,7 @@ testing/
     infra/{molecule,create,prepare,verify,destroy}.yml
     day0/{molecule,converge,verify}.yml + inventory/ (repeats common SSH settings)
     day1/{molecule,converge,verify}.yml
+    tasks/splunk_diagnostics.yml    printed by day0 and day1 verify for a node whose Splunk is down
     environments/{common,small,dev,prod}/hosts.yml + group_vars/
 ```
 

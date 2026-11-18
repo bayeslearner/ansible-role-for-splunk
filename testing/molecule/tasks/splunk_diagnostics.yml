@@ -1,0 +1,26 @@
+---
+# Print why Splunk is not running on this node. Included by the day0 and day1 verify playbooks
+# just before their assert, for a node whose unit is not active, so the cause is in the run's output.
+# The process list reads /proc directly: the AlmaLinux node image has neither ps nor pgrep.
+# Needs: diag_unit (the systemd unit name) and diag_home (the Splunk install directory).
+- name: Collect diagnostics for the node that is not active
+  ansible.builtin.shell: |
+    echo "== processes"
+    found=0
+    for p in /proc/[0-9]*; do
+      if [ "$(cat "$p/comm" 2>/dev/null)" = "splunkd" ]; then
+        found=1; echo "${p#/proc/} $(tr '\0' ' ' < "$p/cmdline")"
+      fi
+    done
+    [ "$found" = 1 ] || echo "no splunkd process"
+    echo "== last errors in splunkd.log"
+    grep -Ei 'error|fatal' {{ diag_home }}/var/log/splunk/splunkd.log 2>/dev/null | tail -20 || echo "no splunkd.log"
+    echo "== unit"; systemctl status {{ diag_unit }} --no-pager -n 15 2>&1 || true
+  register: splunk_diagnostics
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Display diagnostics
+  ansible.builtin.debug:
+    var: splunk_diagnostics.stdout_lines
