@@ -19,7 +19,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R2, R3, R4, R5, R9
     - Verification: full log plus `docker ps` before destroy, in a verification record
   - [x] 1.3 Same for `dev` and `prod`
-    - `dev` passed infra, day0 and day1 on 2026-11-18 (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). `prod` is owed; see 2.1.
+    - `dev` passed infra, day0 and day1 on 2026-11-18 (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). `prod` passed all three on a second Mac the same day (`docs/history/verification-2026-11-18-prod-end-to-end.md`).
     - For the `prod` run, also read back two things day0 sets through the role and no check covers yet: the forwarder `splunk-uf01` is a deployment client of `splunk-fwdmanager:8089` (the role writes `deploymentclient.conf` at install because the inventory sets `splunk_uri_ds` and `clientName`), and the deployer's `target_shc_group_name` resolves to the two search heads. The `dmc` group is a label only: nothing configures a monitoring console.
     - Depends: 1.2
     - Requirements: R2, R4
@@ -32,7 +32,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - [ ] 2. Core: close the gaps between the docs and the code
   - [x] 2.1 `prod` forms the clusters its inventory describes: run the role's indexer-cluster and search-head-cluster deployment (`playbooks/splunk_idxc_deploy.yml`, `playbooks/splunk_shc_deploy.yml` or their task files) in a scenario, and make day0 verify report a real cluster state
     - Requirements: R4
-    - Code landed 2026-11-18: day0 converge runs the role's manager, peer, search-head, deployer, member and captain tasks on the cluster groups, guarded so it can run twice; `prod` sets `splunk_uri_cm`, replication and search factor 2, and `splunk_mgmt_uri`; day0 verify waits for every indexer and every search head cluster member to be Up. Indexer half verified. Search head half verified on a third attempt the same day: verify passes on the healthy two-member cluster and fails when a member is stopped. `prod` as a whole has not run. Evidence: `docs/history/verification-2026-11-18-cluster-formation.md`. Stays open until `MOLECULE_ENV=prod task workflow:full` passes on a host with about 30 GB of free engine disk.
+    - Code landed 2026-11-18: day0 converge runs the role's manager, peer, search-head, deployer, member and captain tasks on the cluster groups, guarded so it can run twice; `prod` sets `splunk_uri_cm`, replication and search factor 2, and `splunk_mgmt_uri`; day0 verify waits for every indexer and every search head cluster member to be Up. Indexer half verified. Search head half verified on a third attempt the same day: verify passes on the healthy two-member cluster and fails when a member is stopped. Evidence: `docs/history/verification-2026-11-18-cluster-formation.md`. Closed by the full `prod` run with both clusters in one lab (`docs/history/verification-2026-11-18-prod-end-to-end.md`), run as `workflow:quick`, `day1:test` and `infra:destroy` so the clusters could be read back between the stages.
     - Note: until then, the README must not call the `prod` nodes a cluster
     - Priority: first of the last-mile work. The owner confirmed on the Board (2026-11-18) that `prod` is meant to form the smallest valid clusters, two indexers and two search heads, to exercise the role's cluster tasks.
   - [x] 2.2 `infra/verify.yml` checks SSH from the controller to every node as `ansible`, so a broken key fails infra instead of day0
@@ -46,7 +46,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
   - [x] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
-    - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). A lab run is still owed.
+    - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). Lab runs followed on 2026-11-18 (2.7).
     - Run 2026-11-18 on `main`, which contains `upstream/master` at `750c071`: `small` and `dev` pass infra, day0 and day1, and the role's cluster tasks formed an indexer cluster. Nothing in the merged role broke those paths. Not exercised: app deployment (`apps`, `git_apps`). The Git server's repositories exist since 2.3; running the role's app tasks against them is day 2 work (spec 10).
     - Requirements: R4, R5
 
@@ -126,7 +126,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Verification: `prod` infra verify reaches all nine nodes
   - [x] 6.7 `day0/converge.yml` stops before any install when the container engine's disk cannot hold the pending installs plus a margin, with a message that says how much is free and how much is needed
     - Requirements: R4, R10
-    - Verification: the check passing and failing on its own (done 2026-11-18, `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`); a whole day0 run with the check in front (owed: not run on the Mac, whose engine disk is shared with other work)
+    - Verification: the check passing and failing on its own (done 2026-11-18, `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`); a whole day0 run with the check in front (done on `prod` on a second Mac, `docs/history/verification-2026-11-18-prod-end-to-end.md`)
   - [x] 6.8 sshd on the node images accepts keys only (it accepted password logins, and the `ansible` user's password is a fixed word with passwordless sudo behind it)
     - Requirements: R3, R10
     - Verification: the methods each node offers before and after, and `prod` infra test, in `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`

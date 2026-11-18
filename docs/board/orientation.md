@@ -34,7 +34,7 @@ flowchart LR
 
 ## Why
 
-The fork exists to turn the upstream role's Molecule harness into a virtual lab: a controller you log into and drive like production, with Molecule only building and tearing down the estate. The harness merged upstream in March and was refactored back to that intent on `feature/virtual-lab`, but never run on record. Spec 05 writes down what was built, so the next step is evidence, not new features.
+The fork exists to turn the upstream role's Molecule harness into a virtual lab: a controller you log into and drive like production, with Molecule only building and tearing down the estate. The harness merged upstream in March and was refactored back to that intent on `feature/virtual-lab`, but had no run on record until November 2026. Spec 05 writes down what was built and collects that evidence before new features: by 2026-11-18 every topology has a recorded full run.
 
 ## Next
 
