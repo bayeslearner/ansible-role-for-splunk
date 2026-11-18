@@ -58,7 +58,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R10
   - [x] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
     - Requirements: NFR Isolation
-  - [ ] 3.4 Remove the Docker socket from the controller, or document why the operator path needs it (nothing in the scenarios uses it from the controller)
+  - [x] 3.4 Remove the Docker socket from the controller, or document why the operator path needs it (nothing in the scenarios uses it from the controller)
     - Requirements: NFR Isolation
   - [ ] 3.5 Decide whether nodes can run without `privileged` and `cgroupns_mode: host` on the target hosts' cgroup version; record the result
     - Requirements: NFR Isolation
@@ -139,3 +139,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 4.1 closed: every base image is pinned by tag and digest, and Gitea, go-task, uv and the controller's Python have exact versions. All five images rebuild and `small` passes a full workflow on them. `prod`'s infra scenario also passes on them.
 - 2026-11-18: 3.3 closed: the lab's published ports bind to `127.0.0.1` unless `LAB_BIND_ADDRESS` widens them (in place since 3.10), and the Git server now refuses sign-up (HTTP 403) while the bootstrap still creates its owner. Evidence: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`.
 - 2026-11-18: day0 verify prints the same failure diagnostics as day1, from one shared task file; the process list reads `/proc`, because the AlmaLinux image has no `ps` (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
+- 2026-11-18: 3.4 closed: the controller no longer mounts the Docker socket; `dev` passes a full workflow and infra verify without it (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).

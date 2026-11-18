@@ -157,7 +157,7 @@ Container creation (`infra/create.yml`):
 targets = groups.full + groups.uf + groups.git_server + groups.ansible_controller
 ensure network splunk-test-network
 if 'ansible_controller' in groups:
-    run controller (privileged, cgroupns=host, docker.sock, /workspace, .secrets ro, publish 3000)
+    run controller (privileged, cgroupns=host, /workspace, .secrets ro, publish 3000 on the bind address)
 for host in targets minus git-server, ansible-controller:
     run host from hostvars[host].docker_image or ubuntu2204
         (privileged, cgroupns=host, /sys/fs/cgroup rw, volume ansible-splunk-test-<host>-data:/opt)
@@ -204,7 +204,7 @@ Recorded runs: `small` and `dev` on the Mac and the cluster halves of `prod`, 20
 | Boundary | As built |
 |---|---|
 | Operator → controller | ttyd basic auth over plain HTTP on `0.0.0.0:3000`; password random, 20 chars |
-| Controller → host | privileged container with `/var/run/docker.sock` mounted (`:ro` does not limit API calls); `ansible` has NOPASSWD sudo, so the ttyd password grants root on the lab host |
+| Controller → host | privileged container (it runs systemd) with no Docker socket since 2026-11-18; `ansible` has NOPASSWD sudo, so the ttyd password grants root inside a privileged container, which can still reach the host's devices (task 3.5) |
 | Nodes → host | privileged, `cgroupns_mode: host`, `/sys/fs/cgroup` rw |
 | Network → Gitea | `0.0.0.0:8929` and `:2222`, `DISABLE_REGISTRATION=false` |
 | Inside the lab | password `ansible:ansible` baked into images, `PermitEmptyPasswords yes`, PAM `account sufficient pam_permit.so` on AlmaLinux; host keys not checked |

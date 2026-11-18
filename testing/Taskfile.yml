@@ -34,7 +34,6 @@ vars:
     -v {{.PROJECT_ROOT}}:/workspace
     -w /workspace/testing
     -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}}
-    -e HOST_DOCKER_SOCK={{.DOCKER_SOCK}}
     -e LAB_BIND_ADDRESS={{.LAB_BIND_ADDRESS}}
     -e MOLECULE_ENV={{.ENV}}
   # Disable veth checksum offloading before running molecule (prevents large file transfer corruption)

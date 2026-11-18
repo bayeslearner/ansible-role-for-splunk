@@ -80,3 +80,16 @@ Two defects in the earlier diagnostics were fixed on the way. The process list u
 
 Not run: the diagnostics on an AlmaLinux node with Splunk installed (those nodes exist only in `prod`).
 
+## The controller without the Docker socket (task 3.4)
+
+On the tree at `1f75b5f`. `infra/create.yml` mounted the host's Docker socket into `ansible-controller`, read-only. A read-only mount of that socket still lets whoever is on the controller drive the whole engine, and nothing on the controller used it: the image has no Docker client, and no playbook run from the controller uses the Docker connection. The mount is removed, with the `HOST_DOCKER_SOCK` variable that only fed it.
+
+| Step on `dev` | Result |
+|---|---|
+| `task workflow:full` | exit 0, no failed step (`sock-dev-full.log`) |
+| `docker inspect ansible-controller`, mounts | the repo at `/workspace`, `/sys/fs/cgroup`, and `.secrets`; no socket |
+| `ls /var/run/docker.sock` on the controller | "No such file or directory" |
+| `molecule verify -s infra` | exit 0 (`sock-verify.log`) |
+
+The runner still mounts the socket; that is how Molecule creates the lab's containers.
+
