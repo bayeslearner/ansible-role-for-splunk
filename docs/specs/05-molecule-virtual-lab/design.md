@@ -4,7 +4,7 @@
 
 `task workflow:full` with `MOLECULE_ENV=small`, traced through the code:
 
-1. `infra:setup` → `infra:create` → `setup` (`Taskfile.yml:47`): secrets, images, `download:splunk` (runs `molecule/download.yml` in a throwaway runner, writes `testing/software/splunk-9.4.2-…tgz`), network, `runner:start` (`mol-run`, left running).
+1. `infra:setup` → `infra:create` → `setup` (`Taskfile.yml:47`): secrets, images, `download:splunk` (runs `molecule/download.yml` in a throwaway runner, writes `testing/software/splunk-9.4.2-…tgz`), network. (`mol-run`, the persistent runner, starts only when `task runner:shell` is used.)
 2. `molecule create -s infra` in a `--rm` runner with the host Docker socket and the repo at `/workspace` (`_MOL`, `Taskfile.yml:36`). `infra/create.yml` starts `ansible-controller`, then one container per host in `full` and `uf` from that host's `docker_image`, each with a named volume `ansible-splunk-test-<host>-data` on `/opt`.
 3. `molecule prepare -s infra`: `infra/prepare.yml` reads the key and password inside the runner, then over the **docker** connection as root writes `authorized_keys`, creates the `splunk` user with sudo, clears `/run/nologin`, and configures the controller (keys, `ansible.cfg`, ttyd unit, nginx).
 4. `day0:test` → `molecule test -s day0` in a runner joined to `splunk-test-network` (`_MOL_NET`), so names like `splunkapp-prod01` resolve to containers. `day0/converge.yml` applies the role with `deployment_task: check_splunk.yml` over **SSH** as `ansible`, then, on a topology that has a `clustermanager` or `shdeployer` group, runs the role's cluster tasks (manager, peers, search heads, deployer, search head cluster members, captain). Because `splunk_download_local: true`, the role's `download_and_unarchive.yml` finds the tarball already in `splunk_package_path` on localhost (the runner), copies it to each node and unpacks it.
@@ -54,7 +54,7 @@ flowchart TB
 
 | Surface | Signature | Does | Called by |
 |---|---|---|---|
-| `task setup` | env `MOLECULE_ENV` | secrets, images, downloads, network, `mol-run` | operator; `infra:test`, `infra:create` |
+| `task setup` | env `MOLECULE_ENV` | secrets, images, downloads, network | operator; `infra:test`, `infra:create` |
 | `task setup:secrets` / `setup:images` / `setup:rebuild` / `download:splunk` / `network:create` | — | the setup steps one by one | `setup` |
 | `task infra:test` | `MOLECULE_ENV` | `molecule test -s infra` (destroy, create, prepare, verify, destroy) | operator |
 | `task infra:create` / `infra:prepare` / `infra:setup` / `infra:destroy` | `MOLECULE_ENV` | one infra stage; `setup` = create + prepare | operator, workflows |
@@ -62,7 +62,7 @@ flowchart TB
 | `task day1:test` / `day1:converge` / `day1:verify` | `MOLECULE_ENV` | operations stage | operator, `workflow:full` |
 | `task workflow:full` / `workflow:quick` | `MOLECULE_ENV` | chained stages | operator |
 | `task diag:terminal` / `diag:ssh` / `status` / `shell -- <name>` | — | inspection; both `diag:*` exit non-zero when the lab is unhealthy | operator |
-| `task runner:start` / `runner:shell` / `runner:stop` | — | persistent `mol-run` | operator, `setup` |
+| `task runner:start` / `runner:shell` / `runner:stop` | — | persistent `mol-run`, started on demand by `runner:shell` | operator, `setup` |
 | `task reset` | — | destroy, stop runner, remove `ansible-splunk-test-*` volumes and the network | operator |
 | `day0/converge.yml`, `day0/verify.yml` | run from runner or controller | role install; checks | Molecule, operator |
 | `http://<host>:3000/ttyd` | basic auth `ansible:<password>` | web shell as `ansible` on the controller | operator |
@@ -229,7 +229,7 @@ Reconstructed from the code, compared with the README and requirements:
 | R6 controller | `ansible.cfg` deployed; the controller runs Ubuntu 22.04's apt `ansible` while the runner runs the latest `ansible-core` from pip, so the two paths use different Ansible versions (exact controller version not yet read from a built image) | 🟡 |
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | Gitea starts; no repositories, users or deploy key are created (`prepare.yml:310` placeholders; `git_key: /tmp/test_git_key` never written) | ❌ |
-| R9 workflows | As specified; `infra:test` leaves `mol-run` running; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
+| R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
 | R10 portability | Built and used on macOS only; fixed names and ports allow one lab per Docker host | ⏳ |
 
 ## Architect's Review

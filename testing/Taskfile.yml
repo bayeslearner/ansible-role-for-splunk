@@ -51,13 +51,12 @@ tasks:
   # === Setup & Prereqs ===
 
   setup:
-    desc: Complete environment setup (secrets + images + software + network + runner)
+    desc: Complete environment setup (secrets + images + software + network)
     cmds:
       - task: setup:secrets
       - task: setup:images
       - task: download:splunk
       - task: network:create
-      - task: runner:start
       - echo "Environment setup complete!"
       - echo "Run 'task infra:test' (or 'MOLECULE_ENV=prod task infra:test') to start testing"
 
@@ -283,8 +282,10 @@ tasks:
         fi
 
   runner:shell:
-    desc: "Shell into molecule-runner"
+    desc: "Shell into a persistent molecule-runner (starts it when needed; stop it with runner:stop)"
     cmds:
+      - task: network:create
+      - task: runner:start
       - docker exec -it mol-run bash
 
   runner:stop:

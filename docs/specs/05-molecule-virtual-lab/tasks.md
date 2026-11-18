@@ -44,8 +44,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R1, R10
   - [x] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
-  - [ ] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
+  - [x] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
     - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). A lab run is still owed.
+    - Run 2026-11-18 on `main`, which contains `upstream/master` at `750c071`: `small` and `dev` pass infra, day0 and day1, and the role's cluster tasks formed an indexer cluster. Nothing in the merged role broke those paths. Not exercised: app deployment (`apps`, `git_apps`), which waits for the Git server (2.3).
     - Requirements: R4, R5
 
 - [ ] 3. Portability and isolation for the pve2 VM and the pre-production host
@@ -89,10 +90,10 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - [ ] 5. Polish and docs
   - [ ] 5.1 `testing/README.md` matches the code after 2.x and 3.x (topology names, what `prod` forms, ports, host requirements)
     - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. Stays open for the measured memory and CPU figures (5.5) and for 3.x.
-  - [ ] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
-    - 2026-11-18, first half done: `day0/destroy.yml` was not unused. `molecule test` ran it whenever day0 failed, deleting the lab and leaving its node volumes. It is removed, and `day0:test` and `day1:test` pass `--destroy=never`. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`. The `mol-run` half is open.
+  - [x] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
+    - 2026-11-18, first half done: `day0/destroy.yml` was not unused. `molecule test` ran it whenever day0 failed, deleting the lab and leaving its node volumes. It is removed, and `day0:test` and `day1:test` pass `--destroy=never`. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`. Second half done the same day: `setup` no longer starts `mol-run`; `task runner:shell` starts it on demand and `runner:stop` removes it.
   - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
-  - [ ] 5.4 Remove the Twingate block from `.env.example`, or implement it under a spec
+  - [x] 5.4 Remove the Twingate block from `.env.example`, or implement it under a spec
   - [ ] 5.5 `testing/README.md` and the root README state the RAM and CPU each topology needs, measured and not estimated: after day0 on `small`, `dev`, `dms` and `prod` (with clusters formed, 2.1), record `docker stats --no-stream` per container and the engine's total, and give a minimum and a comfortable figure per topology
     - Depends: 1.2, 1.3, 2.1
     - Requirements: R10
@@ -124,3 +125,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 2.1 written and run in two halves on the Mac (`docs/history/verification-2026-11-18-cluster-formation.md`). The whole `prod` topology does not fit this Mac's Docker disk: the install failed with "No space left on device" on all eight Enterprise nodes. Disk is now a stated requirement to measure with memory in 5.5.
 - 2026-11-18: `234c8aa` broke day0 on `small`, `dev` and `dms`, whose standalone `indexer` group was sent to join a missing manager; fixed by requiring a `clustermanager` group, and `small` (full) and `dev` (infra, day0, day1) pass again. Also closed 1.4, 1.5, 2.6 and 5.3 with evidence in `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
 - 2026-11-18: A failed day0 deleted the lab (Molecule ran `day0/destroy.yml` on failure); fixed and shown before and after on `dev`. This corrects the design's earlier statement that `day0/destroy.yml` is never invoked.
+- 2026-11-18: Closed 2.7 (lab runs against the merged upstream role), 5.2 (runner started on demand) and 5.4 (`.env.example` lists the lab's real settings instead of an unimplemented Twingate block).
