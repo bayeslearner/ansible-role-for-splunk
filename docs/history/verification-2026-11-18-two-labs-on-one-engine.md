@@ -86,6 +86,17 @@ With an unnamed `dev` lab up beside it, lab C was built with `LAB_NAME=c LAB_POR
 
 `LAB_NAME=c LAB_PORT_OFFSET=200 MOLECULE_ENV=prod task infra:test` on the second Mac: exit 0, six "Executed: Successful". Its verify step printed "The controller reached every node over SSH as ansible" and passed "Assert every app repository has a main branch the lab key can read", so inside a named lab the controller clones from `git-server` by that name. `task reset` then left no `c-` container and no `c` network.
 
+## How the engine's filters match names
+
+`task status` and `task reset` rely on two Docker filters, so their matching was tested on the second Mac with throwaway objects:
+
+| Filter | Result |
+|---|---|
+| `docker ps --filter network=zz-net`, with a container on `zz-net-b` only | lists nothing: the network filter matches the whole name, so the unnamed lab's `status` does not show a named lab's containers |
+| `docker volume ls --filter name=zz-vol`, with a volume `zz-vol-b` | lists `zz-vol-b`: the volume filter matches any part of the name |
+
+The second result is why a named lab's volumes use the stem `ansible-splunk-lab-<name>-` and the name allows no hyphen: no lab's stem is part of another lab's volume names, so one lab's `reset` cannot remove another's volumes.
+
 ## Not covered
 
 - Two labs running day0 at the same moment. Here they ran one after another.
