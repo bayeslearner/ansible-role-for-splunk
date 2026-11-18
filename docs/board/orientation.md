@@ -7,14 +7,15 @@ The Board's "Where we are" panel, read by `docs/board/seed.py`. Redraw it when a
 The lab has run for the first time, on the pre-production host with Podman, as the one-node `dms` topology; the multi-node topologies and the pve2 VM have not run yet.
 
 - **Spec 05, the virtual lab as built: ACTIVE.** Reconstructed from the code on 2026-11-02. Its review (the "Review of spec 05" tab) awaits your sign-off. On 2026-11-10 and 11-11 infra, day0 converge (61 tasks, none failed) and day0 verify passed on the pre-production host (spec 05 Log; tasks 2.5, 3.10, 3.11 done).
-- **Upstream merged.** `upstream/master` (`750c071`) is merged into `feature/virtual-lab`. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged.
+- **Upstream merged.** `upstream/master` (`750c071`) is merged into the lab branch, now `main` and the fork's default branch. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged.
+- **First runs on the Mac, 2026-11-18.** `small` (full workflow, twice in a row) and `dev` pass; each new check was shown to fail on its fault; a teardown bug and a regression were found and fixed by the runs. Records: `docs/history/verification-2026-11-18-*.md`.
 - **Spec 10, day 2 operations: DRAFT.** It waits for spec 05.
 
 ## Goals
 
 | Goal | Where it stands | Next |
 | --- | --- | --- |
-| **A virtual lab, not just a test runner**: log into a controller and operate a Splunk estate as in production | The controller, its `ansible.cfg` and web terminal are built; the `prod` topology installs Splunk but forms no clusters | Clusters and the git server (spec 05 tasks 2.1, 2.3) |
+| **A virtual lab, not just a test runner**: log into a controller and operate a Splunk estate as in production | The controller, its `ansible.cfg` and web terminal are built; `small` and `dev` have recorded runs with checks that fail on a fault (2026-11-18); day0 now forms `prod`'s clusters, with the indexer cluster run in a three-node test | A full `prod` run on a host with about 30 GB of free Docker disk (2.1), then the git server (2.3) |
 | **Stay current with upstream without its bash-first harness** | Upstream role merged; the lab's Taskfile design kept; `run-tests.sh` only forwards to `task` | Run the lab against the merged role (task 2.7) |
 | **Run it on real lab hosts** | The `dms` topology runs on the pre-production host under root Podman; isolation work (3.3) is started, not finished | Finish isolation (3.3, 3.4, 3.6, 3.9); run the multi-node topologies; the pve2 VM (3.1, 3.2) |
 | **Teach Molecule** | The "Learn Molecule through the lab" tab in this doc | Lesson 1 in progress |

@@ -31,10 +31,10 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 | lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | 🟡 destroy.yml unused | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
 
 > [!warning] Built, not verified
-> Every row above. No lab run has a recorded result, and the work Mac has none of the lab images (2026-11-02). Tasks 1.1–1.5 produce the first records.
+> `prod` as a whole: its eleven containers have never run together (it needs about 30 GB of free engine disk). The search head cluster formed in a four-node test but was not verified healthy. `lab-git-server` and `lab-cleanup`'s unused `day0/destroy.yml` have no run behind them. Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
 
 > [!warning] Known gaps
-> - `prod` names a cluster manager, two indexer sites, a search head cluster and a deployer, but day0 only installs Splunk; no cluster is formed (task 2.1).
+> - day0 forms `prod`'s indexer cluster and search head cluster, but a full `prod` run is owed (task 2.1). The inventory's two indexer sites are not used: the role's manager task sets no multisite options.
 > - The lab has run only on macOS. Isolation on a shared host (published ports, the Docker socket in the controller, privileged nodes, lab names that can match real hosts) is open (tasks 3.3–3.6).
 
 ## Day 2 (spec 10, planned)

@@ -72,7 +72,7 @@ WHEN `MOLECULE_ENV` names a topology, THE scenarios SHALL build and deploy exact
 WHEN `task infra:setup` runs, THE `infra` scenario SHALL start every topology host as a systemd container on `splunk-test-network`, install the lab SSH key for user `ansible` on every node, and leave the controller able to reach every node over SSH.
 
 ### R4. Day 0 install
-WHEN `task day0:test` runs after R3, THE `day0` scenario SHALL install Splunk on every `full` and `uf` host through the role with `deployment_task: check_splunk.yml`, distributing the pre-downloaded tarball from `testing/software`, and SHALL report service, port and cluster state.
+WHEN `task day0:test` runs after R3, THE `day0` scenario SHALL install Splunk on every `full` and `uf` host through the role with `deployment_task: check_splunk.yml`, distributing the pre-downloaded tarball from `testing/software`, and SHALL fail unless each host's Splunk service is active and its management port (and Splunk Web on search heads) answers. WHEN the topology has a `clustermanager` group, THE scenario SHALL also form the indexer cluster from the `indexer` hosts, and WHEN it has `shcluster` and `shdeployer` groups, the search head cluster, through the role's cluster tasks, and SHALL fail unless every indexer and every search head cluster member is Up.
 
 ### R5. Day 1 operations
 WHEN `task day1:test` runs after R4, THE `day1` scenario SHALL restart Splunk through the role (`splunk_restart.yml`), check status through the role (`check_splunk_status.yml`), and fail unless each host's Splunk service is active.
@@ -87,7 +87,7 @@ WHEN the lab is up, THE controller SHALL serve a password-protected terminal for
 WHEN the `prod` topology is up, THE lab SHALL run a Gitea server reachable as `git-server` that holds the app repositories the topology's `git_apps` name.
 
 ### R9. Workflows and cleanup
-`task workflow:full` SHALL run infra, day0, day1 and destroy in order and stop at the first failure; `task workflow:quick` SHALL leave the lab running after day0; `task reset` SHALL remove every container, volume and network the lab created and nothing else.
+`task workflow:full` SHALL run infra, day0, day1 and destroy in order and stop at the first failure; `task workflow:quick` SHALL leave the lab running after day0; `infra:destroy` SHALL remove each node together with its data volume, so the next lab starts clean; `task reset` SHALL remove every container, volume and network the lab created and nothing else.
 
 ### R10. Portability
 THE lab SHALL run unchanged on macOS with OrbStack, on a Linux x86_64 Docker host (the pve2 VM), and on `splunkapp-preprod02`.

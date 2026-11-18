@@ -7,10 +7,10 @@
 1. `infra:setup` → `infra:create` → `setup` (`Taskfile.yml:47`): secrets, images, `download:splunk` (runs `molecule/download.yml` in a throwaway runner, writes `testing/software/splunk-9.4.2-…tgz`), network, `runner:start` (`mol-run`, left running).
 2. `molecule create -s infra` in a `--rm` runner with the host Docker socket and the repo at `/workspace` (`_MOL`, `Taskfile.yml:36`). `infra/create.yml` starts `ansible-controller`, then one container per host in `full` and `uf` from that host's `docker_image`, each with a named volume `ansible-splunk-test-<host>-data` on `/opt`.
 3. `molecule prepare -s infra`: `infra/prepare.yml` reads the key and password inside the runner, then over the **docker** connection as root writes `authorized_keys`, creates the `splunk` user with sudo, clears `/run/nologin`, and configures the controller (keys, `ansible.cfg`, ttyd unit, nginx).
-4. `day0:test` → `molecule test -s day0` in a runner joined to `splunk-test-network` (`_MOL_NET`), so names like `splunkapp-prod01` resolve to containers. `day0/converge.yml` applies the role with `deployment_task: check_splunk.yml` over **SSH** as `ansible`. Because `splunk_download_local: true`, the role's `download_and_unarchive.yml` finds the tarball already in `splunk_package_path` on localhost (the runner), copies it to each node and unpacks it.
-5. `day0/verify.yml` checks the `Splunkd`/`SplunkForwarder` units and ports 8089/8000 with `ignore_errors`, prints cluster and SHC status with `failed_when: false`, and probes Gitea.
+4. `day0:test` → `molecule test -s day0` in a runner joined to `splunk-test-network` (`_MOL_NET`), so names like `splunkapp-prod01` resolve to containers. `day0/converge.yml` applies the role with `deployment_task: check_splunk.yml` over **SSH** as `ansible`, then, on a topology that has a `clustermanager` or `shdeployer` group, runs the role's cluster tasks (manager, peers, search heads, deployer, search head cluster members, captain). Because `splunk_download_local: true`, the role's `download_and_unarchive.yml` finds the tarball already in `splunk_package_path` on localhost (the runner), copies it to each node and unpacks it.
+5. `day0/verify.yml` asserts that the `Splunkd`/`SplunkForwarder` unit is active and ports 8089/8000 answer, waits for every indexer to be an Up peer of the manager and every search head cluster member to be Up where those groups exist, and reports whether Gitea answers (informational).
 6. `day1:test` applies the role twice (`splunk_restart.yml`, `check_splunk_status.yml`); `day1/verify.yml` asserts the service is `active`.
-7. `infra:destroy` removes the controller, nodes and git-server. Volumes and the network stay until `task reset`.
+7. `infra:destroy` removes the controller, the nodes with their `/opt` data volumes, and git-server. The Gitea volume and the network stay until `task reset`.
 
 ## Components And Boundaries
 
@@ -61,7 +61,7 @@ flowchart TB
 | `task day0:test` / `day0:converge` / `day0:verify` | `MOLECULE_ENV` | install stage | operator, workflows |
 | `task day1:test` / `day1:converge` / `day1:verify` | `MOLECULE_ENV` | operations stage | operator, `workflow:full` |
 | `task workflow:full` / `workflow:quick` | `MOLECULE_ENV` | chained stages | operator |
-| `task diag:terminal` / `diag:ssh` / `status` / `shell -- <name>` | — | inspection; both `diag:*` print instead of failing | operator |
+| `task diag:terminal` / `diag:ssh` / `status` / `shell -- <name>` | — | inspection; both `diag:*` exit non-zero when the lab is unhealthy | operator |
 | `task runner:start` / `runner:shell` / `runner:stop` | — | persistent `mol-run` | operator, `setup` |
 | `task reset` | — | destroy, stop runner, remove `ansible-splunk-test-*` volumes and the network | operator |
 | `day0/converge.yml`, `day0/verify.yml` | run from runner or controller | role install; checks | Molecule, operator |
@@ -116,8 +116,10 @@ flowchart TD
   C -->|present| D[molecule create -s infra]
   D --> E[molecule prepare -s infra<br/>docker connection, root]
   E --> F[day0: converge over SSH<br/>role check_splunk.yml]
-  F --> G[day0 verify<br/>ignore_errors on every check]
-  G --> H[day1: restart + status via role]
+  F --> F2[day0: form clusters<br/>only with a clustermanager / shdeployer group]
+  F2 --> G{day0 verify:<br/>unit active, ports open,<br/>cluster members Up?}
+  G -->|no| X
+  G -->|yes| H[day1: restart + status + licence via role]
   H --> I{day1 verify:<br/>service active?}
   I -->|no| X[workflow stops; lab left running]
   I -->|yes| J[infra:destroy]
@@ -173,7 +175,7 @@ if installed before this run and installed version < splunk_package_version:
     stop if running; upgrade_splunk.yml
 ```
 
-`install_splunk.yml` does not include any cluster task (`configure_idxc_*`, `configure_shc_*`); clustering is done by `playbooks/splunk_idxc_deploy.yml` and `playbooks/splunk_shc_deploy.yml`, which no scenario runs.
+`install_splunk.yml` does not include any cluster task (`configure_idxc_*`, `configure_shc_*`); the role forms clusters through separate task files, which `day0/converge.yml` runs after the install in the order of `playbooks/splunk_idxc_deploy.yml` and `playbooks/splunk_shc_deploy.yml`. The peer, search-head, member and captain tasks are not idempotent in the role, so converge checks each node first and skips one already configured.
 
 ## State And Data Lifecycle
 
@@ -181,7 +183,7 @@ if installed before this run and installed version < splunk_package_version:
 |---|---|---|---|---|---|
 | `testing/.secrets/` | `setup:secrets` | yes | runner, controller (ro mount) | until deleted by hand; synced by Dropbox in this checkout | regenerated if absent |
 | `testing/software/` | `download.yml` | derived | role via `splunk_package_path` | until deleted | yes, from download.splunk.com |
-| volumes `ansible-splunk-test-<host>-data` | role on nodes | lab state | nodes | survive `infra:destroy`; removed by `reset` | rebuilt by day0 |
+| volumes `ansible-splunk-test-<host>-data` | role on nodes | lab state | nodes | removed with their node by `infra:destroy` (a volume without its container's systemd unit fails the role's boot-start check) | rebuilt by day0 |
 | `ansible-splunk-test-gitea-data` | Gitea | lab state | Gitea | same | empty on rebuild |
 | images `*:latest` | `setup:images` | derived | Docker | until `setup:rebuild` | no: bases and tools unpinned |
 
@@ -194,7 +196,7 @@ if installed before this run and installed version < splunk_package_version:
 
 ## Verification
 
-Recorded runs: none. The work Mac has no lab images (`docker images`, 2026-11-02). Checks the harness itself contains: `infra/verify.yml` (systemd is PID 1 on each node, over the docker connection), `day0/verify.yml` (informational), `day1/verify.yml` (asserts the service is active). Verification tasks are in `tasks.md`.
+Recorded runs: `small` and `dev` on the Mac and the cluster halves of `prod`, 2026-11-18 (`docs/history/verification-2026-11-18-*.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). `prod` as a whole has not run. Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
 
 ## Security
 
@@ -221,11 +223,11 @@ Reconstructed from the code, compared with the README and requirements:
 |---|---|---|
 | R1 setup | All steps present. Image check `docker images \| grep -q name:latest` matches only on Docker CLIs that print `repo:tag` in one column (the work Mac's CLI does; older CLIs print `REPOSITORY TAG` columns, so the check never passes and every `setup` rebuilds) | 🟡 |
 | R2 topologies | `small` 2 nodes, `dev` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ code |
-| R3 infra | Containers and keys done; `infra/verify.yml` does not test SSH from the controller | 🟡 |
-| R4 day0 | Installs and starts Splunk; no cluster is formed, so the `prod` cluster manager, sites, SHC and deployer exist in name only; verify cannot fail | 🟡 |
-| R5 day1 | As specified | ✅ code |
+| R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small` and `dev` |
+| R4 day0 | Installs and starts Splunk and verify fails on a fault (run on `small` and `dev`). Cluster formation is written: the indexer cluster ran in a three-node half; the search head cluster formed but was not verified healthy; `prod` as a whole has not run. Sites in the inventory are not used: the role's manager task sets no multisite options | 🟡 |
+| R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small` and `dev` |
 | R6 controller | `ansible.cfg` deployed; the controller runs Ubuntu 22.04's apt `ansible` while the runner runs the latest `ansible-core` from pip, so the two paths use different Ansible versions (exact controller version not yet read from a built image) | 🟡 |
-| R7 web terminal | As specified | ✅ code |
+| R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | Gitea starts; no repositories, users or deploy key are created (`prepare.yml:310` placeholders; `git_key: /tmp/test_git_key` never written) | ❌ |
 | R9 workflows | As specified; `infra:test` leaves `mol-run` running; `day0/destroy.yml` is never invoked (`destroy_sequence: [cleanup]`) | 🟡 |
 | R10 portability | Built and used on macOS only; fixed names and ports allow one lab per Docker host | ⏳ |
