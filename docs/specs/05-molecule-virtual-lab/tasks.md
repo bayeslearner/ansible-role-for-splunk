@@ -9,11 +9,12 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 ## Tasks
 
 - [ ] 1. Foundation: verify what is built
-  - [ ] 1.1 `task setup` from a clean lab host creates secrets, images, tarballs and the network, and a second run skips every step
-    - Second run skips every step: shown 2026-11-18. Still owed: the first run on a host that has never had the lab.
+  - [x] 1.1 `task setup` from a clean lab host creates secrets, images, tarballs and the network, and a second run skips every step
+    - Second run skips every step: shown 2026-11-18.
+    - 2026-11-18, later: the first run on a machine that never had the lab built all five images, downloaded both packages and created the network, and a second run there skipped (`docs/history/verification-2026-11-18-lab-setup.md`). Assembled from two machines: that checkout already held the secrets through a file sync, so their generation is shown in an empty directory; and the base images were pulled before the run there.
     - Built in: `555beec`, `55426a6`
     - Requirements: R1
-    - Verification: run twice on a clean host; record both outputs in `docs/history/verification-<date>-lab-setup.md`
+    - Verification: run twice on a clean host; `docs/history/verification-2026-11-18-lab-setup.md`
   - [x] 1.2 `MOLECULE_ENV=small task workflow:full` passes on the Mac
     - Built in: `555beec`, `86a1a37`
     - Requirements: R2, R3, R4, R5, R9
@@ -181,3 +182,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 3.7 closed: a lab can be named (`LAB_NAME`, `LAB_PORT_OFFSET`), and three labs ran on one engine at once without seeing each other (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). The run found that the engine publishes a port another program already holds without an error, so `infra:create` now checks the web terminal's port first.
 - 2026-11-18: Reconciled the requirements and design with named labs (configuration table, R1, R3, R7, the defaults note, the port check) and R9 with the code. R9 did not hold: `task reset` under a different `MOLECULE_ENV` than the lab was built with left containers behind. Fixed (6.11) and shown before and after on a second lab beside an untouched one (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`).
 - 2026-11-18: 6.12: destroy reports a removal that fails (it ignored all three), and the port check covers the Git server's ports. The "Learn Molecule" and "Code tour" tabs on the Board were checked against today's code and corrected where stale.
+- 2026-11-18: 1.1 closed from the day's runs on the second Mac, which had never had the lab, plus a secrets run in an empty directory (`docs/history/verification-2026-11-18-lab-setup.md`). The record says where this falls short of one unbroken run on one clean host. Noted there: a checkout shared through a file sync shares its lab secrets between machines.
