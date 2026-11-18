@@ -103,3 +103,18 @@ On the tree at `de7cf83`. The lab reaches its hosts by container name, and sever
 | `task infra:test` with no such name | exit 0; 6 steps "Executed: Successful" (`names-ok.log`) |
 
 The lookup uses the resolver of the container the runner starts in, which takes its DNS servers and search domains from the engine's host. It was tried with a hosts-file entry, not on a network whose DNS answers for a lab name.
+
+## day0 stops before installing when the engine lacks disk (task 6.7)
+
+On the tree at `bcbf6cf`. Every node keeps Splunk on the container engine's own disk, which the engine's other workloads share. During the day's larger runs that disk filled: the installs failed with "No space left on device", and on a machine that runs other containers a full engine disk also takes those down. `day0/converge.yml` now starts with a play that adds up what the pending installs need (4 GB per Enterprise node, 1 GB per forwarder, nodes that already have Splunk count as 0), adds a 6 GB margin, compares it with the free disk under `/opt`, and stops if it does not fit.
+
+Tested on `dev`'s infrastructure with no Splunk install:
+
+| Run | Result |
+|---|---|
+| the check with its real numbers (17.3 GB free, one node to install, 10 GB needed) | "Stop when the installs would not fit": `ok` (`disk-ok.log`) |
+| the same with the margin forced to 500 GB (`-e lab_disk_gb_margin=500`) | exit 2: "Not enough disk for this topology: 17.3 GB free under /opt, and installing Splunk on 1 node(s) needs about 504 GB including a 500 GB margin. Free disk on the container engine, pick a smaller topology (MOLECULE_ENV), or run the lab elsewhere." (`disk-neg.log`) |
+
+Not run: a whole day0 with the new first play followed by an install. Both test runs selected the play with a temporary tag, which made a later role play fail for an unrelated reason; the tag is removed. The playbook passes a syntax check.
+
+By this check's numbers, `prod` (eight Enterprise nodes and one forwarder) needs 39 GB free, `small` 14 GB, and `dev` or `dms` 10 GB.

@@ -42,7 +42,7 @@ The Docker and Molecule harness under `testing/`: images, the Taskfile entry poi
 ## Decisions And Corrections
 
 - 2026-03-30: `ignore_errors` stays on the day0 verify checks (owner preference for the lab, project memory "Feature virtual-lab status"). Day 1 verify asserts.
-- 2026-11-18: Superseded for the service and port checks. The owner approved the portfolio plan's last-mile list, which makes day0 verify able to fail (tasks 6.1); the cluster and Git server plays stay informational until 2.1 and 2.3. Source: the plan in the private `bayes-ops` notes, approved in the project session.
+- 2026-11-18: Superseded for the service and port checks. The owner approved the portfolio plan's last-mile list, which makes day0 verify able to fail (tasks 6.1); the cluster and Git server plays stay informational until 2.1 and 2.3. Source: the plan in the private `bayes-ops` notes, approved in the project session. Later the same day the cluster plays became asserting (task 2.1) and the Git server gained real repositories (task 2.3); its day0 report stays informational, and infra verify checks the repositories.
 - 2026-03-20: upstream maintainer changes kept from PR #252: veth checksum fix, common inventory, volume namespacing, UF group support (project memory "Upstream maintainer").
 - 2026-11-02: reconstructed as this spec and set ACTIVE so verification and portability work have a home ([2026-11-02-01-adopt-spec-layout](../../decisions/2026-11-02-01-adopt-spec-layout.md)).
 
@@ -103,4 +103,4 @@ THE lab SHALL run unchanged on macOS with OrbStack, on a Linux x86_64 Docker hos
 
 - Day 2 operations (`10-day-2-operations`).
 - Changes to the role itself, except fixes the lab exposes, which go upstream separately.
-- Twingate access (`.env.example` mentions it; nothing implements it).
+- Twingate access (nothing implements it; `.env.example` no longer mentions it).

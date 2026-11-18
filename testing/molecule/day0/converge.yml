@@ -8,6 +8,53 @@
 #   splunk_download_local: true  → downloads once to localhost, pushes to targets via SCP
 #   task download:splunk         → pre-caches tarballs so get_url skips the internet download
 
+# Every node keeps Splunk on the container engine's own disk, and so does everything else that
+# engine runs. A Splunk Enterprise install takes about 2.7 GB and needs 1.1 GB more while its
+# package unpacks; a full engine disk fails the install and can take other workloads on the same
+# engine down with it. This play stops before any install when there is not enough room.
+- name: Check the engine has room for the installs
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: false
+  vars:
+    lab_disk_gb_per_enterprise_node: 4
+    lab_disk_gb_per_forwarder: 1
+    # Left free after the installs: Splunk itself stops indexing below 5 GB free.
+    lab_disk_gb_margin: 6
+  tasks:
+    - name: Check whether Splunk is already installed on this node
+      ansible.builtin.stat:
+        path: "{{ '/opt/splunkforwarder' if 'uf' in group_names else '/opt/splunk' }}/bin/splunk"
+      register: lab_splunk_bin
+      become: true
+
+    - name: Note the disk this node's install will need
+      ansible.builtin.set_fact:
+        lab_needs_gb: >-
+          {{ 0 if lab_splunk_bin.stat.exists
+             else (lab_disk_gb_per_forwarder if 'uf' in group_names else lab_disk_gb_per_enterprise_node) }}
+
+    - name: Read the free disk under /opt
+      ansible.builtin.command: df -Pk /opt
+      register: lab_df
+      changed_when: false
+      run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
+
+    - name: Stop when the installs would not fit
+      ansible.builtin.assert:
+        that:
+          - lab_free_gb | float >= lab_total_gb | float
+        quiet: true
+        fail_msg: >-
+          Not enough disk for this topology: {{ lab_free_gb }} GB free under /opt, and installing Splunk on
+          {{ ansible_play_hosts | map('extract', hostvars, 'lab_needs_gb') | map('int') | select('gt', 0) | list | length }}
+          node(s) needs about {{ lab_total_gb }} GB including a {{ lab_disk_gb_margin }} GB margin.
+          Free disk on the container engine, pick a smaller topology (MOLECULE_ENV), or run the lab elsewhere.
+      vars:
+        lab_free_gb: "{{ ((lab_df.stdout_lines[-1].split()[3] | int) / 1048576) | round(1) }}"
+        lab_total_gb: >-
+          {{ (ansible_play_hosts | map('extract', hostvars, 'lab_needs_gb') | map('int') | sum) + (lab_disk_gb_margin | int) }}
+      run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
+
 - name: Install Splunk on target hosts
   hosts: all:!ansible_controller:!git_server:!jumpbox
   serial: 50

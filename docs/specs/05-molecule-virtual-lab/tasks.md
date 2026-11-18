@@ -9,7 +9,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 ## Tasks
 
 - [ ] 1. Foundation: verify what is built
-  - [ ] 1.1 `task setup` from a clean lab host creates secrets, images, tarballs, network and runner, and a second run skips every step
+  - [ ] 1.1 `task setup` from a clean lab host creates secrets, images, tarballs and the network, and a second run skips every step
     - Second run skips every step: shown 2026-11-18. Still owed: the first run on a host that has never had the lab.
     - Built in: `555beec`, `55426a6`
     - Requirements: R1
@@ -73,7 +73,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
     - Depends: 3.2, 3.3, 3.4, 3.6
     - Requirements: R10
-  - [x] 3.10 The engine socket is a variable: `DOCKER_SOCK` (default `/var/run/docker.sock`) is the socket the runner and the controller mount, so the lab can run against a Podman API service whose storage is not the host's default store (a shared host's `/var` may be too small for the lab)
+  - [x] 3.10 The engine socket is a variable: `DOCKER_SOCK` (default `/var/run/docker.sock`) is the socket the runner mounts (the controller mounted it too until 3.4), so the lab can run against a Podman API service whose storage is not the host's default store (a shared host's `/var` may be too small for the lab)
     - Requirements: R10, NFR Isolation
     - Verification: with `DOCKER_SOCK` pointing at a separate Podman service, `MOLECULE_ENV=dms task infra:setup` creates every container in that service's storage and the default store is unchanged
   - [x] 3.11 A `dms` environment: one all-in-one Splunk Enterprise 10.6.1.1 node (`splunk-dms`) plus the controller, for testing the Data Management API app (Edge Processor control plane, Splunk Enterprise 10.6 and later)
@@ -106,7 +106,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Found 2026-11-18. `end-of-file-fixer`, `trailing-whitespace` and `yamllint` pass on the fork's own files after this commit; `roles/splunkupgrader/templates/local_config_102.j2` (upstream's) failed the first two; it is now excluded from them and left as upstream ships it.
 
 - [ ] 6. Last mile: what PR 252 cut and the review found
-  - [x] 6.1 `day0/verify.yml` fails when a node's Splunk unit is not active or its management or web port is closed (it used `ignore_errors` on every check). The cluster and Git server plays stay informational until 2.1 and 2.3.
+  - [x] 6.1 `day0/verify.yml` fails when a node's Splunk unit is not active or its management or web port is closed (it used `ignore_errors` on every check). The cluster plays became asserting with 2.1 and the Git server report stays informational; at the time of this task both were informational until 2.1 and 2.3.
     - Requirements: R4
     - Verification: a day0 run that passes, and one with Splunk stopped on a node that fails at the assert
   - [x] 6.2 `infra/prepare.yml` stops at its first task with the command to run when a lab secret is missing (cut in PR 252)
@@ -122,6 +122,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.6 The AlmaLinux node image installs `openssh-clients`, so `scp` exists on those nodes (the inventory copies files with scp; found by the first `prod` infra verify, which could not reach either AlmaLinux node)
     - Requirements: R2, R3
     - Verification: `prod` infra verify reaches all nine nodes
+  - [ ] 6.7 `day0/converge.yml` stops before any install when the container engine's disk cannot hold the pending installs plus a margin, with a message that says how much is free and how much is needed
+    - Requirements: R4, R10
+    - Verification: the check passing and failing on its own (done 2026-11-18, `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`); a whole day0 run with the check in front (owed: not run on the Mac, whose engine disk is shared with other work)
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -151,3 +154,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 5.6 closed: the `ansible-lint` hook moves from v24.9.2, which crashed on import, to v26.11.0, and now also covers `testing/molecule/`; `.ansible-lint` mocks the three `community.docker` modules the lab uses; upstream's `local_config_102.j2` is excluded from the two whitespace hooks so it stays as upstream ships it. `pre-commit run --all-files` passes all four hooks, and the lint hook fails on a probe playbook with a non-FQCN module. The role, playbooks and environments pass the newer lint unchanged. The version bump is also a fix upstream needs.
 - 2026-11-18: 3.12 fix landed and proven in a probe on Podman; the lab's own run on Podman is owed. The spec's requirements, design and tasks were also corrected in eleven places where one line contradicted another (found while the Board tab was regenerated).
 - 2026-11-18: The search head cluster half of 2.1 is verified: with Splunk's free-disk floor lowered for the test, day0 verify reports both members Up, and fails when one is stopped (`docs/history/verification-2026-11-18-cluster-formation.md`). 2.1 stays open only for the two clusters together in a full `prod` run.
+- 2026-11-18: The day's larger runs filled the container engine's disk on the Mac, which is shared with other work. Added 6.7: day0 now checks free disk before any install. No more Splunk installs are run on this Mac for the lab; `prod`, 5.5 and the whole-day0 check for 6.7 go to a machine with its own engine. The lab's `software/`, `.runs/` and `.build/` folders are marked to stay out of Dropbox sync on this checkout. Also corrected seven more lines where the spec contradicted itself, and day0 verify's indexer report now says so when a topology has a manager and no indexers.

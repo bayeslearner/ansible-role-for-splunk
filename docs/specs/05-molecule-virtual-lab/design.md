@@ -1,4 +1,4 @@
-# Design: Molecule virtual lab (as built at `6ff020f`)
+# Design: Molecule virtual lab (first written from `6ff020f`; kept current with `main`)
 
 ## End-To-End Walkthrough
 
@@ -207,7 +207,7 @@ Recorded runs: `small` and `dev` on the Mac and the cluster halves of `prod`, 20
 | Nodes → host | privileged, `cgroupns_mode: host`, `/sys/fs/cgroup` rw. Privileged is kept on purpose (decision 7 of 2026-11-18): without it the role's huge-pages unit fails. With it, that unit changes the setting for the whole host |
 | Network → Gitea | `127.0.0.1:8929` and `:2222` unless `LAB_BIND_ADDRESS` widens them; sign-up refused; one owner created by infra |
 | Inside the lab | password `ansible:ansible` baked into images, `PermitEmptyPasswords yes`, PAM `account sufficient pam_permit.so` on AlmaLinux; host keys not checked |
-| Name resolution | lab hosts carry production-style names (`splunkapp-prod01`, `splunkshc-prod01`, …) that can match real hosts on a work network; a lab name with no running container falls through Docker's DNS to the host's resolver and its search domain |
+| Name resolution | lab hosts carry production-style names (`splunkapp-prod01`, `splunkshc-prod01`, …). `infra/create.yml` refuses to build the lab when any of those names already resolves outside it. Inside a running lab, a name whose container is down still falls through Docker's DNS to the host's resolver, so the refusal covers the start of a lab, not a network that begins answering for a lab name later |
 
 These are acceptable on a laptop and are the open questions for `splunkapp-preprod02` (tasks 3.x).
 
@@ -223,7 +223,7 @@ Reconstructed from the code, compared with the README and requirements:
 |---|---|---|
 | R1 setup | As specified. Images are checked with `docker image inspect`, built under `localhost/<name>:latest`, and every base and tool is pinned; a second `task setup` skips every step | ✅ run on the Mac; a first run on a host that never had the lab is owed |
 | R2 topologies | `small` 2 nodes, `dev` 1, `dms` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ `small`, `dev`, `dms` run in full; `prod` through infra |
-| R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small` and `dev` |
+| R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small`, `dev`, `dms` and `prod` (nine nodes) |
 | R4 day0 | Installs and starts Splunk and verify fails on a fault (run on `small` and `dev`). Cluster formation is written: the indexer cluster ran in a three-node half and the search head cluster in a four-node half, each verified healthy and shown to fail on a stopped member; `prod` as a whole has not run. The cluster is single-site (the role's manager task sets no multisite options, and the inventory no longer names sites). No licence file is installed: `splunk-license` is a plain node in the licence-manager group and every node runs on a trial licence | 🟡 |
 | R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small` and `dev` |
 | R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small` and `dev` |

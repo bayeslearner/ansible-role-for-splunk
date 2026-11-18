@@ -71,7 +71,10 @@
 
     - name: Report the indexer cluster
       ansible.builtin.debug:
-        msg: "{{ lab_idxc_peers.json.entry | map(attribute='content.label') | list | sort | join(', ') }} are Up peers of {{ inventory_hostname }}"
+        msg: >-
+          {{ (lab_idxc_peers.json.entry | map(attribute='content.label') | list | sort | join(', ') ~ ' are Up peers of ' ~ inventory_hostname)
+             if lab_idxc_peers.json.entry | length > 0
+             else inventory_hostname ~ ' is a cluster manager with no indexers in this topology' }}
 
 - name: Verify the search head cluster
   hosts: shcluster

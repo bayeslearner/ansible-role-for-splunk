@@ -8,10 +8,10 @@
   "review-05": {"file": "cf83d2e2-f62d", "body": "9d3d8c65-8e26", "order": "a1", "source": "hand-written review of spec 05, awaiting sign-off"},
   "board-steering": {"file": "1949b036-63c5", "body": "68bc8d8b-5989", "order": "a4", "hash": "9eac943f796d1259"},
   "board-specs": {"file": "52d5082c-de21", "body": "d2ca679c-c284", "order": "a5", "hash": "538b71c09a6d307b"},
-  "spec-05-molecule-virtual-lab": {"file": "10f94370-fb98", "body": "a4244f0f-412b", "order": "b01", "subtab_of": "52d5082c-de21", "hash": "4cc7e4a84a6ad8b4"},
+  "spec-05-molecule-virtual-lab": {"file": "10f94370-fb98", "body": "a4244f0f-412b", "order": "b01", "subtab_of": "52d5082c-de21", "hash": "42cd01999cb5581c"},
   "spec-10-day-2-operations": {"file": "76d62475-9c3e", "body": "b3e53317-112c", "order": "b02", "subtab_of": "52d5082c-de21", "hash": "b8d7b5840a42ddc6"},
   "board-decisions": {"file": "c2b02389-9705", "body": "99624373-0e1d", "order": "a6", "hash": "8fd9cf3bdaf01c0f"},
-  "board-worknotes": {"file": "b0de357c-c4fa", "body": "c944eb3b-3d0a", "order": "a7", "hash": "2b660373bbc9501a"},
+  "board-worknotes": {"file": "b0de357c-c4fa", "body": "c944eb3b-3d0a", "order": "a7", "hash": "17549f53b73f3c1e"},
   "code-tour": {"file": "c11b3fe2-2f15", "body": "366160ad-cb46", "order": "a0m", "source": "hand-written tour of testing/ and what PR 252 cut; widget 035b97ee-ded8 (the lab map, also docs/diagrams/lab-map.jsx)"}
  }
 }
