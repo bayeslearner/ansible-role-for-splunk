@@ -88,6 +88,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 5. Polish and docs
   - [ ] 5.1 `testing/README.md` matches the code after 2.x and 3.x (topology names, what `prod` forms, ports, host requirements)
+    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. Stays open for the measured memory and CPU figures (5.5) and for 3.x.
   - [ ] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
   - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
   - [ ] 5.4 Remove the Twingate block from `.env.example`, or implement it under a spec
