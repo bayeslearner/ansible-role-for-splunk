@@ -3,7 +3,9 @@ FROM almalinux:9@sha256:02df05719ef287ebd0df0a1eedb9172a00bd70703aed7b25660e426b
 ENV container=docker
 
 # openssh-clients provides scp, which the lab inventory uses to copy files (ansible_ssh_transfer_method: scp).
-RUN dnf -y install systemd systemd-sysv openssh-server openssh-clients sudo python3 passwd authselect ethtool && \
+# procps-ng provides ps: Splunk's own command line checks for splunkd with it, and without it every
+# `splunk` command that needs the running server reports that splunkd is unreachable.
+RUN dnf -y install systemd systemd-sysv openssh-server openssh-clients sudo python3 passwd authselect ethtool procps-ng && \
     dnf clean all
 
 # Fix nsswitch.conf to prioritize local files over sss for user/group lookups

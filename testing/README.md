@@ -41,7 +41,7 @@ dms             = single all-in-one node on a newer Splunk + controller
 ```
 
 ## Prereqs
-- Docker, with free disk for the topology. Every node keeps Splunk on the container engine's own disk: about 2.7 GB per Splunk Enterprise node once installed, plus 1.1 GB while its package unpacks. day0 checks before it installs and stops if the installs plus a 6 GB margin do not fit: `dev` and `dms` need 10 GB free, `small` 14 GB, `prod` 39 GB. Measured memory and CPU figures are owed (spec 05, task 5.5).
+- Docker, with free disk for the topology. Every node keeps Splunk on the container engine's own disk: about 2.7 GB per Splunk Enterprise node once installed, plus 1.1 GB while its package unpacks. day0 checks before it installs and stops if the installs plus a 6 GB margin do not fit: `dev` and `dms` need 10 GB free, `small` 14 GB, `prod` 39 GB. Measured on one full `prod` run: 35 GB of engine disk, and 6.0 to 6.6 GiB of memory across its eleven containers with no data and no searches (650 to 960 MiB per Splunk Enterprise node). Give the engine well above that; figures for the other topologies are owed (spec 05, task 5.5).
 - 🚨 On a machine that runs other containers, the lab shares the engine's disk with them. A full engine disk fails the lab and can take the other workloads down. Run the larger topologies on an engine of their own.
 - `testing/software/` (the Splunk packages, 1 to 4 GB) and `testing/.runs/` are ignored by git. If the checkout lives in a synced folder such as Dropbox, keep them out of the sync too (`xattr -w com.dropbox.ignored 1 testing/software` on macOS).
 - [Task](https://taskfile.dev/) (go-task) on the host

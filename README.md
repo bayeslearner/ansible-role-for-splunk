@@ -30,7 +30,7 @@ Pick a topology with `MOLECULE_ENV`:
 | `dms` | 2 | one all-in-one node on a newer Splunk, the controller |
 | `prod` | 11 | manager, license manager, two indexers, two search heads, deployer, forwarder manager, a forwarder, a Git server, the controller |
 
-What has and has not been verified, per capability: [docs/design/feature-matrix.md](docs/design/feature-matrix.md). The plan and its open tasks: [docs/specs/05-molecule-virtual-lab](docs/specs/05-molecule-virtual-lab/). On `prod`, day0 also forms a two-peer indexer cluster and a two-member search head cluster, the smallest that exercise the role's cluster tasks. Each cluster has a recorded run in a half-size lab; the full eleven-container `prod` has not been run yet. day0 checks free disk before it installs: `prod` needs 39 GB on the container engine, `small` 14 GB, `dev` and `dms` 10 GB.
+What has and has not been verified, per capability: [docs/design/feature-matrix.md](docs/design/feature-matrix.md). The plan and its open tasks: [docs/specs/05-molecule-virtual-lab](docs/specs/05-molecule-virtual-lab/). On `prod`, day0 also forms a two-peer indexer cluster and a two-member search head cluster, the smallest that exercise the role's cluster tasks. The full eleven-container `prod` has a recorded run with both clusters healthy; it took 35 GB of engine disk and about 6.5 GiB of memory with no data. day0 checks free disk before it installs: `prod` needs 39 GB on the container engine, `small` 14 GB, `dev` and `dms` 10 GB.
 
 ----
 

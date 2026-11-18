@@ -18,7 +18,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Built in: `555beec`, `86a1a37`
     - Requirements: R2, R3, R4, R5, R9
     - Verification: full log plus `docker ps` before destroy, in a verification record
-  - [ ] 1.3 Same for `dev` and `prod`
+  - [x] 1.3 Same for `dev` and `prod`
     - `dev` passed infra, day0 and day1 on 2026-11-18 (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). `prod` is owed; see 2.1.
     - For the `prod` run, also read back two things day0 sets through the role and no check covers yet: the forwarder `splunk-uf01` is a deployment client of `splunk-fwdmanager:8089` (the role writes `deploymentclient.conf` at install because the inventory sets `splunk_uri_ds` and `clientName`), and the deployer's `target_shc_group_name` resolves to the two search heads. The `dmc` group is a label only: nothing configures a monitoring console.
     - Depends: 1.2
@@ -30,7 +30,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R7
 
 - [ ] 2. Core: close the gaps between the docs and the code
-  - [ ] 2.1 `prod` forms the clusters its inventory describes: run the role's indexer-cluster and search-head-cluster deployment (`playbooks/splunk_idxc_deploy.yml`, `playbooks/splunk_shc_deploy.yml` or their task files) in a scenario, and make day0 verify report a real cluster state
+  - [x] 2.1 `prod` forms the clusters its inventory describes: run the role's indexer-cluster and search-head-cluster deployment (`playbooks/splunk_idxc_deploy.yml`, `playbooks/splunk_shc_deploy.yml` or their task files) in a scenario, and make day0 verify report a real cluster state
     - Requirements: R4
     - Code landed 2026-11-18: day0 converge runs the role's manager, peer, search-head, deployer, member and captain tasks on the cluster groups, guarded so it can run twice; `prod` sets `splunk_uri_cm`, replication and search factor 2, and `splunk_mgmt_uri`; day0 verify waits for every indexer and every search head cluster member to be Up. Indexer half verified. Search head half verified on a third attempt the same day: verify passes on the healthy two-member cluster and fails when a member is stopped. `prod` as a whole has not run. Evidence: `docs/history/verification-2026-11-18-cluster-formation.md`. Stays open until `MOLECULE_ENV=prod task workflow:full` passes on a host with about 30 GB of free engine disk.
     - Note: until then, the README must not call the `prod` nodes a cluster
@@ -100,6 +100,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
   - [x] 5.4 Remove the Twingate block from `.env.example`, or implement it under a spec
   - [ ] 5.5 `testing/README.md` and the root README state the RAM and CPU each topology needs, measured and not estimated: after day0 on `small`, `dev`, `dms` and `prod` (with clusters formed, 2.1), record `docker stats --no-stream` per container and the engine's total, and give a minimum and a comfortable figure per topology
+    - 2026-11-18: `prod` measured: 35 GB of engine disk, 6.0 to 6.6 GiB of memory across its eleven containers with no data and no searches (`docs/history/verification-2026-11-18-prod-end-to-end.md`). Single readings exist for `small`, `dev` and the cluster halves in the other records of that day. Stays open for the other three topologies on one host, a minimum and a comfortable figure for each, and the figures written into both READMEs.
     - Depends: 1.2, 1.3, 2.1
     - Requirements: R10
     - Verification: the `docker stats` output in a verification record
@@ -123,12 +124,18 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.6 The AlmaLinux node image installs `openssh-clients`, so `scp` exists on those nodes (the inventory copies files with scp; found by the first `prod` infra verify, which could not reach either AlmaLinux node)
     - Requirements: R2, R3
     - Verification: `prod` infra verify reaches all nine nodes
-  - [ ] 6.7 `day0/converge.yml` stops before any install when the container engine's disk cannot hold the pending installs plus a margin, with a message that says how much is free and how much is needed
+  - [x] 6.7 `day0/converge.yml` stops before any install when the container engine's disk cannot hold the pending installs plus a margin, with a message that says how much is free and how much is needed
     - Requirements: R4, R10
     - Verification: the check passing and failing on its own (done 2026-11-18, `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`); a whole day0 run with the check in front (owed: not run on the Mac, whose engine disk is shared with other work)
   - [x] 6.8 sshd on the node images accepts keys only (it accepted password logins, and the `ansible` user's password is a fixed word with passwordless sudo behind it)
     - Requirements: R3, R10
     - Verification: the methods each node offers before and after, and `prod` infra test, in `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`
+  - [x] 6.9 The AlmaLinux node image installs `procps-ng`: Splunk's command line needs `ps` to find the running server, and without it the two AlmaLinux nodes could not join the clusters
+    - Requirements: R2, R4
+    - Verification: `prod` end to end, `docs/history/verification-2026-11-18-prod-end-to-end.md`
+  - [x] 6.10 `setup:secrets` sets the lab key's file mode every time, so a checkout that arrived through a file sync (which drops modes) still gets a key ssh accepts
+    - Requirements: R1, R10
+    - Verification: the first `prod` pass failing on a 0644 key and the later passes, `docs/history/verification-2026-11-18-prod-end-to-end.md`; on the first Mac, a key set to 0644 is reset by `task setup:secrets`
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -160,3 +167,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: The search head cluster half of 2.1 is verified: with Splunk's free-disk floor lowered for the test, day0 verify reports both members Up, and fails when one is stopped (`docs/history/verification-2026-11-18-cluster-formation.md`). 2.1 stays open only for the two clusters together in a full `prod` run.
 - 2026-11-18: The day's larger runs filled the container engine's disk on the Mac, which is shared with other work. Added 6.7: day0 now checks free disk before any install. No more Splunk installs are run on this Mac for the lab; `prod`, 5.5 and the whole-day0 check for 6.7 go to a machine with its own engine. The lab's `software/`, `.runs/` and `.build/` folders are marked to stay out of Dropbox sync on this checkout. Also corrected seven more lines where the spec contradicted itself, and day0 verify's indexer report now says so when a topology has a manager and no indexers.
 - 2026-11-18: 6.8: node images no longer accept SSH password logins; `prod`'s infra scenario passes on the rebuilt images. Two owner questions are written up as `docs/decisions/2026-11-18-03-host-name-and-site-names.md` (open). Notes added for the owed `prod` run: read back the forwarder's deployment-client setting and the deployer's target group.
+- 2026-11-18: `prod` ran end to end on a second Mac with its own Docker engine: infra, day0 with both clusters formed in one lab, day1, a second verify, teardown (`docs/history/verification-2026-11-18-prod-end-to-end.md`). Closes 1.3, 2.1 and 6.7. The run found and fixed two faults: the AlmaLinux image had no `ps`, which Splunk's command line needs (6.9), and a synced checkout lost the lab key's file mode (6.10). The forwarder's deployment-client setting was read back from both ends.

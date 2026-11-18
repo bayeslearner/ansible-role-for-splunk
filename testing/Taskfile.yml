@@ -75,9 +75,13 @@ tasks:
           printf '%s\n' "---" "splunk_admin_password: ${ADMIN_PASS}" "gitea_secret_key: ${GITEA_KEY}" \
             > {{.SECRETS_DIR}}/inventory/group_vars/all.yml
         fi
+      # ssh refuses a private key that others can read. A checkout that arrived through a file
+      # sync (Dropbox and the like) loses the mode, so set it every time, not only at creation.
+      - chmod 600 {{.SECRETS_DIR}}/id_rsa {{.SECRETS_DIR}}/ansible_password {{.SECRETS_DIR}}/inventory/group_vars/all.yml
       - echo "Secrets OK"
     status:
       - test -f {{.SECRETS_DIR}}/id_rsa
+      - find {{.SECRETS_DIR}}/id_rsa -perm 600 | grep -q .
       - test -f {{.SECRETS_DIR}}/ansible_password
       - test -f {{.SECRETS_DIR}}/inventory/group_vars/all.yml
 
