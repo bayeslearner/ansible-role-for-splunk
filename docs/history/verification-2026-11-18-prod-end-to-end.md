@@ -59,9 +59,26 @@ Engine disk: 28.2 GB used before the lab, 63.4 GB with `prod` installed and both
 
 Each Splunk Enterprise node also held about one CPU core while otherwise idle. These nodes run amd64 Splunk under emulation on an ARM host, so that CPU figure says little about a native host. The lab carried no data and ran no searches.
 
+## Later the same day: the cluster checks shown to fail in the full lab
+
+A second full `prod` lab on the same machine, at `1e666c3`: `MOLECULE_ENV=prod task workflow:quick` exit 0, both clusters formed (the second full pass of the day). Then faults, each followed by `task day0:verify`. Raw output: `~/lab-runs/2026-11-18-prod-faults/` on that machine.
+
+| Fault | `task day0:verify` | Which check failed |
+|---|---|---|
+| `systemctl stop Splunkd` on `splunkshc-prod02` | exit 201 | the service check: "Splunkd is inactive on splunkshc-prod02" |
+| service started again | exit 0, both clusters reported Up | |
+| `systemctl stop Splunkd` on `splunkapp-prod02` | failed | the service check, as above |
+| service started again | exit 0 | |
+| `splunkapp-prod02` given a wrong `pass4SymmKey` under `[clustering]` and restarted; its service is `active` | exit 201 | the indexer cluster check: "Wait until every indexer is an Up peer of the manager" ran out of retries |
+| the saved `server.conf` put back, restarted | exit 0 | |
+| `splunkshc-prod02` given a wrong `pass4SymmKey` under `[shclustering]` and restarted; its service is `active` | exit 201 | the search head cluster check: "Wait until the cluster has a captain and every member is Up" failed after 30 attempts |
+| the saved `server.conf` put back, restarted | exit 0: "splunkapp-prod01, splunkapp-prod02 are Up peers of splunk-master" and "splunkshc-prod01, splunkshc-prod02 are Up members of the search head cluster" | |
+| `task reset` | exit 0; no lab container or volume left; engine disk back to 30.6 GB used |
+
+A stopped node never reaches the cluster checks, because the service check comes first and fails. The wrong-key faults are the ones that exercise the cluster checks: the node runs, its ports answer, and it is not a member. The result of the stopped-indexer verify was read from its log; the script that would have written its exit code was stopped at that point so the lab could be kept for the wrong-key faults.
+
 ## Not covered
 
 - A native amd64 Linux host, and Podman.
-- The search head cluster with a member stopped, in the full lab (shown in the half-size lab).
 - The role's app deployment from the Git server (day 2, spec 10).
 - Memory and CPU for the other three topologies on this host, and any figure under load.

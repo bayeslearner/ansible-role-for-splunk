@@ -32,7 +32,6 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 
 ## Known limits, recorded and not fixed
 
-- The search head cluster losing a member has been shown only in the half-size lab.
 - Two labs running day0 at the same moment has not been tried.
 - On an ARM machine under Podman the infra prepare step fails: the amd64 Docker client in the runner crashes under emulation. It works on x86_64 Podman.
 - day0's Git server report is informational by decision; infra verify asserts the repositories.

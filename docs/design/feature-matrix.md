@@ -31,7 +31,7 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 | lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | ✅ a failed day0 or day1 leaves the lab up | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
 
 > [!warning] Built, not verified
-> `prod` has one full run, on a second Mac, where the lab took 35 GB of engine disk and 6.0 to 6.6 GiB of memory with no data; all four topologies have measured memory and disk ([record](../history/verification-2026-11-18-memory-and-disk-per-topology.md)). The search head cluster losing a member has been shown only in the half-size lab. The role deploying apps from the Git server has no run behind it (day 2, spec 10). Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
+> `prod` has one full run, on a second Mac, where the lab took 35 GB of engine disk and 6.0 to 6.6 GiB of memory with no data; all four topologies have measured memory and disk ([record](../history/verification-2026-11-18-memory-and-disk-per-topology.md)). Both cluster checks were shown to fail in the full lab on a node that runs but is not a member. The role deploying apps from the Git server has no run behind it (day 2, spec 10). Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
 
 > [!warning] Known gaps
 > - `prod`'s clusters are the smallest that form (two peers, two members). The indexer cluster is single-site, and no licence manager is configured: the lab has no licence file, so every node runs on a trial licence.
