@@ -18,7 +18,7 @@ RUN git clone --branch ${TTYD_VERSION} --depth 1 https://github.com/tsl0922/ttyd
     make
 
 # Final stage
-FROM splunk-base-ubuntu2204:latest
+FROM localhost/splunk-base-ubuntu2204:latest
 
 # Install runtime dependencies and tools
 RUN apt-get update && \

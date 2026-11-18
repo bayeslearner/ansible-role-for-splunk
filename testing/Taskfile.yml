@@ -38,8 +38,8 @@ vars:
     -e MOLECULE_ENV={{.ENV}}
   # Disable veth checksum offloading before running molecule (prevents large file transfer corruption)
   _ETHTOOL_FIX: 'ethtool -K eth0 tx off rx off 2>/dev/null;'
-  _MOL: 'docker run --rm {{._DOCKER_ARGS}} molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
-  _MOL_NET: 'docker run --rm --network splunk-test-network {{._DOCKER_ARGS}} molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
+  _MOL: 'docker run --rm {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
+  _MOL_NET: 'docker run --rm --network splunk-test-network {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
 
 tasks:
   default:
@@ -81,32 +81,35 @@ tasks:
       - test -f {{.SECRETS_DIR}}/ansible_password
       - test -f {{.SECRETS_DIR}}/inventory/group_vars/all.yml
 
+  # The lab's images are named localhost/<name>:latest. Docker and Podman both resolve that name to the
+  # local image; a bare <name>:latest is read by Podman's Docker-compatible API as docker.io/library/<name>
+  # and pulled, which fails.
   setup:images:
     desc: Build all Docker images required for testing (idempotent)
     cmds:
       - |
         echo "Checking/building Splunk testing framework images..."
-        docker image inspect splunk-base-almalinux9:latest >/dev/null 2>&1 || docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
-        docker image inspect splunk-base-ubuntu2204:latest >/dev/null 2>&1 || docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
-        docker image inspect splunk-ansible-controller:latest >/dev/null 2>&1 || docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
-        docker image inspect splunk-git-server:latest >/dev/null 2>&1 || docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
-        docker image inspect molecule-runner:latest >/dev/null 2>&1 || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+        docker image inspect localhost/splunk-base-almalinux9:latest >/dev/null 2>&1 || docker build -t localhost/splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+        docker image inspect localhost/splunk-base-ubuntu2204:latest >/dev/null 2>&1 || docker build -t localhost/splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+        docker image inspect localhost/splunk-ansible-controller:latest >/dev/null 2>&1 || docker build -t localhost/splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+        docker image inspect localhost/splunk-git-server:latest >/dev/null 2>&1 || docker build -t localhost/splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+        docker image inspect localhost/molecule-runner:latest >/dev/null 2>&1 || docker build -t localhost/molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
         echo "All images ready!"
     status:
-      - docker image inspect splunk-base-almalinux9:latest >/dev/null 2>&1
-      - docker image inspect splunk-base-ubuntu2204:latest >/dev/null 2>&1
-      - docker image inspect splunk-ansible-controller:latest >/dev/null 2>&1
-      - docker image inspect splunk-git-server:latest >/dev/null 2>&1
-      - docker image inspect molecule-runner:latest >/dev/null 2>&1
+      - docker image inspect localhost/splunk-base-almalinux9:latest >/dev/null 2>&1
+      - docker image inspect localhost/splunk-base-ubuntu2204:latest >/dev/null 2>&1
+      - docker image inspect localhost/splunk-ansible-controller:latest >/dev/null 2>&1
+      - docker image inspect localhost/splunk-git-server:latest >/dev/null 2>&1
+      - docker image inspect localhost/molecule-runner:latest >/dev/null 2>&1
 
   setup:rebuild:
     desc: Force rebuild all Docker images
     cmds:
-      - docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
-      - docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
-      - docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
-      - docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
-      - docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+      - docker build -t localhost/splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+      - docker build -t localhost/splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+      - docker build -t localhost/splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+      - docker build -t localhost/splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+      - docker build -t localhost/molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
       - echo "All images rebuilt!"
 
   download:splunk:
@@ -117,7 +120,7 @@ tasks:
           -v {{.PROJECT_ROOT}}:/workspace \
           -w /workspace/testing \
           -e MOLECULE_ENV={{.ENV}} \
-          molecule-runner:latest \
+          localhost/molecule-runner:latest \
           bash -c "ansible-playbook -e ansible_connection=local molecule/download.yml && chown -R $(id -u):$(id -g) /workspace/testing/software"
 
   network:create:
@@ -276,7 +279,7 @@ tasks:
           docker rm -f mol-run 2>/dev/null || true
           docker run -d --name mol-run --network splunk-test-network \
             {{._DOCKER_ARGS}} \
-            molecule-runner:latest sleep infinity
+            localhost/molecule-runner:latest sleep infinity
           echo "Molecule runner started (use: task runner:shell)"
         fi
 

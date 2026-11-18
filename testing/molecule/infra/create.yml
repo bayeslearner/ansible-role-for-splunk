@@ -39,7 +39,7 @@
     - name: Start ansible-controller
       community.docker.docker_container:
         name: ansible-controller
-        image: splunk-ansible-controller:latest
+        image: localhost/splunk-ansible-controller:latest
         hostname: ansible-controller
         privileged: true
         cgroupns_mode: host
@@ -62,7 +62,7 @@
     - name: Start Splunk containers
       community.docker.docker_container:
         name: "{{ item }}"
-        image: "{{ hostvars[item].docker_image | default('splunk-base-ubuntu2204:latest') }}"
+        image: "{{ hostvars[item].docker_image | default('localhost/splunk-base-ubuntu2204:latest') }}"
         hostname: "{{ item }}"
         privileged: true
         cgroupns_mode: host
@@ -85,7 +85,7 @@
     - name: Start git-server
       community.docker.docker_container:
         name: git-server
-        image: splunk-git-server:latest
+        image: localhost/splunk-git-server:latest
         hostname: git-server
         env:
           GITEA__security__SECRET_KEY: "{{ gitea_secret_key }}"

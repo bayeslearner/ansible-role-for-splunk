@@ -139,6 +139,7 @@ Both `diag:` targets exit non-zero when something is wrong.
 `task runner:shell` opens a shell in a persistent runner container (`mol-run`) for running `molecule` or `ansible-playbook` by hand against the lab; it starts the container when needed, and `task runner:stop` removes it.
 
 ## Engine socket and published ports
+- The lab's images are named `localhost/<name>:latest` (`localhost/molecule-runner:latest` and so on). Docker and Podman both resolve that form to the local image.
 - `DOCKER_SOCK` (default `/var/run/docker.sock`) is the engine socket the runner mounts. The controller does not get the socket: it reaches the nodes over SSH only. Set it to use another engine, such as a Podman API socket.
 - `LAB_BIND_ADDRESS` (default `127.0.0.1`) is the address the lab's published ports bind to: 3000 (web terminal), 2222 and 8929 (Git server). Set `LAB_BIND_ADDRESS=0.0.0.0` to reach them from another machine.
 

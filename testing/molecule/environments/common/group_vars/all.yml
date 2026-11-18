@@ -22,7 +22,7 @@ splunk_package_version: 9.4.2
 build_id: e9664af3d956
 
 # Default container image
-docker_image: splunk-base-ubuntu2204:latest
+docker_image: localhost/splunk-base-ubuntu2204:latest
 
 # Local software configuration
 splunk_package_path: "/workspace/testing/software"
