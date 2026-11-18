@@ -51,7 +51,7 @@ Lint (repo root): `pre-commit run --all-files` (yamllint, ansible-lint on `roles
 - `roles/splunk/` — the role (upstream-owned; changes here go upstream when general).
 - `playbooks/`, `environments/` — upstream examples.
 - `testing/` — the virtual lab: `Taskfile.yml`, `docker-images/`, `molecule/{infra,day0,day1,environments}`, `software/` (downloaded tarballs, ignored), `.secrets/` (generated, ignored).
-- `docs/` — map in `docs/README.md`.
+- `docs/` — map in `docs/README.md`. Verification records with their commands and results: `docs/history/verification-*.md`; raw run logs stay local in `testing/.runs/` (ignored).
 
 ## What to maintain
 
