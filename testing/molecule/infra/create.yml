@@ -6,10 +6,31 @@
   vars:
     ansible_python_interpreter: /usr/local/bin/python3
     targets: "{{ groups['full'] | default([]) + groups['uf'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
-    # Host-side engine socket and bind address, passed in by the Taskfile
+    # Bind address for published ports, passed in by the Taskfile
     lab_bind_address: "{{ lookup('env', 'LAB_BIND_ADDRESS') | default('127.0.0.1', true) }}"
 
   tasks:
+    # The lab's hosts are reached by container name. If the machine running the lab can already
+    # resolve one of those names (through its DNS search domains, for example), a playbook run from
+    # outside the lab network could reach a real host of the same name. This runner is not on the
+    # lab network during infra, so a name that resolves here resolves to something outside the lab.
+    - name: Look up each lab host name outside the lab network
+      ansible.builtin.command: getent hosts {{ item }}
+      loop: "{{ targets }}"
+      register: lab_name_lookup
+      changed_when: false
+      failed_when: false
+
+    - name: Refuse lab host names that already resolve to something else
+      ansible.builtin.assert:
+        that:
+          - lab_name_lookup.results | selectattr('rc', 'equalto', 0) | list | length == 0
+        quiet: true
+        fail_msg: |
+          These lab host names already resolve outside the lab, so they could reach a real host:
+          {{ lab_name_lookup.results | selectattr('rc', 'equalto', 0) | map(attribute='stdout') | join('; ') }}
+          Rename them in the topology's hosts.yml, or run the lab where they do not resolve.
+
     - name: Ensure Docker network exists
       community.docker.docker_network:
         name: splunk-test-network

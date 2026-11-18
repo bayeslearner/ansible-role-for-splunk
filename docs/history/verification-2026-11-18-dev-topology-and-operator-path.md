@@ -93,3 +93,14 @@ On the tree at `1f75b5f`. `infra/create.yml` mounted the host's Docker socket in
 
 The runner still mounts the socket; that is how Molecule creates the lab's containers.
 
+## Lab names that already resolve are refused (task 3.6)
+
+On the tree at `de7cf83`. The lab reaches its hosts by container name, and several names look like real host names. On a machine whose DNS search domains resolve such a name, a playbook run outside the lab network could reach a real host. `infra/create.yml` now looks up every lab host name from the runner, which is not on the lab network during infra, and stops before creating anything if one resolves.
+
+| Step on `dev` | Result |
+|---|---|
+| `molecule create -s infra` in a runner started with `--add-host splunk-dev:10.9.9.9` | exit 2: "These lab host names already resolve outside the lab, so they could reach a real host: 10.9.9.9 splunk-dev"; no lab container created (`names-neg.log`) |
+| `task infra:test` with no such name | exit 0; 6 steps "Executed: Successful" (`names-ok.log`) |
+
+The lookup uses the resolver of the container the runner starts in, which takes its DNS servers and search domains from the engine's host. It was tried with a hosts-file entry, not on a network whose DNS answers for a lab name.
+

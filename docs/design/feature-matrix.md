@@ -35,7 +35,7 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 
 > [!warning] Known gaps
 > - day0 forms `prod`'s indexer cluster and search head cluster, but a full `prod` run is owed (task 2.1). The inventory's two indexer sites are not used: the role's manager task sets no multisite options.
-> - The lab has run only on macOS. Published ports bind to `127.0.0.1`, the Git server refuses sign-up and the controller has no Docker socket (tasks 3.3, 3.4). Still open for a shared host: privileged nodes, lab names that can match real hosts, and one lab per engine (tasks 3.5–3.7).
+> - The lab has run only on macOS. Published ports bind to `127.0.0.1`, the Git server refuses sign-up and the controller has no Docker socket (tasks 3.3, 3.4). Infra refuses lab names that already resolve outside the lab (3.6). Still open for a shared host: privileged nodes and one lab per engine (tasks 3.5, 3.7).
 
 ## Day 2 (spec 10, planned)
 

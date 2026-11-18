@@ -62,7 +62,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: NFR Isolation
   - [ ] 3.5 Decide whether nodes can run without `privileged` and `cgroupns_mode: host` on the target hosts' cgroup version; record the result
     - Requirements: NFR Isolation
-  - [ ] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
+  - [x] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
+    - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; with the check, a collision cannot go unnoticed. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
     - Requirements: NFR Isolation
   - [ ] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host
     - Requirements: R10
@@ -141,3 +142,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: day0 verify prints the same failure diagnostics as day1, from one shared task file; the process list reads `/proc`, because the AlmaLinux image has no `ps` (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
 - 2026-11-18: 3.4 closed: the controller no longer mounts the Docker socket; `dev` passes a full workflow and infra verify without it (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
 - 2026-11-18: 3.8 closed: a systemd unit in both node images turns checksum offload off at every boot, replacing the one-off task in prepare; it holds across a container restart on Ubuntu and AlmaLinux nodes (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`).
+- 2026-11-18: 3.6 closed with a check in `infra/create.yml` that refuses lab host names which already resolve outside the lab.
