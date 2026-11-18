@@ -145,3 +145,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 3.8 closed: a systemd unit in both node images turns checksum offload off at every boot, replacing the one-off task in prepare; it holds across a container restart on Ubuntu and AlmaLinux nodes (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`).
 - 2026-11-18: 3.6 closed with a check in `infra/create.yml` that refuses lab host names which already resolve outside the lab.
 - 2026-11-18: 3.5 closed with a recorded experiment. Finding for shared hosts: on a privileged node the role's huge-pages unit changes the setting for the whole machine, because containers share the host's kernel.
+- 2026-11-18: Regression on the day's last code commit (`7d3d91a`): `prod` infra, `small` and `dms` in full, `dev` with the operator path, and five failure cases all behave as recorded earlier (`docs/history/verification-2026-11-18-final-regression.md`).
