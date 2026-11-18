@@ -35,7 +35,7 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 
 > [!warning] Known gaps
 > - `prod`'s clusters are the smallest that form (two peers, two members). The indexer cluster is single-site, and no licence manager is configured: the lab has no licence file, so every node runs on a trial licence.
-> - The lab's full runs are all on macOS (two machines); `dms` alone ran on Linux under Podman. Published ports bind to `127.0.0.1`, the Git server refuses sign-up and the controller has no Docker socket (tasks 3.3, 3.4). Infra refuses lab names that already resolve outside the lab (3.6). Nodes stay privileged by decision, and through them the role changes the host's huge-pages setting (3.5). Still open for a shared host: one lab per engine (3.7).
+> - The lab's full runs are all on macOS (two machines); `dms` alone ran on Linux under Podman. Published ports bind to `127.0.0.1`, the Git server refuses sign-up and the controller has no Docker socket (tasks 3.3, 3.4). Infra refuses lab names that already resolve outside the lab (3.6). Nodes stay privileged by decision, and through them the role changes the host's huge-pages setting (3.5). A lab can be named (`LAB_NAME`, `LAB_PORT_OFFSET`), and three labs ran on one engine at once ([record](../history/verification-2026-11-18-two-labs-on-one-engine.md), 3.7).
 
 ## Day 2 (spec 10, planned)
 

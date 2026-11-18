@@ -27,6 +27,16 @@ vars:
   DOCKER_SOCK: '{{.DOCKER_SOCK | default "/var/run/docker.sock"}}'
   # Address published lab ports bind to; widen with LAB_BIND_ADDRESS=0.0.0.0
   LAB_BIND_ADDRESS: '{{.LAB_BIND_ADDRESS | default "127.0.0.1"}}'
+  # A second lab on the same engine: LAB_NAME=<letters and digits> prefixes every container, gives
+  # the lab its own network and volumes, and LAB_PORT_OFFSET moves its three published ports.
+  # Empty (the default) keeps the names the lab has always used.
+  LAB_NAME: '{{.LAB_NAME | default ""}}'
+  LAB_PORT_OFFSET: '{{.LAB_PORT_OFFSET | default "0"}}'
+  _PFX: '{{if .LAB_NAME}}{{.LAB_NAME}}-{{end}}'
+  _NET: 'splunk-test-network{{if .LAB_NAME}}-{{.LAB_NAME}}{{end}}'
+  _VOL: '{{if .LAB_NAME}}ansible-splunk-lab-{{.LAB_NAME}}-{{else}}ansible-splunk-test-{{end}}'
+  _WEB_PORT: '{{add 3000 (atoi .LAB_PORT_OFFSET)}}'
+  _LAB_NAME_OK: 'case "{{.LAB_NAME}}" in *[!a-z0-9]*) exit 1;; esac'
   # Common docker run args for molecule tasks (ENV resolved per-invocation)
   _DOCKER_ARGS: >-
     --cap-add NET_ADMIN
@@ -36,10 +46,14 @@ vars:
     -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}}
     -e LAB_BIND_ADDRESS={{.LAB_BIND_ADDRESS}}
     -e MOLECULE_ENV={{.ENV}}
+    -e LAB_PREFIX={{._PFX}}
+    -e LAB_NETWORK={{._NET}}
+    -e LAB_VOLUME_STEM={{._VOL}}
+    -e LAB_PORT_OFFSET={{.LAB_PORT_OFFSET}}
   # Disable veth checksum offloading before running molecule (prevents large file transfer corruption)
   _ETHTOOL_FIX: 'ethtool -K eth0 tx off rx off 2>/dev/null;'
   _MOL: 'docker run --rm {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
-  _MOL_NET: 'docker run --rm --network splunk-test-network {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
+  _MOL_NET: 'docker run --rm --network {{._NET}} {{._DOCKER_ARGS}} localhost/molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
 
 tasks:
   default:
@@ -129,11 +143,14 @@ tasks:
 
   network:create:
     desc: Create Docker network for testing (idempotent)
+    preconditions:
+      - sh: '{{._LAB_NAME_OK}}'
+        msg: "LAB_NAME may hold only lower-case letters and digits (got '{{.LAB_NAME}}')"
     cmds:
-      - docker network ls | grep -q splunk-test-network || docker network create splunk-test-network
-      - echo "Network splunk-test-network ready"
+      - docker network inspect {{._NET}} >/dev/null 2>&1 || docker network create {{._NET}}
+      - echo "Network {{._NET}} ready"
     status:
-      - docker network ls | grep -q splunk-test-network
+      - docker network inspect {{._NET}} >/dev/null 2>&1
 
   # === Infra (Containers + SSH) ===
 
@@ -145,9 +162,21 @@ tasks:
       - '{{._MOL}} molecule test -s infra'
       - echo "Infrastructure scenario complete!"
 
+  lab:ports:
+    desc: "Refuse to start when the web terminal's port already answers and this lab's controller is not the one answering"
+    preconditions:
+      - sh: '{{._LAB_NAME_OK}}'
+        msg: "LAB_NAME may hold only lower-case letters and digits (got '{{.LAB_NAME}}')"
+      - sh: |
+          docker inspect {{._PFX}}ansible-controller >/dev/null 2>&1 && exit 0
+          # curl exits 7 when nothing listens; any other result means something answered or held the port
+          if curl -s -o /dev/null --max-time 3 http://127.0.0.1:{{._WEB_PORT}}/; then exit 1; else [ $? -eq 7 ]; fi
+        msg: "Port {{._WEB_PORT}} on this machine is already in use, so the lab's web terminal would not be reachable there. Pick another LAB_PORT_OFFSET (now {{.LAB_PORT_OFFSET}}); it also moves the Git server's ports {{add 2222 (atoi .LAB_PORT_OFFSET)}} and {{add 8929 (atoi .LAB_PORT_OFFSET)}}."
+
   infra:create:
     desc: "Create infrastructure containers"
     cmds:
+      - task: lab:ports
       - task: setup
       - echo "Creating infrastructure containers with env={{.ENV}}..."
       - '{{._MOL}} molecule create -s infra'
@@ -163,7 +192,7 @@ tasks:
     cmds:
       - task: infra:create
       - task: infra:prepare
-      - echo "Infrastructure ready! Web terminal at http://localhost:3000/ttyd"
+      - echo "Infrastructure ready! Web terminal at http://localhost:{{._WEB_PORT}}/ttyd"
 
   infra:destroy:
     desc: "Destroy infrastructure containers"
@@ -241,11 +270,11 @@ tasks:
     cmds:
       - |
           set -e
-          docker exec ansible-controller true 2>/dev/null || { echo "ansible-controller is not running - run: task infra:setup"; exit 1; }
+          docker exec {{._PFX}}ansible-controller true 2>/dev/null || { echo "{{._PFX}}ansible-controller is not running - run: task infra:setup"; exit 1; }
           echo "=== Service status (ttyd, nginx) ==="
-          docker exec ansible-controller systemctl is-active ttyd nginx
-          echo "=== http://localhost:3000/ttyd/ without a password (401 expected) ==="
-          code=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:3000/ttyd/ || true)
+          docker exec {{._PFX}}ansible-controller systemctl is-active ttyd nginx
+          echo "=== http://localhost:{{._WEB_PORT}}/ttyd/ without a password (401 expected) ==="
+          code=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:{{._WEB_PORT}}/ttyd/ || true)
           echo "HTTP $code"
           [ "$code" = "401" ] || { echo "Expected 401 from the password prompt, got $code"; exit 1; }
 
@@ -254,8 +283,8 @@ tasks:
     cmds:
       - |
           set -e
-          docker exec ansible-controller true 2>/dev/null || { echo "ansible-controller is not running - run: task infra:setup"; exit 1; }
-          docker exec -u ansible -e ANSIBLE_CONFIG=/home/ansible/ansible.cfg ansible-controller \
+          docker exec {{._PFX}}ansible-controller true 2>/dev/null || { echo "{{._PFX}}ansible-controller is not running - run: task infra:setup"; exit 1; }
+          docker exec -u ansible -e ANSIBLE_CONFIG=/home/ansible/ansible.cfg {{._PFX}}ansible-controller \
             ansible 'all:!git_server:!ansible_controller' -m ansible.builtin.ping -o
 
   # === Utilities ===
@@ -263,13 +292,13 @@ tasks:
   status:
     desc: "Show container status"
     cmds:
-      - echo "Containers on splunk-test-network:"
-      - docker ps --filter network=splunk-test-network
+      - echo "Containers on {{._NET}}:"
+      - docker ps --filter network={{._NET}}
 
   shell:
     desc: "Shell into container (usage: task shell -- <container-name>)"
     cmds:
-      - docker exec -it {{.CLI_ARGS}} bash
+      - docker exec -it {{._PFX}}{{.CLI_ARGS}} bash
 
   # === Runner (Persistent Container) ===
 
@@ -277,11 +306,11 @@ tasks:
     desc: "Start persistent molecule-runner container"
     cmds:
       - |
-        if docker ps --filter name=^mol-run$ --filter status=running -q | grep -q .; then
+        if docker ps --filter name=^{{._PFX}}mol-run$ --filter status=running -q | grep -q .; then
           echo "Molecule runner already running"
         else
-          docker rm -f mol-run 2>/dev/null || true
-          docker run -d --name mol-run --network splunk-test-network \
+          docker rm -f {{._PFX}}mol-run 2>/dev/null || true
+          docker run -d --name {{._PFX}}mol-run --network {{._NET}} \
             {{._DOCKER_ARGS}} \
             localhost/molecule-runner:latest sleep infinity
           echo "Molecule runner started (use: task runner:shell)"
@@ -292,12 +321,12 @@ tasks:
     cmds:
       - task: network:create
       - task: runner:start
-      - docker exec -it mol-run bash
+      - docker exec -it {{._PFX}}mol-run bash
 
   runner:stop:
     desc: "Stop molecule-runner"
     cmds:
-      - docker rm -f mol-run 2>/dev/null || true
+      - docker rm -f {{._PFX}}mol-run 2>/dev/null || true
       - echo "Molecule runner stopped"
 
   # === Cleanup ===
@@ -308,6 +337,6 @@ tasks:
       - task: infra:destroy
       - task: runner:stop
       - echo "Removing test volumes and network..."
-      - docker volume ls -q --filter name=ansible-splunk-test- | xargs -r docker volume rm
-      - docker network rm splunk-test-network 2>/dev/null || true
+      - docker volume ls -q --filter name={{._VOL}} | xargs -r docker volume rm
+      - docker network rm {{._NET}} 2>/dev/null || true
       - echo "Reset complete!"

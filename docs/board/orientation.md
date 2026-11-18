@@ -8,7 +8,7 @@ The lab runs and checks itself on all four topologies. `prod`, the largest, ran 
 
 - **Spec 05, the virtual lab as built: ACTIVE.** Reconstructed from the code on 2026-11-02. Its review (the "Review of spec 05" tab) awaits your sign-off. It first ran on 2026-11-10 and 11-11, on the pre-production host, as the one-node `dms` topology.
 - **Upstream merged.** `upstream/master` (`750c071`) is merged into the lab branch, now `main` and the fork's default branch. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged.
-- **2026-11-18.** `small`, `dev` and `dms` pass full workflows on the work Mac, and every stage's check was shown to fail on its fault. `prod` passes its full workflow on a second Mac; that run found two faults, both fixed (the AlmaLinux image had no `ps`, which Splunk's command line needs; a synced checkout lost the lab key's file mode). 7 of spec 05's tasks remain open, all needing a lab host, a design choice or an answer from you. Records: `docs/history/verification-2026-11-18-*.md`; the day's decisions: `docs/decisions/2026-11-18-02-lab-behaviour-changes.md`.
+- **2026-11-18.** `small`, `dev` and `dms` pass full workflows on the work Mac, and every stage's check was shown to fail on its fault. `prod` passes its full workflow on a second Mac; that run found two faults, both fixed (the AlmaLinux image had no `ps`, which Splunk's command line needs; a synced checkout lost the lab key's file mode). 6 of spec 05's tasks remain open, all needing a lab host, a design choice or an answer from you. Records: `docs/history/verification-2026-11-18-*.md`; the day's decisions: `docs/decisions/2026-11-18-02-lab-behaviour-changes.md`.
 - **Spec 10, day 2 operations: DRAFT.** It waits for spec 05.
 
 ## Goals
@@ -17,7 +17,7 @@ The lab runs and checks itself on all four topologies. `prod`, the largest, ran 
 | --- | --- | --- |
 | **A virtual lab, not just a test runner**: log into a controller and operate a Splunk estate as in production | The controller works with no flags and runs the runner's Ansible; all four topologies have full recorded runs, and every stage's check was shown to fail on its fault; `prod` forms a two-peer indexer cluster and a two-member search head cluster, with a Git server that holds its app repositories | A clean-host setup run (1.1); then spec 10 |
 | **Stay current with upstream without its bash-first harness** | Upstream role merged and run in the lab on all four topologies, its cluster tasks included; the Taskfile design kept; `run-tests.sh` only forwards to `task`; the lint hook, which crashed upstream too, works again | Exercise the role's app deployment from the Git server (spec 10) |
-| **Run it on real lab hosts** | `dms` ran on the pre-production host under root Podman. For a shared host: ports bind to loopback, the Git server refuses sign-up, the controller has no Docker socket, SSH takes keys only, lab names that already resolve are refused, images use names Podman resolves, and day0 checks free disk first | The pve2 VM's facts and a run there (3.1, 3.2); the lab on Podman with the new image names (3.12); the pre-production host (3.9); two labs on one engine (3.7) |
+| **Run it on real lab hosts** | `dms` ran on the pre-production host under root Podman. For a shared host: ports bind to loopback, the Git server refuses sign-up, the controller has no Docker socket, SSH takes keys only, a lab can be named so several share one engine, lab names that already resolve are refused, images use names Podman resolves, and day0 checks free disk first | The pve2 VM's facts and a run there (3.1, 3.2); the lab on Podman with the new image names (3.12); the pre-production host (3.9) |
 | **Teach Molecule** | The "Learn Molecule through the lab" tab in this doc | Lesson 1 in progress |
 
 ## Roadmap
@@ -41,5 +41,4 @@ The fork exists to turn the upstream role's Molecule harness into a virtual lab:
 - **Needs you:** two questions (the Needs you panel above, `docs/decisions/2026-11-18-03-host-name-and-site-names.md`) and the sign-off on the review (the "Review of spec 05" tab).
 - **Done since the last redraw:** `prod` end to end (2.1, 1.3) and a whole day0 behind the disk check (6.7). Memory, CPU and disk are measured for all four topologies and tabled in both READMEs (5.5).
 - **Then, on the lab hosts:** the pve2 VM's facts and a run there (3.1, 3.2); the lab on Podman with the new image names (3.12); the pre-production host (3.9).
-- **Design work with no run needed:** two labs on one engine (3.7).
 - **After spec 05:** spec 10, day 2 operations, which can now use the Git server's repositories.

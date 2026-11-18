@@ -4,6 +4,8 @@
   gather_facts: false
   vars:
     ansible_connection: docker  # Use Docker for verification (not SSH)
+    # The Docker connection addresses a container by its real name, which a named lab prefixes.
+    ansible_host: "{{ lookup('env', 'LAB_PREFIX') }}{{ inventory_hostname }}"
   tasks:
     - name: Test infrastructure setup
       ansible.builtin.command: echo "Infrastructure setup verified - containers created and SSH keys distributed to {{ inventory_hostname }}"
@@ -32,6 +34,8 @@
   gather_facts: false
   vars:
     ansible_connection: docker
+    # The Docker connection addresses a container by its real name, which a named lab prefixes.
+    ansible_host: "{{ lookup('env', 'LAB_PREFIX') }}{{ inventory_hostname }}"
     ansible_user: root
     lab_git_owner: test
     lab_git_apps: >-

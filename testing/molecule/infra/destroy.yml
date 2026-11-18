@@ -6,17 +6,19 @@
   vars:
     ansible_python_interpreter: /usr/local/bin/python3
     targets: "{{ groups['full'] | default([]) + groups['uf'] | default([]) + groups['git_server'] | default([]) }}"
+    lab_prefix: "{{ lookup('env', 'LAB_PREFIX') }}"
+    lab_volume_stem: "{{ lookup('env', 'LAB_VOLUME_STEM') | default('ansible-splunk-test-', true) }}"
   tasks:
     - name: Stop and remove ansible-controller
       community.docker.docker_container:
-        name: ansible-controller
+        name: "{{ lab_prefix }}ansible-controller"
         state: absent
         force_kill: true
       ignore_errors: true
 
     - name: Stop and remove Splunk containers
       community.docker.docker_container:
-        name: "{{ item }}"
+        name: "{{ lab_prefix }}{{ item }}"
         state: absent
         force_kill: true
       loop: "{{ targets | reject('equalto', 'git-server') | list }}"
@@ -29,7 +31,7 @@
     # so a destroyed node takes its volume with it. The Git server's data volume is kept.
     - name: Remove the Splunk nodes' data volumes
       community.docker.docker_volume:
-        name: "ansible-splunk-test-{{ item }}-data"
+        name: "{{ lab_volume_stem }}{{ item }}-data"
         state: absent
       loop: "{{ targets | reject('equalto', 'git-server') | list }}"
       loop_control:
@@ -37,7 +39,7 @@
 
     - name: Stop and remove git-server
       community.docker.docker_container:
-        name: git-server
+        name: "{{ lab_prefix }}git-server"
         state: absent
         force_kill: true
       ignore_errors: true

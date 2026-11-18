@@ -8,6 +8,13 @@
     targets: "{{ groups['full'] | default([]) + groups['uf'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
     # Bind address for published ports, passed in by the Taskfile
     lab_bind_address: "{{ lookup('env', 'LAB_BIND_ADDRESS') | default('127.0.0.1', true) }}"
+    # A named lab (LAB_NAME in the Taskfile) prefixes its container names and has its own network,
+    # volumes and published ports. Inside its network every container keeps its inventory name as
+    # an alias, so the inventory and the role see the same host names in every lab.
+    lab_prefix: "{{ lookup('env', 'LAB_PREFIX') }}"
+    lab_network: "{{ lookup('env', 'LAB_NETWORK') | default('splunk-test-network', true) }}"
+    lab_volume_stem: "{{ lookup('env', 'LAB_VOLUME_STEM') | default('ansible-splunk-test-', true) }}"
+    lab_port_offset: "{{ lookup('env', 'LAB_PORT_OFFSET') | default('0', true) | int }}"
 
   tasks:
     # The lab's hosts are reached by container name. If the machine running the lab can already
@@ -33,21 +40,22 @@
 
     - name: Ensure Docker network exists
       community.docker.docker_network:
-        name: splunk-test-network
+        name: "{{ lab_network }}"
         state: present
 
     - name: Start ansible-controller
       community.docker.docker_container:
-        name: ansible-controller
+        name: "{{ lab_prefix }}ansible-controller"
         image: localhost/splunk-ansible-controller:latest
         hostname: ansible-controller
         privileged: true
         cgroupns_mode: host
         command: /usr/sbin/init
         networks:
-          - name: splunk-test-network
+          - name: "{{ lab_network }}"
+            aliases: [ansible-controller]
         published_ports:
-          - "{{ lab_bind_address }}:3000:3000"
+          - "{{ lab_bind_address }}:{{ 3000 + lab_port_offset | int }}:3000"
         volumes:
           - /sys/fs/cgroup:/sys/fs/cgroup:rw
           - "{{ lookup('env', 'HOST_PROJECT_DIRECTORY') }}:/workspace:rw"
@@ -61,17 +69,18 @@
 
     - name: Start Splunk containers
       community.docker.docker_container:
-        name: "{{ item }}"
+        name: "{{ lab_prefix }}{{ item }}"
         image: "{{ hostvars[item].docker_image | default('localhost/splunk-base-ubuntu2204:latest') }}"
         hostname: "{{ item }}"
         privileged: true
         cgroupns_mode: host
         command: /usr/sbin/init
         networks:
-          - name: splunk-test-network
+          - name: "{{ lab_network }}"
+            aliases: ["{{ item }}"]
         volumes:
           - /sys/fs/cgroup:/sys/fs/cgroup:rw
-          - "ansible-splunk-test-{{ item }}-data:/opt:rw"
+          - "{{ lab_volume_stem }}{{ item }}-data:/opt:rw"
         tmpfs:
           - /run
           - /run/lock
@@ -84,18 +93,19 @@
 
     - name: Start git-server
       community.docker.docker_container:
-        name: git-server
+        name: "{{ lab_prefix }}git-server"
         image: localhost/splunk-git-server:latest
         hostname: git-server
         env:
           GITEA__security__SECRET_KEY: "{{ gitea_secret_key }}"
         networks:
-          - name: splunk-test-network
+          - name: "{{ lab_network }}"
+            aliases: [git-server]
         published_ports:
-          - "{{ lab_bind_address }}:2222:22"
-          - "{{ lab_bind_address }}:8929:8929"
+          - "{{ lab_bind_address }}:{{ 2222 + lab_port_offset | int }}:22"
+          - "{{ lab_bind_address }}:{{ 8929 + lab_port_offset | int }}:8929"
         volumes:
-          - ansible-splunk-test-gitea-data:/data:rw
+          - "{{ lab_volume_stem }}gitea-data:/data:rw"
         restart_policy: unless-stopped
         state: started
       when: "'git_server' in groups"

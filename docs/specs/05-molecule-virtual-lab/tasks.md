@@ -67,8 +67,10 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
     - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; the check covers the moment a lab is built; a name that starts resolving later is not caught (design, Security). Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
     - Requirements: NFR Isolation
-  - [ ] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host
+  - [x] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host
+    - 2026-11-18: `LAB_NAME` and `LAB_PORT_OFFSET`; unset, nothing changes. Three labs ran side by side, two with Splunk installed (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). `infra:create` refuses a web-terminal port that is already in use.
     - Requirements: R10
+    - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`
   - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
     - Requirements: R10
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
@@ -170,3 +172,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 6.8: node images no longer accept SSH password logins; `prod`'s infra scenario passes on the rebuilt images. Two owner questions are written up as `docs/decisions/2026-11-18-03-host-name-and-site-names.md` (open). Notes added for the owed `prod` run: read back the forwarder's deployment-client setting and the deployer's target group.
 - 2026-11-18: `prod` ran end to end on a second Mac with its own Docker engine: infra, day0 with both clusters formed in one lab, day1, a second verify, teardown (`docs/history/verification-2026-11-18-prod-end-to-end.md`). Closes 1.3, 2.1 and 6.7. The run found and fixed two faults: the AlmaLinux image had no `ps`, which Splunk's command line needs (6.9), and a synced checkout lost the lab key's file mode (6.10). The forwarder's deployment-client setting was read back from both ends.
 - 2026-11-18: 5.5 closed: `small`, `dev` and `dms` each ran setup, day0, day1 and teardown on the second Mac with memory, CPU and disk read at three points (`docs/history/verification-2026-11-18-memory-and-disk-per-topology.md`). At rest a Splunk 9.4.2 node takes 640 to 810 MiB and Splunk 10.6.1.1 twice that. Both READMEs now carry the table.
+- 2026-11-18: 3.7 closed: a lab can be named (`LAB_NAME`, `LAB_PORT_OFFSET`), and three labs ran on one engine at once without seeing each other (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). The run found that the engine publishes a port another program already holds without an error, so `infra:create` now checks the web terminal's port first.
