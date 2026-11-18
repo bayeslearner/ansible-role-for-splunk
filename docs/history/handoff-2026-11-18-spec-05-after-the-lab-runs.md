@@ -17,7 +17,7 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 
 | Item | Waits on |
 |---|---|
-| Tasks 3.1, 3.2: facts of, and a run on, the pve2 VM | the VM existing; a request with the lab's measured needs was left with the session that owns that hardware |
+| Tasks 3.1, 3.2: facts of, and a run on, the pve2 VM | a Docker VM on `pve-02`, the homelab's Proxmox node: load the lab key (`mise -C ~/Homecloud run lab:key`), then `mise run lab:vm:dev:create` from `homecloud-lab` (`docs/guides/dev-vms.md`), with the owner's go-ahead. An earlier version of this handoff said the VM did not exist; that was wrong. |
 | Task 3.9: `small` in full on the pre-production host with today's code | the owner asking for it; it changes state on a shared host. It will need `podman` as the build command and probably `LAB_RUNNER_ARGS='--security-opt label=disable'` (`verification-2026-11-18-lab-on-podman.md`) |
 | Task 5.1 | whatever those two runs change in `testing/README.md` |
 | Two owner questions | `docs/decisions/2026-11-18-03-host-name-and-site-names.md` |
@@ -40,4 +40,4 @@ Close spec 05 (the virtual lab as built), then start spec 10 (day 2 operations).
 
 ## Next action
 
-When the owner answers: act on the two questions, then either run 3.9 or record that the pve2 step is dropped, close spec 05 through `/spec-review`, and activate spec 10.
+When the owner answers: act on the two questions, run 3.1 and 3.2 on a dev VM on `pve-02`, then 3.9, close spec 05 through `/spec-review`, and activate spec 10.

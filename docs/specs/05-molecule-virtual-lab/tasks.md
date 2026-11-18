@@ -53,11 +53,11 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 3. Portability and isolation for the pve2 VM and the pre-production host
   - [ ] 3.1 Record the facts of each lab host before the first run: OS, kernel and cgroup version, Docker engine and CLI versions, egress to download.splunk.com and Docker Hub, the user the lab runs as, DNS search domains
-    - 2026-11-18: no facts record has been written for either host. What the 2026-11-10 and 2026-11-11 runs showed about the pre-production host is in the Log (root Podman and its socket). The pve2 VM's facts cannot be taken: no such VM exists yet (see 3.2). Stays open for that VM, and for a generic `research-<date>-lab-hosts.md` in this repository.
+    - 2026-11-18: no facts record has been written for either host. What the 2026-11-10 and 2026-11-11 runs showed about the pre-production host is in the Log (root Podman and its socket). The pve2 VM's facts are taken once it is created on `pve-02` (see 3.2). Stays open for that, and for a generic `research-<date>-lab-hosts.md` in this repository.
     - Requirements: R10
     - Verification: `docs/history/research-<date>-lab-hosts.md`, kept generic; host-specific details stay in the private work notes, not this public repo
   - [ ] 3.2 `MOLECULE_ENV=small task workflow:full` passes on the pve2 VM
-    - 2026-11-18: no such VM is known to this session: none is recorded, and from the work Mac `ssh -o BatchMode=yes pve-02 hostname` answers "Host key verification failed." Creating a VM on that host belongs to the homelab's own session; a request with the lab's measured needs is left in the owner's private operator notes for that session; it has not been picked up. Stays open until a VM exists.
+    - 2026-11-18: Correction of an earlier note here, which said no such VM exists. "pve2" is `pve-02`, the homelab's Proxmox node (192.168.1.222), and the homelab provides throwaway Docker VMs on it for exactly this kind of test (`homecloud-lab/docs/guides/dev-vms.md`). The "Host key verification failed" answer meant an unknown host key without the lab key loaded, not a missing host; from the work Mac it answers ping and ports 22 and 8006. Next: load the lab key, create a dev VM there with the owner's go-ahead, then run 3.1 and 3.2 on it.
     - Depends: 1.2, 3.1
     - Requirements: R10
   - [x] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
@@ -77,7 +77,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
     - Requirements: R10
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
-    - Depends: 3.3, 3.4, 3.6 (all closed). 3.2 was listed here so the lab would meet a plain Linux Docker host first; with no pve2 VM, this run can go first if the owner asks for it
+    - Depends: 3.3, 3.4, 3.6 (all closed). 3.2 was listed here so the lab meets a plain Linux Docker host (a VM on `pve-02`) before the shared host
     - Requirements: R10
   - [x] 3.10 The engine socket is a variable: `DOCKER_SOCK` (default `/var/run/docker.sock`) is the socket the runner mounts (the controller mounted it too until 3.4), so the lab can run against a Podman API service whose storage is not the host's default store (a shared host's `/var` may be too small for the lab)
     - Requirements: R10, NFR Isolation
@@ -209,3 +209,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: Group headers 1, 2, 4 and 6 marked done, as every required task under them is; groups 3 and 5 stay open for 3.1, 3.2, 3.9 and 5.1. The one unexplained infra failure of the day is now optional task 6.16.
 - 2026-11-18: Two labs ran day0 at the same moment, then day1 at the same moment, on one engine; both passed, and resetting one left the other passing its verify (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). This was the last limit recorded against 3.7.
 - 2026-11-18: 6.17: the Git server bootstrap says why it failed; shown with a mismatched owner password, which a kept Git volume and regenerated secrets produce (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`). Both teaching tabs were checked against the day0 verify change and needed no edit.
+- 2026-11-18: Correction. Earlier Log lines and notes said the pve2 VM does not exist and pve2 is unreachable. Both were wrong: `pve-02` is the homelab's Proxmox node, reachable from the work Mac with the lab key, and the homelab has a self-service path for a Docker VM on it. The owner pointed this out; `house-facts` now describes the homelab. 3.1 and 3.2 can proceed once a VM is created there.
