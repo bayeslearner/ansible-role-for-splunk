@@ -28,7 +28,6 @@ Both Dockerfiles name `ansible-core==2.21.6` and the collections `ansible.posix:
 
 ## Not covered
 
-- The new version assert failing: no run with mismatched images was made.
 - AlmaLinux nodes under the new controller Ansible (`small` is Ubuntu only).
 - Operating-system packages installed with `apt` and `dnf` inside the images are not pinned.
 
@@ -56,4 +55,13 @@ Each "now" value is what the unpinned build had resolved to, so behaviour is unc
 | `MOLECULE_ENV=prod task infra:test` on the rebuilt images | exit 0; 6 steps "Executed: Successful"; the version match and the SSH check to all nine nodes pass; no "Missing playbook" warning (`pin2-prod-infra-test.log`) |
 
 The `prod` infra run is what exercises the rebuilt AlmaLinux and Git server images.
+
+## The version check failing
+
+On the tree at `b38171c`, on the `dev` lab's infrastructure: the controller's `ansible` command was replaced by a script that prints `ansible [core 2.10.8]`, then `molecule verify -s infra` was run.
+
+| Controller reports | Result |
+|---|---|
+| `ansible [core 2.10.8]` | exit 2: "Runner runs ansible-core 2.21.6; the controller reports: ansible [core 2.10.8]" (`ver-neg.log`) |
+| the real command restored | exit 0 (`ver-ok.log`) |
 
