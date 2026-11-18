@@ -84,8 +84,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Verification: `infra:create` on a Podman engine creates every container with no pull attempt
 
 - [ ] 4. Reproducibility
-  - [ ] 4.1 Pin exact versions: base images by tag and digest, Gitea, ttyd (already 1.7.7), pip packages in the runner, Galaxy collections, go-task
-    - 2026-11-18, part done: the runner's pip packages and both images' ansible-core and Galaxy collections are pinned to exact versions (`docs/history/verification-2026-11-18-same-ansible-on-controller.md`). Still unpinned: base images (tag and digest), Gitea (`latest`), go-task (install script), the Python patch version on the controller.
+  - [x] 4.1 Pin exact versions: base images by tag and digest, Gitea, ttyd (already 1.7.7), pip packages in the runner, Galaxy collections, go-task
+    - 2026-11-18, part done: the runner's pip packages and both images' ansible-core and Galaxy collections are pinned to exact versions (`docs/history/verification-2026-11-18-same-ansible-on-controller.md`). Completed the same day: base images by tag and digest, Gitea 28.4.0, go-task v3.54.0, uv by digest, controller Python 3.12.11. Operating-system packages from `apt` and `dnf` are not pinned.
     - Requirements: NFR Reproducibility
 
 - [ ] 5. Polish and docs
@@ -136,3 +136,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: `dms` (Splunk 10.6.1.1) passes a full workflow on the Mac after the day's changes to day0 and day1, so 3.11 still holds (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). Every topology except `prod` now has a full recorded run on today's code.
 - 2026-11-18: 2.3 closed: the Git server placeholder is replaced by a bootstrap (owner, lab key, one repository per app in `git_apps`, a seed app in each), `prod`'s Git settings now form the address the role clones, and infra verify lists every repository from the controller. `prod`'s infra stage passes with eleven containers. The run found that the AlmaLinux nodes had no `scp` (6.6, fixed). Evidence: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`.
 - 2026-11-18: `infra` names its destroy sequence, which removes a false "Missing playbook" warning Molecule printed on every infra destroy (5 times in the day's logs); `dev` infra test and destroy now print none.
+- 2026-11-18: 4.1 closed: every base image is pinned by tag and digest, and Gitea, go-task, uv and the controller's Python have exact versions. All five images rebuild and `small` passes a full workflow on them. `prod`'s infra scenario also passes on them.

@@ -1,6 +1,7 @@
 # Ephemeral Molecule Runner for Cross-Platform Testing
 # Runs molecule commands to provision containers via Docker socket
-FROM python:3.12-slim
+# Base image pinned by tag and digest (checked 2026-11-18). To move it: `docker buildx imagetools inspect <image>:<tag>`.
+FROM python:3.12.16-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
 
 # Install system dependencies
 RUN apt-get update && \
@@ -26,7 +27,7 @@ RUN pip3 install --no-cache-dir \
         requests==2.34.2
 
 # Install go-task
-RUN sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+RUN sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin v3.54.0
 
 # Install required Ansible collections
 RUN ansible-galaxy collection install \

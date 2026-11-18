@@ -30,4 +30,30 @@ Both Dockerfiles name `ansible-core==2.21.6` and the collections `ansible.posix:
 
 - The new version assert failing: no run with mismatched images was made.
 - AlmaLinux nodes under the new controller Ansible (`small` is Ubuntu only).
-- Base images, Gitea, go-task and the Python patch version are still unpinned (task 4.1).
+- Operating-system packages installed with `apt` and `dnf` inside the images are not pinned.
+
+## Remaining pins, later the same day (task 4.1)
+
+On the tree at `b6c49c8`, every base image is named by tag and digest, and the last three unpinned tools got versions:
+
+| Image or tool | Was | Now |
+|---|---|---|
+| runner base | `python:3.12-slim` | `python:3.12.16-slim@sha256:5e2bdb1b…` |
+| node and controller-builder base | `ubuntu:22.04` | `ubuntu:22.04@sha256:9abcaffc…` (22.04.5) |
+| AlmaLinux node base | `almalinux:9` | `almalinux:9@sha256:02df0571…` (9.9) |
+| Git server | `gitea/gitea:latest` | `gitea/gitea:28.4.0@sha256:aa90e8f0…` |
+| `uv` in the controller | `0.8.22` | `0.8.22@sha256:9874eb7a…` |
+| go-task in the runner | the install script's newest | `v3.54.0` |
+| controller Python | `3.12` | `3.12.11` |
+
+Each "now" value is what the unpinned build had resolved to, so behaviour is unchanged.
+
+| Step | Result |
+|---|---|
+| `task setup:rebuild` (all five images) | exit 0 (`pin2-rebuild.log`) |
+| versions read from the rebuilt images | runner: go-task 3.54.0, Python 3.12.16, ansible-core 2.21.6; controller Python 3.12.11; Gitea 28.4.0 |
+| `MOLECULE_ENV=small task workflow:full` on the rebuilt images | exit 0; 9 Molecule steps "Executed: Successful", none failed (`pin2-small-full.log`) |
+| `MOLECULE_ENV=prod task infra:test` on the rebuilt images | exit 0; 6 steps "Executed: Successful"; the version match and the SSH check to all nine nodes pass; no "Missing playbook" warning (`pin2-prod-infra-test.log`) |
+
+The `prod` infra run is what exercises the rebuilt AlmaLinux and Git server images.
+

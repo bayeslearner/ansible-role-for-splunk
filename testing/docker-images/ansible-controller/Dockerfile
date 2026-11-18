@@ -1,5 +1,6 @@
 # Build stage for ttyd
-FROM ubuntu:22.04 AS builder
+# Base image pinned by tag and digest (checked 2026-11-18). To move it: `docker buildx imagetools inspect <image>:<tag>`.
+FROM ubuntu:22.04@sha256:9abcaffc92a5279fff3a6a41635c0800ea33e528425fb389658806476e7defde AS builder
 
 # Install build dependencies
 RUN apt-get update && \
@@ -33,9 +34,9 @@ COPY --from=builder /tmp/ttyd/build/ttyd /usr/local/bin/
 # collections), so a playbook behaves the same from either place. Ubuntu 22.04's Python
 # is too old for this ansible-core, so uv supplies Python 3.12 in its own virtualenv.
 # Change a version here and in docker-images/molecule-runner/Dockerfile together.
-COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.8.22@sha256:9874eb7afe5ca16c363fe80b294fe700e460df29a55532bbfea234a0f12eddb1 /uv /usr/local/bin/uv
 ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
-RUN uv venv --python 3.12 /opt/ansible && \
+RUN uv venv --python 3.12.11 /opt/ansible && \
     uv pip install --python /opt/ansible/bin/python --no-cache ansible-core==2.21.6 && \
     ln -s /opt/ansible/bin/ansible /opt/ansible/bin/ansible-playbook /opt/ansible/bin/ansible-galaxy \
           /opt/ansible/bin/ansible-inventory /opt/ansible/bin/ansible-vault /opt/ansible/bin/ansible-config \

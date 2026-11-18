@@ -1,4 +1,5 @@
-FROM gitea/gitea:latest
+# Base image pinned by tag and digest (checked 2026-11-18). To move it: `docker buildx imagetools inspect <image>:<tag>`.
+FROM gitea/gitea:28.4.0@sha256:aa90e8f00b755b0d665214ab9c14447ea44d3190dbe6b6d0cb46cd9c4f55d309
 
 # Set basic configuration
 ENV GITEA__database__DB_TYPE=sqlite3

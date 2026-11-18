@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+# Base image pinned by tag and digest (checked 2026-11-18). To move it: `docker buildx imagetools inspect <image>:<tag>`.
+FROM ubuntu:22.04@sha256:9abcaffc92a5279fff3a6a41635c0800ea33e528425fb389658806476e7defde
 ENV container=docker
 
 RUN apt-get update && \

@@ -1,4 +1,5 @@
-FROM almalinux:9
+# Base image pinned by tag and digest (checked 2026-11-18). To move it: `docker buildx imagetools inspect <image>:<tag>`.
+FROM almalinux:9@sha256:02df05719ef287ebd0df0a1eedb9172a00bd70703aed7b25660e426b8e0d6047
 ENV container=docker
 
 # openssh-clients provides scp, which the lab inventory uses to copy files (ansible_ssh_transfer_method: scp).
