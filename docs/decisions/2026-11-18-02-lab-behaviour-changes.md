@@ -60,3 +60,11 @@ Five choices made while closing spec 05 tasks. Each is technical, inside the ste
 - **Choice:** keep `privileged`. The lab's purpose is to exercise the role as it behaves on a real host.
 - **Consequence to weigh on a shared host:** a privileged node lets the role change transparent huge pages for the whole machine. If the lab is to share a host with other workloads, this choice should be revisited for that host.
 - **Reversal:** set `privileged: false` and add `capabilities: [NET_ADMIN]` on the nodes in `infra/create.yml`.
+
+## 8. The fork runs its lint on GitHub Actions (added later the same day)
+
+- **Context:** the lint hooks and the spec lint ran only when someone ran them by hand. The fork had no workflow; neither has upstream. Actions is enabled on the fork.
+- **Options:** leave lint to the person committing; or add a workflow that runs the same two commands on every push and pull request to `main`.
+- **Choice:** add `.github/workflows/lint.yml`: `pre-commit run --all-files` and `python3 scripts/spec_lint.py`, read-only permissions, no secrets, no lab build. It runs on GitHub's free runners for a public repository.
+- **Not done:** a lab run in CI. The lab needs privileged systemd containers, the Splunk packages and 10 GB or more of disk; whether to run `dev` there is a separate question.
+- **Reversal:** delete the workflow file.

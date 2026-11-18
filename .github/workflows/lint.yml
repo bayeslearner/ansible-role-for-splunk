@@ -1,0 +1,28 @@
+---
+# Runs the repository's own lint on every push and pull request to main:
+# the pre-commit hooks (whitespace, yamllint, ansible-lint on the role, the
+# playbooks, the environments and the lab) and the spec lint.
+# No lab is built here; lab runs are recorded under docs/history/.
+name: lint
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: pre-commit
+        run: pipx run pre-commit==4.3.0 run --all-files --show-diff-on-failure
+      - name: spec lint
+        run: python3 scripts/spec_lint.py

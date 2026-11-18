@@ -2,7 +2,7 @@
 
 - **Date:** 2026-11-18, 12:42 to 13:30 UTC.
 - **Code:** the working tree on top of `4b6553c` (`main`), committed with this record. Two fixes were made during the run and are part of that tree: the AlmaLinux node image installs `procps-ng`, and `setup:secrets` sets the key's file mode every time.
-- **Host:** a second Mac (Apple Silicon, 128 GB memory) with its own Docker engine: Docker 29.8.2 under OrbStack, 47 GB given to the engine, 102.8 GB of engine disk free at the start. Images built as `linux/amd64` (`DOCKER_DEFAULT_PLATFORM`), so Splunk runs emulated, as on the first Mac.
+- **Host:** a second Mac (Apple Silicon, 128 GB memory) with its own Docker engine: Docker 29.8.2 under OrbStack, 47 GB given to the engine, 102.8 GB of engine disk free at the start. The engine is separate from the first Mac's but not empty: a few unrelated containers were running on it; none belongs to the lab and none is counted in the figures below. Images built as `linux/amd64` (`DOCKER_DEFAULT_PLATFORM`), so Splunk runs emulated, as on the first Mac.
 - **Topology:** `MOLECULE_ENV=prod`: eleven containers. Splunk Enterprise 9.4.2 on eight nodes, a Universal Forwarder on one, the Git server, the controller.
 - **Raw output:** `~/lab-runs/2026-11-18-prod/` on that machine, outside any synced folder (not committed).
 
