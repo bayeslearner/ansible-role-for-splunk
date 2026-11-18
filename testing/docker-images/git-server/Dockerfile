@@ -6,7 +6,7 @@ ENV GITEA__security__INSTALL_LOCK=true
 ENV USER_UID=1000
 ENV USER_GID=1000
 
-# Create initial admin user 
+# Create initial admin user
 ENV GITEA__admin__DISABLE_REGISTRATION=false
 ENV GITEA__server__DOMAIN=git-server
 ENV GITEA__server__HTTP_PORT=8929

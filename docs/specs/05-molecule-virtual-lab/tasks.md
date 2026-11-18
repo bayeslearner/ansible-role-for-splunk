@@ -99,6 +99,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Depends: 1.2, 1.3, 2.1
     - Requirements: R10
     - Verification: the `docker stats` output in a verification record
+  - [ ] 5.6 `pre-commit run --all-files` passes: the `ansible-lint` hook is pinned to v24.9.2, which crashes on import against the ansible-core its environment now installs (`ModuleNotFoundError: No module named 'ansible.parsing.yaml.constructor'`), so no Ansible lint runs; and the hook covers `roles/ playbooks/ environments/` but not `testing/molecule/`. Bump the hook, add the lab's playbooks, fix what it reports. `.pre-commit-config.yaml` is upstream's file, so the bump is also an upstream fix.
+    - Found 2026-11-18. `end-of-file-fixer`, `trailing-whitespace` and `yamllint` pass on the fork's own files after this commit; `roles/splunkupgrader/templates/local_config_102.j2` (upstream's) still fails the first two and is left as upstream ships it.
 
 - [ ] 6. Last mile: what PR 252 cut and the review found
   - [x] 6.1 `day0/verify.yml` fails when a node's Splunk unit is not active or its management or web port is closed (it used `ignore_errors` on every check). The cluster and Git server plays stay informational until 2.1 and 2.3.
