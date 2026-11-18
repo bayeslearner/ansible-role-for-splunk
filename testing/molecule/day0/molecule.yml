@@ -33,6 +33,9 @@ driver:
 verifier:
   name: ansible
 
+# day0 never creates or destroys containers; the infra scenario owns them.
+# `task day0:test` runs `molecule test --destroy=never`, so a failed install leaves
+# the lab up for inspection. With no destroy.yml here, Molecule has nothing to remove.
 scenario:
   # Day 0 operations workflow - assumes infra is already running
   destroy_sequence:

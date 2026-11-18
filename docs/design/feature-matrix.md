@@ -28,10 +28,10 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 | lab-controller | — | — | ✅ prepare | — | — | 🟡 works with no flags; apt Ansible differs from runner | — | run: Mac, `dev`, 2026-11-18 ([record](../history/verification-2026-11-18-dev-topology-and-operator-path.md)) | 05 | 1.4, 2.4 |
 | lab-web-terminal | ✅ diag:terminal | — | ✅ | — | — | ✅ ttyd + nginx, password checked; 🟡 open on all interfaces | — | login 200 / 401: Mac, `dev`, 2026-11-18 (same record) | 05 | 1.5, 3.3 |
 | lab-git-server | — | — | ✅ starts | 🟡 probes only | — | — | ❌ no repos, users or key | no recorded run | 05 | 2.3 |
-| lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | 🟡 destroy.yml unused | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
+| lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | ✅ a failed day0 or day1 leaves the lab up | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
 
 > [!warning] Built, not verified
-> `prod` as a whole: its eleven containers have never run together (it needs about 30 GB of free engine disk). The search head cluster formed in a four-node test but was not verified healthy. `lab-git-server` and `lab-cleanup`'s unused `day0/destroy.yml` have no run behind them. Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
+> `prod` as a whole: its eleven containers have never run together (it needs about 30 GB of free engine disk). The search head cluster formed in a four-node test but was not verified healthy. `lab-git-server` has no run behind it. Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
 
 > [!warning] Known gaps
 > - day0 forms `prod`'s indexer cluster and search head cluster, but a full `prod` run is owed (task 2.1). The inventory's two indexer sites are not used: the role's manager task sets no multisite options.

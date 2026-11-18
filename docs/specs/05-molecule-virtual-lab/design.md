@@ -101,7 +101,7 @@ testing/
   molecule/
     download.yml                    tarball fetch
     infra/{molecule,create,prepare,verify,destroy}.yml
-    day0/{molecule,converge,verify,destroy}.yml + inventory/ (repeats common SSH settings)
+    day0/{molecule,converge,verify}.yml + inventory/ (repeats common SSH settings)
     day1/{molecule,converge,verify}.yml
     environments/{common,small,dev,prod}/hosts.yml + group_vars/
 ```
@@ -229,7 +229,7 @@ Reconstructed from the code, compared with the README and requirements:
 | R6 controller | `ansible.cfg` deployed; the controller runs Ubuntu 22.04's apt `ansible` while the runner runs the latest `ansible-core` from pip, so the two paths use different Ansible versions (exact controller version not yet read from a built image) | 🟡 |
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | Gitea starts; no repositories, users or deploy key are created (`prepare.yml:310` placeholders; `git_key: /tmp/test_git_key` never written) | ❌ |
-| R9 workflows | As specified; `infra:test` leaves `mol-run` running; `day0/destroy.yml` is never invoked (`destroy_sequence: [cleanup]`) | 🟡 |
+| R9 workflows | As specified; `infra:test` leaves `mol-run` running; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
 | R10 portability | Built and used on macOS only; fixed names and ports allow one lab per Docker host | ⏳ |
 
 ## Architect's Review

@@ -50,3 +50,18 @@ On the `dev` lab, as `ansible` in an interactive shell on `ansible-controller`:
 ## Memory, one reading after day1
 
 `splunk-dev` 763 MiB, `ansible-controller` 82 MiB.
+
+## A failed day0 used to delete the lab (task 5.2)
+
+Found after the runs above, on the tree at `9735f35`, and fixed in the commit that adds this section.
+
+`task day0:test` runs `molecule test -s day0`. When a step fails, `molecule test` runs the scenario's destroy step, and `day0/destroy.yml` removed the controller and every node. Their data volumes stayed behind, which is the stale-volume state that fails the next day0.
+
+| Tree | Steps on `dev` | Result |
+|---|---|---|
+| before | `task infra:setup`; `systemctl stop sshd` on `splunk-dev`; `task day0:test` | exit 201; the log shows "Stop and remove ansible-controller" and "Stop and remove Splunk containers"; 0 lab containers left; volume `ansible-splunk-test-splunk-dev-data` left (`bug-day0-before.log`) |
+| after | the same | exit 201; no destroy step ran; both containers still up; after restarting `sshd`, `task diag:ssh` answered `pong` (`bug-day0-after.log`) |
+| after | `MOLECULE_ENV=dev task workflow:full` | exit 0; 10 Molecule steps "Executed: Successful"; no lab container left (`dev-full-after-fix.log`) |
+
+The fix: `day0:test` and `day1:test` pass `--destroy=never`, and `day0/destroy.yml` is deleted. Removing containers stays with `task infra:destroy`.
+

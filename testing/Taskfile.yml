@@ -172,7 +172,7 @@ tasks:
     desc: "Run complete Day 0 scenario (converge, verify)"
     cmds:
       - echo "Day 0 - Running Splunk deployment with env={{.ENV}}..."
-      - '{{._MOL_NET}} molecule test -s day0'
+      - '{{._MOL_NET}} molecule test -s day0 --destroy=never'
       - echo "Day 0 scenario complete!"
 
   day0:converge:
@@ -194,7 +194,7 @@ tasks:
     desc: "Run complete Day 1 scenario (converge, verify)"
     cmds:
       - echo "Day 1 - Running operations scenario with env={{.ENV}}..."
-      - '{{._MOL_NET}} molecule test -s day1'
+      - '{{._MOL_NET}} molecule test -s day1 --destroy=never'
       - echo "Day 1 scenario complete!"
 
   day1:converge:
