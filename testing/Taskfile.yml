@@ -3,10 +3,13 @@
 # Single entry point for the Docker + Molecule testing harness.
 # Run on the host with: task <command>
 #
-# Environments:
-#   small  - 2 nodes (default)
-#   prod   - 9 nodes (full cluster)
+# Environments (MOLECULE_ENV):
+#   small  - 2 Splunk nodes (default)
 #   dev    - 1 node (all-in-one)
+#   dms    - 1 node (all-in-one, newer Splunk)
+#   prod   - 9 Splunk nodes and a Git server; forms an indexer cluster and a search head cluster
+#
+# A second lab on the same engine: LAB_NAME=<name> LAB_PORT_OFFSET=<n> on every command for it.
 #
 # Quick Start:
 #   task setup
