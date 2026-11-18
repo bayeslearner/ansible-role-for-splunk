@@ -38,7 +38,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R3
   - [ ] 2.3 Git server: create the Gitea admin, the `test/splunk_apps` repository with the apps `prod` names, and the deploy key at `git_key`, or remove `git_apps` from `prod` until day 2 needs them
     - Requirements: R8
-  - [ ] 2.4 Controller Ansible matches the runner: install `ansible-core` at the runner's pinned version in the controller image instead of Ubuntu's apt `ansible`, and print both versions in infra verify
+  - [x] 2.4 Controller Ansible matches the runner: install `ansible-core` at the runner's pinned version in the controller image instead of Ubuntu's apt `ansible`, and print both versions in infra verify
     - Requirements: R6, NFR Fidelity
   - [x] 2.5 Image checks use `docker image inspect <name>` instead of `docker images | grep -q name:latest`, which fails on Docker CLIs that print repository and tag in separate columns
     - Requirements: R1, R10
@@ -85,6 +85,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 4. Reproducibility
   - [ ] 4.1 Pin exact versions: base images by tag and digest, Gitea, ttyd (already 1.7.7), pip packages in the runner, Galaxy collections, go-task
+    - 2026-11-18, part done: the runner's pip packages and both images' ansible-core and Galaxy collections are pinned to exact versions (`docs/history/verification-2026-11-18-same-ansible-on-controller.md`). Still unpinned: base images (tag and digest), Gitea (`latest`), go-task (install script), the Python patch version on the controller.
     - Requirements: NFR Reproducibility
 
 - [ ] 5. Polish and docs
@@ -126,3 +127,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: `234c8aa` broke day0 on `small`, `dev` and `dms`, whose standalone `indexer` group was sent to join a missing manager; fixed by requiring a `clustermanager` group, and `small` (full) and `dev` (infra, day0, day1) pass again. Also closed 1.4, 1.5, 2.6 and 5.3 with evidence in `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
 - 2026-11-18: A failed day0 deleted the lab (Molecule ran `day0/destroy.yml` on failure); fixed and shown before and after on `dev`. This corrects the design's earlier statement that `day0/destroy.yml` is never invoked.
 - 2026-11-18: Closed 2.7 (lab runs against the merged upstream role), 5.2 (runner started on demand) and 5.4 (`.env.example` lists the lab's real settings instead of an unimplemented Twingate block).
+- 2026-11-18: 2.4 closed. The controller ran ansible 2.10.8 from apt while the runner ran ansible-core 2.21.6; both now pin 2.21.6 and the same collections, infra verify asserts they match, and the controller ran ping, day0 verify and day1 on `small` with it.

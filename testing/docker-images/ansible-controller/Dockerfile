@@ -22,12 +22,30 @@ FROM splunk-base-ubuntu2204:latest
 # Install runtime dependencies and tools
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates curl gnupg iproute2 net-tools nginx apache2-utils ansible \
+      ca-certificates curl gnupg iproute2 net-tools nginx apache2-utils \
       libjson-c5 libwebsockets16 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy ttyd binary from builder stage
 COPY --from=builder /tmp/ttyd/build/ttyd /usr/local/bin/
+
+# Ansible on the controller matches the molecule-runner image exactly (ansible-core and
+# collections), so a playbook behaves the same from either place. Ubuntu 22.04's Python
+# is too old for this ansible-core, so uv supplies Python 3.12 in its own virtualenv.
+# Change a version here and in docker-images/molecule-runner/Dockerfile together.
+COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /usr/local/bin/uv
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv-python
+RUN uv venv --python 3.12 /opt/ansible && \
+    uv pip install --python /opt/ansible/bin/python --no-cache ansible-core==2.21.6 && \
+    ln -s /opt/ansible/bin/ansible /opt/ansible/bin/ansible-playbook /opt/ansible/bin/ansible-galaxy \
+          /opt/ansible/bin/ansible-inventory /opt/ansible/bin/ansible-vault /opt/ansible/bin/ansible-config \
+          /opt/ansible/bin/ansible-doc /usr/local/bin/ && \
+    chmod -R a+rX /opt/uv-python /opt/ansible && \
+    ansible-galaxy collection install -p /usr/share/ansible/collections \
+        ansible.posix:2.2.2 \
+        community.crypto:3.5.1 \
+        community.general:14.0.1 \
+        community.docker:5.4.0
 
 # Create systemd directory (service will be configured in prepare.yml)
 RUN mkdir -p /etc/systemd/system

@@ -34,6 +34,20 @@
     ansible_connection: docker
     ansible_user: root
   tasks:
+    # The runner executes this play, so `ansible_version` is the runner's. The two images pin the
+    # same ansible-core; a difference means one Dockerfile was changed without the other.
+    - name: Read the controller's ansible-core version
+      ansible.builtin.command: ansible --version
+      register: controller_ansible
+      changed_when: false
+
+    - name: Assert the controller and the runner run the same ansible-core
+      ansible.builtin.assert:
+        that:
+          - "('[core ' ~ ansible_version.full ~ ']') in controller_ansible.stdout_lines[0]"
+        success_msg: "Runner and controller both run ansible-core {{ ansible_version.full }}"
+        fail_msg: "Runner runs ansible-core {{ ansible_version.full }}; the controller reports: {{ controller_ansible.stdout_lines[0] }}"
+
     - name: Ping every node from the controller as the ansible user
       ansible.builtin.command:
         argv:

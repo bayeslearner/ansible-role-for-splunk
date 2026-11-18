@@ -23,7 +23,7 @@ flowchart TB
     task -->|docker run --rm| runner
     subgraph net["Docker network splunk-test-network"]
       runner["molecule-runner<br/>python 3.12, molecule 25.12.0,<br/>latest ansible-core"]
-      ctrl["ansible-controller<br/>Ubuntu 22.04, apt ansible,<br/>ttyd + nginx :3000"]
+      ctrl["ansible-controller<br/>Ubuntu 22.04, ansible-core 2.21.6,<br/>ttyd + nginx :3000"]
       n1["Splunk nodes<br/>ubuntu2204 / almalinux9<br/>systemd + sshd"]
       git["git-server<br/>gitea:latest :8929 / :22"]
     end
@@ -45,7 +45,7 @@ flowchart TB
 | Taskfile | Entry point, ordering, Docker run flags, veth fix in the runner | `testing/Taskfile.yml` |
 | molecule-runner | Runs Molecule; creates containers through the host socket; runs the role in scenarios | `docker-images/molecule-runner/Dockerfile` |
 | Node images | systemd PID 1, sshd, user `ansible` with NOPASSWD sudo | `docker-images/{ubuntu2204,almalinux9}-systemd-sshd/` |
-| Controller image | Node image plus apt `ansible`, ttyd 1.7.7 (built from source), nginx proxy on 3000 | `docker-images/ansible-controller/Dockerfile` |
+| Controller image | Node image plus ansible-core 2.21.6 in a Python 3.12 virtualenv (the runner's version and collections), ttyd 1.7.7 (built from source), nginx proxy on 3000 | `docker-images/ansible-controller/Dockerfile` |
 | git-server | Gitea on SQLite, port 8929 | `docker-images/git-server/Dockerfile` |
 | Topologies | Hosts, groups, versions, cluster vars | `molecule/environments/*` |
 | Secrets | Lab key, ttyd password, Splunk admin password, Gitea key | generated in `testing/.secrets/` |
@@ -96,7 +96,7 @@ testing/
     molecule-runner/Dockerfile      python:3.12-slim + molecule 25.12.0 + unpinned tools
     ubuntu2204-systemd-sshd/        node base
     almalinux9-systemd-sshd/        node base + sshd/PAM overrides for containers
-    ansible-controller/             node base + apt ansible + ttyd 1.7.7 + nginx
+    ansible-controller/             node base + pinned ansible-core + ttyd 1.7.7 + nginx
     git-server/Dockerfile           gitea:latest
   molecule/
     download.yml                    tarball fetch
@@ -226,7 +226,7 @@ Reconstructed from the code, compared with the README and requirements:
 | R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small` and `dev` |
 | R4 day0 | Installs and starts Splunk and verify fails on a fault (run on `small` and `dev`). Cluster formation is written: the indexer cluster ran in a three-node half; the search head cluster formed but was not verified healthy; `prod` as a whole has not run. Sites in the inventory are not used: the role's manager task sets no multisite options | 🟡 |
 | R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small` and `dev` |
-| R6 controller | `ansible.cfg` deployed; the controller runs Ubuntu 22.04's apt `ansible` while the runner runs the latest `ansible-core` from pip, so the two paths use different Ansible versions (exact controller version not yet read from a built image) | 🟡 |
+| R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small` and `dev` |
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | Gitea starts; no repositories, users or deploy key are created (`prepare.yml:310` placeholders; `git_key: /tmp/test_git_key` never written) | ❌ |
 | R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
