@@ -36,7 +36,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Priority: first of the last-mile work. The owner confirmed on the Board (2026-11-18) that `prod` is meant to form the smallest valid clusters, two indexers and two search heads, to exercise the role's cluster tasks.
   - [x] 2.2 `infra/verify.yml` checks SSH from the controller to every node as `ansible`, so a broken key fails infra instead of day0
     - Requirements: R3
-  - [ ] 2.3 Git server: create the Gitea admin, the `test/splunk_apps` repository with the apps `prod` names, and the deploy key at `git_key`, or remove `git_apps` from `prod` until day 2 needs them
+  - [x] 2.3 Git server: create the Gitea admin, the `test/splunk_apps` repository with the apps `prod` names, and the deploy key at `git_key`, or remove `git_apps` from `prod` until day 2 needs them
     - Requirements: R8
   - [x] 2.4 Controller Ansible matches the runner: install `ansible-core` at the runner's pinned version in the controller image instead of Ubuntu's apt `ansible`, and print both versions in infra verify
     - Requirements: R6, NFR Fidelity
@@ -116,6 +116,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.5 `infra/destroy.yml` removes each node's data volume with the node, so a lab built after a destroy starts clean (found by the first full run: a leftover `/opt` volume with no systemd unit failed the role's boot-start check)
     - Requirements: R9
     - Verification: two `task workflow:full` runs in a row
+  - [x] 6.6 The AlmaLinux node image installs `openssh-clients`, so `scp` exists on those nodes (the inventory copies files with scp; found by the first `prod` infra verify, which could not reach either AlmaLinux node)
+    - Requirements: R2, R3
+    - Verification: `prod` infra verify reaches all nine nodes
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -131,3 +134,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: Closed 2.7 (lab runs against the merged upstream role), 5.2 (runner started on demand) and 5.4 (`.env.example` lists the lab's real settings instead of an unimplemented Twingate block).
 - 2026-11-18: 2.4 closed. The controller ran ansible 2.10.8 from apt while the runner ran ansible-core 2.21.6; both now pin 2.21.6 and the same collections, infra verify asserts they match, and the controller ran ping, day0 verify and day1 on `small` with it.
 - 2026-11-18: `dms` (Splunk 10.6.1.1) passes a full workflow on the Mac after the day's changes to day0 and day1, so 3.11 still holds (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`). Every topology except `prod` now has a full recorded run on today's code.
+- 2026-11-18: 2.3 closed: the Git server placeholder is replaced by a bootstrap (owner, lab key, one repository per app in `git_apps`, a seed app in each), `prod`'s Git settings now form the address the role clones, and infra verify lists every repository from the controller. `prod`'s infra stage passes with eleven containers. The run found that the AlmaLinux nodes had no `scp` (6.6, fixed). Evidence: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`.

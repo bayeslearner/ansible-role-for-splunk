@@ -22,7 +22,7 @@ FROM splunk-base-ubuntu2204:latest
 # Install runtime dependencies and tools
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates curl gnupg iproute2 net-tools nginx apache2-utils \
+      ca-certificates curl gnupg iproute2 net-tools nginx apache2-utils git \
       libjson-c5 libwebsockets16 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 

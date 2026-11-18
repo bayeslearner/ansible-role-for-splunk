@@ -5,8 +5,10 @@
 splunk_nix_home: /opt/splunk
 
 # Git configuration for app deployment testing
-git_server: "git@git-server"
-git_key: "/tmp/test_git_key"
+# The role clones "<git_server>/<git_project>/<app name>" with git_key. The lab key is the one
+# infra installs on the Git server; /workspace is mounted in the runner and on the controller.
+git_server: "ssh://git@git-server"
+git_key: "/workspace/testing/.secrets/id_rsa"
 git_local_clone_path: ~/git_apps
 
 # Cluster configuration

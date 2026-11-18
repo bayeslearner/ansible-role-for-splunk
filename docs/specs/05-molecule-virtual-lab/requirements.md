@@ -84,7 +84,7 @@ WHEN an operator opens a shell on the controller after R3, THE controller SHALL 
 WHEN the lab is up, THE controller SHALL serve a password-protected terminal for user `ansible` at `http://<lab host>:3000/ttyd`.
 
 ### R8. Git server for app deployment
-WHEN the `prod` topology is up, THE lab SHALL run a Gitea server reachable as `git-server` that holds the app repositories the topology's `git_apps` name.
+WHEN the `prod` topology is up, THE lab SHALL run a Gitea server reachable as `git-server` that holds the app repositories the topology's `git_apps` name. Each app is its own repository, `ssh://git@git-server/<git_project>/<app name>`, the address the role's `splunk_apps` tasks clone, readable with the lab SSH key.
 
 ### R9. Workflows and cleanup
 `task workflow:full` SHALL run infra, day0, day1 and destroy in order and stop at the first failure; `task workflow:quick` SHALL leave the lab running after day0; `infra:destroy` SHALL remove each node together with its data volume, so the next lab starts clean; `task reset` SHALL remove every container, volume and network the lab created and nothing else.

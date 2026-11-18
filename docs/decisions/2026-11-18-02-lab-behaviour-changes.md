@@ -43,3 +43,13 @@ Five choices made while closing spec 05 tasks. Each is technical, inside the ste
 - **Context:** a 2026-03-30 preference kept `ignore_errors` on day0 verify. The portfolio plan the owner approved on 2026-11-18 lists "make day0's verify able to fail".
 - **Choice:** the service and port checks assert; the Git server check stays informational until it has repositories (task 2.3).
 - **Reversal:** this one reverses an earlier owner preference, so it is the first to revisit if the lab should tolerate a half-working day0 again.
+
+## 6. The Git server holds one repository per app, and accepts the lab's RSA 2048 key (added later the same day)
+
+- **Context:** the role clones `<git_server>/<git_project>/<app name>`. `prod` named a single `test/splunk_apps/` project and a key file nothing wrote. Gitea 28.4.0 refuses RSA keys under 3071 bits, and the lab key is RSA 2048 and is never rotated.
+- **Options for the layout:** one repository per app under an owner (what the role's address means), or keep one repository and change how the role is called.
+- **Choice:** one repository per app under the owner `test`; `prod` sets `git_server: ssh://git@git-server`, `git_project: test` and the lab key as `git_key`. The owner's password is the lab's generated Splunk admin password, so no new secret is added.
+- **Options for the key:** lower Gitea's minimum key size in the lab image; generate a separate, larger key for Git; or change the lab key's type, which would change every existing lab.
+- **Choice:** lower the minimum in the lab's Gitea image. The server is reachable only on the lab network and on the lab host's loopback address, and one key for the whole lab is the existing design.
+- **Reversal:** remove the two `GITEA__ssh…` lines and give Git its own key.
+

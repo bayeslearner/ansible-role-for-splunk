@@ -331,9 +331,79 @@
   connection: docker
   vars:
     ansible_connection: docker
-  tasks:
-    - name: Check Gitea container is running
-      ansible.builtin.raw: echo 'Git server container running - Gitea will auto-start'
+    # The Gitea image has no Python, so every task is a raw shell command inside the container.
+    # The role clones "<git_server>/<git_project>/<app name>", so each app is its own repository
+    # under one owner. The owner name and the app names come from the inventory's git_apps.
+    lab_git_owner: test
+    lab_git_apps: >-
+      {{ groups['all'] | map('extract', hostvars, 'git_apps') | select('defined') | flatten
+         | map(attribute='name') | unique | sort | list }}
+    lab_git_api: http://localhost:8929/api/v1
+    lab_git_auth: "{{ lab_git_owner }}:{{ splunk_admin_password }}"
+    runner_public_key: "{{ hostvars['localhost'].runner_public_key }}"
+    # The seed app's default/app.conf; `item` is the app name in the seeding loop.
+    lab_git_app_conf: |
+      [ui]
+      is_visible = false
+      label = {{ item }}
 
-    - name: Create test repositories (placeholder)
-      ansible.builtin.raw: "echo 'Gitea ready for app repository testing'"
+      [launcher]
+      version = 1.0.0
+      description = Lab app {{ item }}
+  tasks:
+    - name: Wait for Gitea to answer
+      ansible.builtin.raw: >-
+        sh -c 'for i in $(seq 1 60); do curl -fs {{ lab_git_api }}/version >/dev/null && exit 0; sleep 2; done; exit 1'
+      changed_when: false
+
+    # `gitea admin` must run as the git user. A second run finds the user and moves on.
+    - name: Create the repository owner
+      ansible.builtin.raw: >-
+        su-exec git gitea admin user create --username {{ lab_git_owner }}
+        --password '{{ splunk_admin_password }}' --email {{ lab_git_owner }}@lab.invalid
+        --must-change-password=false
+        || su-exec git gitea admin user list | grep -qw {{ lab_git_owner }}
+      no_log: true
+      changed_when: false
+
+    # Add the key only when it is not there yet, and accept nothing but "created" (201):
+    # Gitea answers 422 both for a duplicate and for a key it rejects.
+    - name: List the owner's SSH keys
+      ansible.builtin.raw: curl -s -u '{{ lab_git_auth }}' {{ lab_git_api }}/user/keys
+      register: lab_git_keys
+      no_log: true
+      changed_when: false
+
+    - name: Give the owner the lab SSH key, so the role can clone as git@git-server
+      ansible.builtin.raw: >-
+        curl -s -o /dev/null -w '%{http_code}' -u '{{ lab_git_auth }}' -H 'Content-Type: application/json'
+        -X POST {{ lab_git_api }}/user/keys
+        -d '{{ {"title": "lab key", "key": runner_public_key | trim, "read_only": true} | to_json }}'
+      register: lab_git_key
+      no_log: true
+      when: "'lab key' not in (lab_git_keys.stdout | from_json | map(attribute='title') | list)"
+      failed_when: lab_git_key.stdout | trim != '201'
+
+    # 201 = created; 409 = the repository already exists.
+    - name: Create one repository per app the inventory names
+      ansible.builtin.raw: >-
+        curl -s -o /dev/null -w '%{http_code}' -u '{{ lab_git_auth }}' -H 'Content-Type: application/json'
+        -X POST {{ lab_git_api }}/user/repos
+        -d '{{ {"name": item, "auto_init": true, "default_branch": "main", "private": false} | to_json }}'
+      loop: "{{ lab_git_apps }}"
+      register: lab_git_repo
+      no_log: true
+      changed_when: "'201' in lab_git_repo.stdout"
+      failed_when: lab_git_repo.stdout | trim not in ['201', '409']
+
+    # A Splunk app needs at least default/app.conf. 201 = created; 422 = the file is already there.
+    - name: Seed each repository with a minimal Splunk app
+      ansible.builtin.raw: >-
+        curl -s -o /dev/null -w '%{http_code}' -u '{{ lab_git_auth }}' -H 'Content-Type: application/json'
+        -X POST {{ lab_git_api }}/repos/{{ lab_git_owner }}/{{ item }}/contents/default/app.conf
+        -d '{{ {"branch": "main", "message": "Seed the lab app", "content": lab_git_app_conf | b64encode} | to_json }}'
+      loop: "{{ lab_git_apps }}"
+      register: lab_git_seed
+      no_log: true
+      changed_when: "'201' in lab_git_seed.stdout"
+      failed_when: lab_git_seed.stdout | trim not in ['201', '422']

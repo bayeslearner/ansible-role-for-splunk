@@ -33,6 +33,10 @@
   vars:
     ansible_connection: docker
     ansible_user: root
+    lab_git_owner: test
+    lab_git_apps: >-
+      {{ groups['all'] | map('extract', hostvars, 'git_apps') | select('defined') | flatten
+         | map(attribute='name') | unique | sort | list }}
   tasks:
     # The runner executes this play, so `ansible_version` is the runner's. The two images pin the
     # same ansible-core; a difference means one Dockerfile was changed without the other.
@@ -69,3 +73,33 @@
           The controller could not reach every node over SSH as ansible:
           {{ controller_ping.stdout }}
           {{ controller_ping.stderr }}
+
+    # Only a topology with a Git server names app repositories (git_apps). The role clones each
+    # one as "<git_server>/<git_project>/<app name>" with the lab key, so check exactly that.
+    - name: List each app repository from the controller over SSH
+      ansible.builtin.command:
+        argv:
+          - su
+          - "-"
+          - ansible
+          - "-c"
+          - >-
+            GIT_SSH_COMMAND='ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+            git ls-remote --heads {{ git_server }}/{{ lab_git_owner }}/{{ item }} main
+      loop: "{{ lab_git_apps }}"
+      register: controller_git
+      changed_when: false
+      failed_when: false
+      when: groups['git_server'] | default([]) | length > 0
+
+    - name: Assert every app repository has a main branch the lab key can read
+      ansible.builtin.assert:
+        that:
+          - item.rc == 0
+          - "'refs/heads/main' in item.stdout"
+        quiet: true
+        fail_msg: "{{ git_server }}/{{ lab_git_owner }}/{{ item.item }} is not readable from the controller: {{ item.stderr | default('') }}"
+      loop: "{{ controller_git.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item | default('') }}"
+      when: groups['git_server'] | default([]) | length > 0

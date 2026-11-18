@@ -1,7 +1,8 @@
 FROM almalinux:9
 ENV container=docker
 
-RUN dnf -y install systemd systemd-sysv openssh-server sudo python3 passwd authselect ethtool && \
+# openssh-clients provides scp, which the lab inventory uses to copy files (ansible_ssh_transfer_method: scp).
+RUN dnf -y install systemd systemd-sysv openssh-server openssh-clients sudo python3 passwd authselect ethtool && \
     dnf clean all
 
 # Fix nsswitch.conf to prioritize local files over sss for user/group lookups

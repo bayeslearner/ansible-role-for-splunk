@@ -222,13 +222,13 @@ Reconstructed from the code, compared with the README and requirements:
 | Requirement | As built | State |
 |---|---|---|
 | R1 setup | All steps present. Image check `docker images \| grep -q name:latest` matches only on Docker CLIs that print `repo:tag` in one column (the work Mac's CLI does; older CLIs print `REPOSITORY TAG` columns, so the check never passes and every `setup` rebuilds) | 🟡 |
-| R2 topologies | `small` 2 nodes, `dev` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ code |
+| R2 topologies | `small` 2 nodes, `dev` 1, `dms` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ `small`, `dev`, `dms` run in full; `prod` through infra |
 | R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small` and `dev` |
 | R4 day0 | Installs and starts Splunk and verify fails on a fault (run on `small` and `dev`). Cluster formation is written: the indexer cluster ran in a three-node half; the search head cluster formed but was not verified healthy; `prod` as a whole has not run. Sites in the inventory are not used: the role's manager task sets no multisite options | 🟡 |
 | R5 day1 | As specified, plus licence acceptance after the restart and diagnostics on failure | ✅ run on `small` and `dev` |
 | R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small` and `dev` |
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
-| R8 git server | Gitea starts; no repositories, users or deploy key are created (`prepare.yml:310` placeholders; `git_key: /tmp/test_git_key` never written) | ❌ |
+| R8 git server | As specified: infra creates the owner, installs the lab key, and creates and seeds one repository per app in `git_apps`; infra verify reads each from the controller | ✅ infra run on `prod` |
 | R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
 | R10 portability | Built and used on macOS only; fixed names and ports allow one lab per Docker host | ⏳ |
 

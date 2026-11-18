@@ -27,11 +27,11 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 | lab-day1-ops | ✅ | ✅ | — | — | ✅ restart, status, licence; verify asserts active and prints diagnostics on failure | — | — | run: Mac, `small`, 2026-11-18 ([record](../history/verification-2026-11-18-small-topology.md)); verify also shown to fail | 05 | 1.2, 6.3, 6.4 |
 | lab-controller | — | — | ✅ prepare | — | — | ✅ works with no flags; same ansible-core and collections as the runner, asserted in infra verify | — | run: Mac, `dev`, 2026-11-18 ([record](../history/verification-2026-11-18-dev-topology-and-operator-path.md)) | 05 | 1.4, 2.4 |
 | lab-web-terminal | ✅ diag:terminal | — | ✅ | — | — | ✅ ttyd + nginx, password checked; 🟡 open on all interfaces | — | login 200 / 401: Mac, `dev`, 2026-11-18 (same record) | 05 | 1.5, 3.3 |
-| lab-git-server | — | — | ✅ starts | 🟡 probes only | — | — | ❌ no repos, users or key | no recorded run | 05 | 2.3 |
+| lab-git-server | — | — | ✅ starts; prepare creates the owner, key and one seeded repository per app; verify reads each from the controller | 🟡 reports only | — | ✅ has git; clones with the lab key | ✅ six app repositories on `prod` | infra run: Mac, `prod`, 2026-11-18 ([record](../history/verification-2026-11-18-prod-infra-and-git-server.md)); the role deploying the apps is not run | 05 | 2.3 |
 | lab-cleanup | ✅ reset | — | ✅ destroy removes containers and node volumes | ✅ a failed day0 or day1 leaves the lab up | — | — | ✅ | run: Mac, `small`, 2026-11-18, two full runs in a row ([record](../history/verification-2026-11-18-small-topology.md)) | 05 | 5.2, 6.5 |
 
 > [!warning] Built, not verified
-> `prod` as a whole: its eleven containers have never run together (it needs about 30 GB of free engine disk). The search head cluster formed in a four-node test but was not verified healthy. `lab-git-server` has no run behind it. Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
+> `prod` as a whole: its eleven containers have never run together (it needs about 30 GB of free engine disk). The search head cluster formed in a four-node test but was not verified healthy. The role deploying apps from the Git server has no run behind it (day 2, spec 10). Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
 
 > [!warning] Known gaps
 > - day0 forms `prod`'s indexer cluster and search head cluster, but a full `prod` run is owed (task 2.1). The inventory's two indexer sites are not used: the role's manager task sets no multisite options.
