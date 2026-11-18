@@ -88,3 +88,16 @@ One `docker stats` reading with all eleven containers up and no Splunk installed
 - The role deploying these apps (its `splunk_apps` tasks). That is day 2 work (spec 10); this record shows the repositories exist at the address the role will use and are readable with the key it will use.
 - Day 0 and day 1 on `prod`.
 - A lab whose key was generated with a different size or type.
+
+## Later the same day: a failed Git bootstrap step says why
+
+The bootstrap calls carry the owner's password, so their output is hidden, and a step that failed printed only "the output has been hidden". Each call now records only the HTTP status, and a task after it fails with that status. A new first step signs in as the owner. On the second Mac, on the working tree committed with this section:
+
+| Step | Result |
+|---|---|
+| `MOLECULE_ENV=prod task infra:setup` | exit 0 |
+| `task infra:prepare` again on the same lab | exit 0 (owner, key and repositories already there) |
+| the owner's password changed inside Gitea, then `task infra:prepare` | exit 201: "Gitea answered HTTP 401 to the owner 'test', expected 200. 401 means the owner's password is not this checkout's splunk_admin_password: the Git server's data volume was created with other secrets. Remove it with: task reset (run from testing/)." |
+| `task reset` | exit 0; no lab container or volume left |
+
+That fault is the one a real operator can meet: `infra:destroy` keeps the Git server's volume, so a lab rebuilt after its secrets were regenerated finds an owner with the old password. The key, repository and seed steps report in the same way; only the sign-in step was made to fail here.

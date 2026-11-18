@@ -161,7 +161,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ]* 6.16 Find why infra prepare once failed to copy a module into one container ("failed to transfer file … AnsiballZ_systemd.py" at "Start SSH service" on one `prod` node; once in about a dozen `prod` infra runs on 2026-11-18, the next attempt passed unchanged). Optional: nothing to work on unless it recurs; then capture the engine's log at that moment
     - Requirements: R3
     - Evidence so far: `docs/history/verification-2026-11-18-prod-end-to-end.md`, last section
-
+  - [x] 6.17 A failed Git server bootstrap step in `infra/prepare.yml` reports the HTTP status and what it means, and a sign-in step catches an owner whose password is not this checkout's (the calls carry the password, so a failure printed only that the output was hidden)
+    - Requirements: R3, R8
+    - Verification: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`, "Later the same day"
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -205,3 +207,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 6.15: a failed cluster check now names the peer that is not Up and what the manager answered; shown on a third full `prod` lab (`docs/history/verification-2026-11-18-prod-end-to-end.md`). That lab's first attempt failed once in infra prepare with a file transfer into one container; cause not found, noted in the record.
 - 2026-11-18: Group headers 1, 2, 4 and 6 marked done, as every required task under them is; groups 3 and 5 stay open for 3.1, 3.2, 3.9 and 5.1. The one unexplained infra failure of the day is now optional task 6.16.
 - 2026-11-18: Two labs ran day0 at the same moment, then day1 at the same moment, on one engine; both passed, and resetting one left the other passing its verify (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). This was the last limit recorded against 3.7.
+- 2026-11-18: 6.17: the Git server bootstrap says why it failed; shown with a mismatched owner password, which a kept Git volume and regenerated secrets produce (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`). Both teaching tabs were checked against the day0 verify change and needed no edit.

@@ -367,6 +367,24 @@
       no_log: true
       changed_when: false
 
+    # The calls below carry the owner's password, so their output is hidden. Each one only records
+    # the HTTP status, and the task after it fails with that status, which is safe to print.
+    - name: Sign in to the Gitea API as the owner
+      ansible.builtin.raw: curl -s -o /dev/null -w '%{http_code}' -u '{{ lab_git_auth }}' {{ lab_git_api }}/user
+      register: lab_git_login
+      no_log: true
+      changed_when: false
+      failed_when: false
+
+    - name: Stop when the owner cannot sign in
+      ansible.builtin.assert:
+        that: lab_git_login.stdout | trim == '200'
+        quiet: true
+        fail_msg: >-
+          Gitea answered HTTP {{ lab_git_login.stdout | trim }} to the owner '{{ lab_git_owner }}', expected 200.
+          401 means the owner's password is not this checkout's splunk_admin_password: the Git server's
+          data volume was created with other secrets. Remove it with: task reset (run from testing/).
+
     # Add the key only when it is not there yet, and accept nothing but "created" (201):
     # Gitea answers 422 both for a duplicate and for a key it rejects.
     - name: List the owner's SSH keys
@@ -383,7 +401,14 @@
       register: lab_git_key
       no_log: true
       when: "'lab key' not in (lab_git_keys.stdout | from_json | map(attribute='title') | list)"
-      failed_when: lab_git_key.stdout | trim != '201'
+      failed_when: false
+
+    - name: Stop unless the key was added
+      ansible.builtin.assert:
+        that: lab_git_key.stdout | trim == '201'
+        quiet: true
+        fail_msg: "Gitea answered HTTP {{ lab_git_key.stdout | default('nothing') | trim }} when the lab SSH key was added, expected 201 (422: Gitea rejected the key)."
+      when: lab_git_key is not skipped
 
     # 201 = created; 409 = the repository already exists.
     - name: Create one repository per app the inventory names
@@ -395,7 +420,15 @@
       register: lab_git_repo
       no_log: true
       changed_when: "'201' in lab_git_repo.stdout"
-      failed_when: lab_git_repo.stdout | trim not in ['201', '409']
+      failed_when: false
+
+    - name: Stop unless every repository exists
+      ansible.builtin.assert:
+        that: lab_git_repo.results | map(attribute='stdout') | map('trim') | difference(['201', '409']) | length == 0
+        quiet: true
+        fail_msg: >-
+          Gitea did not create every app repository (expected HTTP 201, or 409 for one that exists):
+          {% for r in lab_git_repo.results %}{{ r.item }}={{ r.stdout | trim }}{{ ', ' if not loop.last else '' }}{% endfor %}.
 
     # A Splunk app needs at least default/app.conf. 201 = created; 422 = the file is already there.
     - name: Seed each repository with a minimal Splunk app
@@ -407,4 +440,12 @@
       register: lab_git_seed
       no_log: true
       changed_when: "'201' in lab_git_seed.stdout"
-      failed_when: lab_git_seed.stdout | trim not in ['201', '422']
+      failed_when: false
+
+    - name: Stop unless every repository is seeded
+      ansible.builtin.assert:
+        that: lab_git_seed.results | map(attribute='stdout') | map('trim') | difference(['201', '422']) | length == 0
+        quiet: true
+        fail_msg: >-
+          Gitea did not seed every app repository (expected HTTP 201, or 422 for a file that is there):
+          {% for r in lab_git_seed.results %}{{ r.item }}={{ r.stdout | trim }}{{ ', ' if not loop.last else '' }}{% endfor %}.
