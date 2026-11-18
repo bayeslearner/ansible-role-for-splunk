@@ -46,8 +46,25 @@ Two defects in the first draft of the new plays were found and fixed during thes
 
 After the Git server and image work (tree at `c1f4906`), the four-node search head half was started again, to lower Splunk's free-disk floor on the members for the test and see the member check pass. It did not get that far: with two nodes installed, the install of the two search heads failed with `tar: … Cannot write: No space left on device` (`shc2-converge.log`). The day's image rebuilds had taken the engine's free disk from about 17 GB to 14.4 GB. The lab was torn down and the temporary topology removed. A healthy search head cluster is still unshown.
 
+## Third attempt: the search head cluster healthy, and its check failing
+
+On the tree at `9f73069`, after 4.7 GB of unused Docker build cache was removed (15.9 GB free at the start). Same four-node topology as before, Splunk installed on the manager and deployer first, then the rest.
+
+| Step | Result |
+|---|---|
+| day0 converge | exit 0 (`shc3/converge.log`); 1.6 GB of engine disk free afterwards |
+| on the four nodes: `[diskUsage] minFreeSpace = 300` appended to `server.conf`, Splunk restarted | a test-only change, so that Splunk's 5 GB free-disk floor does not detain the members on this nearly full disk |
+| `task day0:verify` | exit 0: "splunkshc-prod01, splunkshc-prod02 are Up members of the search head cluster" (`shc3/verify-healthy.log`) |
+| `systemctl stop Splunkd` on `splunkshc-prod02`, then `task day0:verify` | exit 201. Two checks failed: the service assert on the stopped node, and "Wait until the cluster has a captain and every member is Up" on the other member after all 30 tries, each answered HTTP 503 (`shc3/NEG-verify-member-stopped.log`) |
+
+So the search head cluster forms through the role's tasks with two members, its verify passes when the cluster is healthy, and fails when a member is down. With two members, losing one leaves no majority for a captain, which is why the surviving member answers 503 rather than listing one member as down. That is the cost of the two-member size the lab uses on purpose.
+
+`minFreeSpace` is not set by the lab. On a host with more than 5 GB free per Splunk data volume it is not needed.
+
+A step that failed as expected: a converge limited to one search head (`--limit splunkshc-prod01`) exits non-zero, because the cluster plays need the whole group. The full converge that followed passed.
+
 ## Not covered
 
 - `prod` as a whole (eleven containers) has not run. It needs a host with about 30 GB of free engine disk; memory for nine Splunk nodes at 0.8 to 1 GiB each is 8 to 9 GiB before load.
-- The search head cluster verify passing, and its member-count check failing on a fault of its own (it failed here because of the disk, not a stopped member).
+- The indexer cluster and the search head cluster in one lab, as `prod` has them. Each half has been run; the two together have not.
 - Day 1 on a clustered lab.
