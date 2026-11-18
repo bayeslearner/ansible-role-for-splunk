@@ -161,6 +161,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [ ]* 6.16 Find why infra prepare once failed to copy a module into one container ("failed to transfer file … AnsiballZ_systemd.py" at "Start SSH service" on one `prod` node; once in about a dozen `prod` infra runs on 2026-11-18, the next attempt passed unchanged). Optional: nothing to work on unless it recurs; then capture the engine's log at that moment
     - Requirements: R3
     - Evidence so far: `docs/history/verification-2026-11-18-prod-end-to-end.md`, last section
+    - 2026-11-18: looked for a cause afterwards and found none. The failing task's output holds only the one line (no return code, no stderr). The engine's own log has no error, warning or pause in the minutes around it, and the machine's power log shows no sleep or wake then. The failure coincided with a moment when another machine briefly could not resolve this one's name, which may or may not be related.
   - [x] 6.17 A failed Git server bootstrap step in `infra/prepare.yml` reports the HTTP status and what it means, and a sign-in step catches an owner whose password is not this checkout's (the calls carry the password, so a failure printed only that the output was hidden)
     - Requirements: R3, R8
     - Verification: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`, "Later the same day"
