@@ -21,7 +21,7 @@ To exercise the new plays, two temporary topologies were cut from `prod`, with `
 |---|---|
 | `task workflow:quick` | exit 0. day0 converge ran the manager and peer plays; verify printed "splunkapp-prod01, splunkapp-prod02 are Up peers of splunk-master" (`idxc-quick.log`) |
 | `task day0:converge` again on the clustered lab | exit 0; the peer play skipped both nodes (`idxc-converge-again.log`) |
-| `systemctl stop Splunkd` on `splunkapp-prod02`, then `task day0:verify` | exit 201: "Splunkd is inactive on splunkapp-prod02" (`idxc-neg-verify.log`). The service check fails first, so the peer-count assert was not the one that fired. |
+| `systemctl stop Splunkd` on `splunkapp-prod02`, then `task day0:verify` | exit 201 (`idxc-neg-verify.log`). Two checks failed: the service assert on the stopped node ("Splunkd is inactive on splunkapp-prod02"), and, on `splunk-master`, "Wait until every indexer is an Up peer of the manager" after all 30 tries. |
 
 Memory right after day0, one `docker stats` reading: `splunk-master` 978 MiB, `splunkapp-prod01` 802 MiB, `splunkapp-prod02` 814 MiB.
 
@@ -45,5 +45,5 @@ Two defects in the first draft of the new plays were found and fixed during thes
 ## Not covered
 
 - `prod` as a whole (eleven containers) has not run. It needs a host with about 30 GB of free engine disk; memory for nine Splunk nodes at 0.8 to 1 GiB each is 8 to 9 GiB before load.
-- The search head cluster verify passing, and the peer-count and member-count asserts each failing on their own fault.
+- The search head cluster verify passing, and its member-count check failing on a fault of its own (it failed here because of the disk, not a stopped member).
 - Day 1 on a clustered lab.
