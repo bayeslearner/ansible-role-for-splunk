@@ -14,6 +14,8 @@
 
 ## Components And Boundaries
 
+Names in this document are those of the unnamed lab, the default. A lab started with `LAB_NAME=<name>` has the same parts under its own names: containers `<name>-<host>`, the network `splunk-test-network-<name>`, volumes `ansible-splunk-lab-<name>-…`, and its three published ports moved by `LAB_PORT_OFFSET`. Inside its network every container keeps its inventory name as hostname and alias, so everything below holds for a named lab as written (task 3.7).
+
 ```mermaid
 flowchart TB
   subgraph host["Lab host (Mac/OrbStack, pve2 VM, splunkapp-preprod02)"]
@@ -62,7 +64,7 @@ flowchart TB
 | `task workflow:full` / `workflow:quick` | `MOLECULE_ENV` | chained stages | operator |
 | `task diag:terminal` / `diag:ssh` / `status` / `shell -- <name>` | — | inspection; both `diag:*` exit non-zero when the lab is unhealthy | operator |
 | `task runner:start` / `runner:shell` / `runner:stop` | — | persistent `mol-run`, started on demand by `runner:shell` | operator |
-| `task reset` | — | destroy, stop runner, remove `ansible-splunk-test-*` volumes and the network | operator |
+| `task reset` | — | destroy, stop runner, remove any container still on the lab's network (a lab built from another topology), its volumes and the network | operator |
 | `day0/converge.yml`, `day0/verify.yml` | run from runner or controller | role install; checks | Molecule, operator |
 | `http://<host>:3000/ttyd` | basic auth `ansible:<password>` | web shell as `ansible` on the controller | operator |
 | `http://<host>:8929`, `ssh -p 2222` | Gitea | one repository per app in `git_apps`, at `ssh://git@git-server/test/<app>`, created and seeded by infra | infra verify; the role's `splunk_apps` tasks (not yet run in the lab) |
@@ -152,7 +154,7 @@ Operator path from the controller (R6): operator → `:3000/ttyd` (nginx → tty
 
 ## Algorithms
 
-Container creation (`infra/create.yml`):
+Container creation (`infra/create.yml`). Before it, `task infra:create` runs `task lab:ports`, which stops when the lab's controller does not exist yet and the web terminal's port is already in use on the machine:
 
 ```text
 targets = groups.full + groups.uf + groups.git_server + groups.ansible_controller
@@ -192,6 +194,8 @@ if installed before this run and installed version < splunk_package_version:
 ## Failure And Recovery
 
 - A failed stage stops the workflow and leaves containers up for debugging; `task infra:destroy` or `task reset` cleans up.
+- `infra:destroy` removes the hosts of the topology `MOLECULE_ENV` names when it runs. A lab built as `prod` and destroyed as `small` keeps its other nodes; `task reset` removes them, because it clears whatever is left on the lab's network.
+- The container engine publishes a port that another program already holds without an error, and that program then answers on it. `task lab:ports` catches this for the web terminal's port before the lab is created; the Git server's two ports are not probed.
 - Destroy steps use `ignore_errors`, so a partly created lab still tears down.
 - The veth offload fix is applied once per runner command, and on every node and the controller by a systemd unit at each boot, so it survives a container or host restart.
 - Download retries 3 times, 10 s apart.
@@ -226,7 +230,7 @@ Reconstructed from the code, compared with the README and requirements:
 
 | Requirement | As built | State |
 |---|---|---|
-| R1 setup | As specified. Images are checked with `docker image inspect`, built under `localhost/<name>:latest`, and every base and tool is pinned; a second `task setup` skips every step | ✅ run on the Mac; a first run on a host that never had the lab is owed |
+| R1 setup | As specified. Images are checked with `docker image inspect`, built under `localhost/<name>:latest`, and every base and tool is pinned; a second `task setup` skips every step | ✅ run on both Macs; a first run on a host that never had the lab is owed (1.1) |
 | R2 topologies | `small` 2 nodes, `dev` 1, `dms` 1, `prod` 9 + git-server; AlmaLinux on `splunkapp-prod02`, `splunkshc-prod02` | ✅ all four run in full |
 | R3 infra | As specified; `infra/verify.yml` pings every node from the controller over SSH | ✅ run on `small`, `dev`, `dms` and `prod` (nine nodes) |
 | R4 day0 | As specified. Checks free disk, installs Splunk, forms a two-peer indexer cluster and a two-member search head cluster where the topology has them, and verify fails on a fault. The cluster is single-site and no licence file is installed (every node runs on a trial licence); `splunk-uf01` is a deployment client of `splunk-fwdmanager`, read back from both ends | ✅ run on `small`, `dev`, `dms` and `prod` |
@@ -234,8 +238,8 @@ Reconstructed from the code, compared with the README and requirements:
 | R6 controller | As specified. The controller and the runner pin the same ansible-core (2.21.6) and collections, and infra verify asserts it | ✅ run on `small`, `dev`, `dms` and `prod` infra |
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | As specified: infra creates the owner, installs the lab key, and creates and seeds one repository per app in `git_apps`; infra verify reads each from the controller | ✅ infra run on `prod` |
-| R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab | 🟡 |
-| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 |
+| R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab; `task reset` removes a lab whichever topology built it and leaves another lab on the engine alone | ✅ run on two Macs |
+| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 no run yet on a Linux Docker host or on the pre-production host with today's code (3.2, 3.9, 3.12) |
 
 ## Architect's Review
 

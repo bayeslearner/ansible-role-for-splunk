@@ -336,6 +336,11 @@ tasks:
     cmds:
       - task: infra:destroy
       - task: runner:stop
+      # infra:destroy removes the hosts of the topology MOLECULE_ENV names now. A lab built from
+      # another topology would be left behind, so remove whatever is still on this lab's network.
+      - |
+        left=$(docker network inspect {{._NET}} --format '{{"{{"}}range .Containers{{"}}"}}{{"{{"}}.Name{{"}}"}} {{"{{"}}end{{"}}"}}' 2>/dev/null || true)
+        if [ -n "$left" ]; then echo "Removing containers left on {{._NET}}: $left"; docker rm -f $left; fi
       - echo "Removing test volumes and network..."
       - docker volume ls -q --filter name={{._VOL}} | xargs -r docker volume rm
       - docker network rm {{._NET}} 2>/dev/null || true

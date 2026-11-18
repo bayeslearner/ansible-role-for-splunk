@@ -163,4 +163,4 @@ task infra:destroy
 # remove everything the lab created: containers, volumes and the network
 task reset
 ```
-Docker volumes are prefixed with `ansible-splunk-test-` to avoid conflicts with other resources on your workstation.
+`infra:destroy` removes the hosts of the topology `MOLECULE_ENV` names when you run it, so give it the topology the lab was built with. `reset` removes the lab whichever topology built it. Docker volumes are prefixed with `ansible-splunk-test-` (`ansible-splunk-lab-<name>-` for a named lab) to avoid conflicts with other resources on your workstation.

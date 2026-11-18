@@ -33,7 +33,6 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 2.1 `prod` forms the clusters its inventory describes: run the role's indexer-cluster and search-head-cluster deployment (`playbooks/splunk_idxc_deploy.yml`, `playbooks/splunk_shc_deploy.yml` or their task files) in a scenario, and make day0 verify report a real cluster state
     - Requirements: R4
     - Code landed 2026-11-18: day0 converge runs the role's manager, peer, search-head, deployer, member and captain tasks on the cluster groups, guarded so it can run twice; `prod` sets `splunk_uri_cm`, replication and search factor 2, and `splunk_mgmt_uri`; day0 verify waits for every indexer and every search head cluster member to be Up. Indexer half verified. Search head half verified on a third attempt the same day: verify passes on the healthy two-member cluster and fails when a member is stopped. Evidence: `docs/history/verification-2026-11-18-cluster-formation.md`. Closed by the full `prod` run with both clusters in one lab (`docs/history/verification-2026-11-18-prod-end-to-end.md`), run as `workflow:quick`, `day1:test` and `infra:destroy` so the clusters could be read back between the stages.
-    - Note: until then, the README must not call the `prod` nodes a cluster
     - Priority: first of the last-mile work. The owner confirmed on the Board (2026-11-18) that `prod` is meant to form the smallest valid clusters, two indexers and two search heads, to exercise the role's cluster tasks.
   - [x] 2.2 `infra/verify.yml` checks SSH from the controller to every node as `ansible`, so a broken key fails infra instead of day0
     - Requirements: R3
@@ -42,6 +41,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 2.4 Controller Ansible matches the runner: install `ansible-core` at the runner's pinned version in the controller image instead of Ubuntu's apt `ansible`, and print both versions in infra verify
     - Requirements: R6, NFR Fidelity
   - [x] 2.5 Image checks use `docker image inspect <name>` instead of `docker images | grep -q name:latest`, which fails on Docker CLIs that print repository and tag in separate columns
+    - Checked 2026-11-18: `testing/Taskfile.yml` has ten `docker image inspect` checks and no `docker images` call; every `task setup` in the day's records went through them, and a second `task setup` skipped the builds (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
     - Requirements: R1, R10
   - [x] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
@@ -139,6 +139,9 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 6.10 `setup:secrets` sets the lab key's file mode every time, so a checkout that arrived through a file sync (which drops modes) still gets a key ssh accepts
     - Requirements: R1, R10
     - Verification: the first `prod` pass failing on a 0644 key and the later passes, `docs/history/verification-2026-11-18-prod-end-to-end.md`; on the first Mac, a key set to 0644 is reset by `task setup:secrets`
+  - [x] 6.11 `task reset` removes a lab whichever topology built it: `infra:destroy` only knows the hosts of the topology `MOLECULE_ENV` names now, so a `prod` lab reset as `small` kept seven containers (found reconciling R9 against the code)
+    - Requirements: R9
+    - Verification: `docs/history/verification-2026-11-18-two-labs-on-one-engine.md`, "Reset under another topology"
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -173,3 +176,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: `prod` ran end to end on a second Mac with its own Docker engine: infra, day0 with both clusters formed in one lab, day1, a second verify, teardown (`docs/history/verification-2026-11-18-prod-end-to-end.md`). Closes 1.3, 2.1 and 6.7. The run found and fixed two faults: the AlmaLinux image had no `ps`, which Splunk's command line needs (6.9), and a synced checkout lost the lab key's file mode (6.10). The forwarder's deployment-client setting was read back from both ends.
 - 2026-11-18: 5.5 closed: `small`, `dev` and `dms` each ran setup, day0, day1 and teardown on the second Mac with memory, CPU and disk read at three points (`docs/history/verification-2026-11-18-memory-and-disk-per-topology.md`). At rest a Splunk 9.4.2 node takes 640 to 810 MiB and Splunk 10.6.1.1 twice that. Both READMEs now carry the table.
 - 2026-11-18: 3.7 closed: a lab can be named (`LAB_NAME`, `LAB_PORT_OFFSET`), and three labs ran on one engine at once without seeing each other (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). The run found that the engine publishes a port another program already holds without an error, so `infra:create` now checks the web terminal's port first.
+- 2026-11-18: Reconciled the requirements and design with named labs (configuration table, R1, R3, R7, the defaults note, the port check) and R9 with the code. R9 did not hold: `task reset` under a different `MOLECULE_ENV` than the lab was built with left containers behind. Fixed (6.11) and shown before and after on a second lab beside an untouched one (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`).

@@ -50,6 +50,19 @@ B's `task diag:terminal` failed: it expected 401 on port 3100 and got 200. Anoth
 | `LAB_NAME=B-2 task network:create` | stops: "LAB_NAME may hold only lower-case letters and digits (got 'B-2')" |
 | On the first Mac: `task lab:ports` against a port held by a test server, and a free one | stops; exit 0 |
 
+## Reset under another topology
+
+Found while checking requirement R9 ("`task reset` SHALL remove every container, volume and network the lab created") against the code: `reset` relied on `infra:destroy`, which removes the hosts of the topology `MOLECULE_ENV` names at that moment. `reset` now also removes whatever is still on the lab's network.
+
+With an unnamed `dev` lab up beside it, lab C was built with `LAB_NAME=c LAB_PORT_OFFSET=200 MOLECULE_ENV=prod task infra:setup` (eleven containers), then addressed as `small`:
+
+| Step | Result |
+|---|---|
+| `LAB_NAME=c … MOLECULE_ENV=small task infra:destroy` | 7 of C's 11 containers remain: the old behaviour of `reset` |
+| `LAB_NAME=c … MOLECULE_ENV=small task reset` | prints "Removing containers left on splunk-test-network-c:" and the seven names; afterwards C has 0 containers, 0 volumes and no network |
+| the unnamed lab | both containers still up; `task diag:ssh` exit 0 |
+| `MOLECULE_ENV=small task reset` on the unnamed `dev` lab | exit 0; no lab container, network member or lab volume left |
+
 ## Not covered
 
 - The check looks at the web terminal's port only. The two Git ports are not probed; an occupied one would show the same symptom on a topology with a Git server.
