@@ -53,3 +53,11 @@ Five choices made while closing spec 05 tasks. Each is technical, inside the ste
 - **Choice:** lower the minimum in the lab's Gitea image. The server is reachable only on the lab network and on the lab host's loopback address, and one key for the whole lab is the existing design.
 - **Reversal:** remove the two `GITEA__ssh…` lines and give Git its own key.
 
+## 7. Nodes stay privileged (added later the same day)
+
+- **Context:** task 3.5 asks whether nodes can run without `privileged`. On Docker with cgroup v2 they can boot and run Splunk with the host cgroup namespace and the `NET_ADMIN` capability, but the role's `disable-thp.service` fails, because `/sys/kernel/mm` is read-only in such a container (`docs/history/research-2026-11-18-nodes-without-privileged.md`).
+- **Options:** drop `privileged` and accept one always-failing unit from the role; drop it and skip that part of the role in the lab; or keep `privileged`.
+- **Choice:** keep `privileged`. The lab's purpose is to exercise the role as it behaves on a real host.
+- **Consequence to weigh on a shared host:** a privileged node lets the role change transparent huge pages for the whole machine. If the lab is to share a host with other workloads, this choice should be revisited for that host.
+- **Reversal:** set `privileged: false` and add `capabilities: [NET_ADMIN]` on the nodes in `infra/create.yml`.
+

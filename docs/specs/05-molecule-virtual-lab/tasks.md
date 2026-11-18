@@ -60,7 +60,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: NFR Isolation
   - [x] 3.4 Remove the Docker socket from the controller, or document why the operator path needs it (nothing in the scenarios uses it from the controller)
     - Requirements: NFR Isolation
-  - [ ] 3.5 Decide whether nodes can run without `privileged` and `cgroupns_mode: host` on the target hosts' cgroup version; record the result
+  - [x] 3.5 Decide whether nodes can run without `privileged` and `cgroupns_mode: host` on the target hosts' cgroup version; record the result
+    - 2026-11-18: decided for the one engine tried (Docker on OrbStack, cgroup v2): nodes stay privileged. A node runs Splunk without `privileged` given the host cgroup namespace and `NET_ADMIN`, but the role's `disable-thp.service` then fails, so the node would no longer be the target the role is written for. Result and the shared-host consequence: `docs/history/research-2026-11-18-nodes-without-privileged.md`. The pve2 VM and the pre-production host still need the same check under 3.1.
     - Requirements: NFR Isolation
   - [x] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
     - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; with the check, a collision cannot go unnoticed. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
@@ -143,3 +144,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 3.4 closed: the controller no longer mounts the Docker socket; `dev` passes a full workflow and infra verify without it (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
 - 2026-11-18: 3.8 closed: a systemd unit in both node images turns checksum offload off at every boot, replacing the one-off task in prepare; it holds across a container restart on Ubuntu and AlmaLinux nodes (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`).
 - 2026-11-18: 3.6 closed with a check in `infra/create.yml` that refuses lab host names which already resolve outside the lab.
+- 2026-11-18: 3.5 closed with a recorded experiment. Finding for shared hosts: on a privileged node the role's huge-pages unit changes the setting for the whole machine, because containers share the host's kernel.

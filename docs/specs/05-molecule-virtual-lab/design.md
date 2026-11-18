@@ -204,7 +204,7 @@ Recorded runs: `small` and `dev` on the Mac and the cluster halves of `prod`, 20
 |---|---|
 | Operator → controller | ttyd basic auth over plain HTTP on `127.0.0.1:3000` unless `LAB_BIND_ADDRESS` widens it; password random, 20 chars |
 | Controller → host | privileged container (it runs systemd) with no Docker socket since 2026-11-18; `ansible` has NOPASSWD sudo, so the ttyd password grants root inside a privileged container, which can still reach the host's devices (task 3.5) |
-| Nodes → host | privileged, `cgroupns_mode: host`, `/sys/fs/cgroup` rw |
+| Nodes → host | privileged, `cgroupns_mode: host`, `/sys/fs/cgroup` rw. Privileged is kept on purpose (decision 7 of 2026-11-18): without it the role's huge-pages unit fails. With it, that unit changes the setting for the whole host |
 | Network → Gitea | `127.0.0.1:8929` and `:2222` unless `LAB_BIND_ADDRESS` widens them; sign-up refused; one owner created by infra |
 | Inside the lab | password `ansible:ansible` baked into images, `PermitEmptyPasswords yes`, PAM `account sufficient pam_permit.so` on AlmaLinux; host keys not checked |
 | Name resolution | lab hosts carry production-style names (`splunkapp-prod01`, `splunkshc-prod01`, …) that can match real hosts on a work network; a lab name with no running container falls through Docker's DNS to the host's resolver and its search domain |
