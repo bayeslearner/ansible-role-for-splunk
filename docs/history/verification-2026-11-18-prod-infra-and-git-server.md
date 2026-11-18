@@ -49,6 +49,20 @@ On the tree at `a7e70cb`, with the Git server image rebuilt and its volume remov
 
 The image used to set `GITEA__admin__DISABLE_REGISTRATION=false`, a key in the wrong section that left sign-up open. The owner is created by the `gitea` command inside the container, which does not need sign-up.
 
+## The network offload fix at every boot (task 3.8)
+
+On the tree at `4a8e2cd`. Checksum offload on a container's `eth0` can corrupt large transfers on Docker's virtual network, which once broke copying the Splunk package. The fix (`ethtool -K eth0 tx off rx off`) was a one-off task in `infra/prepare.yml`, so a node that restarted lost it. Both node images now carry a systemd unit, `lab-veth-offload.service`, that applies it at every boot; the controller image inherits it; the prepare task is removed.
+
+| Check | Result |
+|---|---|
+| `task setup:rebuild` | exit 0 (`veth-rebuild.log`) |
+| `prod` `task infra:setup`, then on `splunkapp-prod01` (Ubuntu), `splunkapp-prod02` (AlmaLinux) and `ansible-controller` | unit `active`; `rx-checksumming: off`, `tx-checksumming: off` on all three |
+| `docker restart` of the two nodes, same check | unit `active`, both settings `off` |
+| `molecule verify -s infra` after the restart | exit 0 (`veth-verify.log`) |
+| `MOLECULE_ENV=small task workflow:full` | exit 0, no failed step: the 1.1 GB package reached both nodes with only the unit applying the fix (`veth-small-full.log`) |
+
+Not shown: the corruption itself with offload left on. The fix predates this session and that failure was not reproduced.
+
 ## Memory, infra only
 
 One `docker stats` reading with all eleven containers up and no Splunk installed: each node about 30 MiB, `ansible-controller` 70 MiB, `git-server` 186 MiB.

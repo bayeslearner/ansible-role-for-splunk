@@ -66,7 +66,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: NFR Isolation
   - [ ] 3.7 Container names, network and ports take a lab prefix so two labs can share a Docker host
     - Requirements: R10
-  - [ ] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
+  - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
     - Requirements: R10
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
     - Depends: 3.2, 3.3, 3.4, 3.6
@@ -140,3 +140,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 3.3 closed: the lab's published ports bind to `127.0.0.1` unless `LAB_BIND_ADDRESS` widens them (in place since 3.10), and the Git server now refuses sign-up (HTTP 403) while the bootstrap still creates its owner. Evidence: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`.
 - 2026-11-18: day0 verify prints the same failure diagnostics as day1, from one shared task file; the process list reads `/proc`, because the AlmaLinux image has no `ps` (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
 - 2026-11-18: 3.4 closed: the controller no longer mounts the Docker socket; `dev` passes a full workflow and infra verify without it (`docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`).
+- 2026-11-18: 3.8 closed: a systemd unit in both node images turns checksum offload off at every boot, replacing the one-off task in prepare; it holds across a container restart on Ubuntu and AlmaLinux nodes (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`).

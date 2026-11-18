@@ -44,7 +44,7 @@ flowchart TB
 |---|---|---|
 | Taskfile | Entry point, ordering, Docker run flags, veth fix in the runner | `testing/Taskfile.yml` |
 | molecule-runner | Runs Molecule; creates containers through the host socket; runs the role in scenarios | `docker-images/molecule-runner/Dockerfile` |
-| Node images | systemd PID 1, sshd and scp, user `ansible` with NOPASSWD sudo | `docker-images/{ubuntu2204,almalinux9}-systemd-sshd/` |
+| Node images | systemd PID 1, sshd and scp, user `ansible` with NOPASSWD sudo, a boot-time unit that turns checksum offload off on `eth0` | `docker-images/{ubuntu2204,almalinux9}-systemd-sshd/` |
 | Controller image | Node image plus ansible-core 2.21.6 in a Python 3.12 virtualenv (the runner's version and collections), ttyd 1.7.7 (built from source), nginx proxy on 3000 | `docker-images/ansible-controller/Dockerfile` |
 | git-server | Gitea 28.4.0 on SQLite, port 8929; infra prepare creates an owner, the lab key and one seeded repository per app in `git_apps` | `docker-images/git-server/Dockerfile` |
 | Topologies | Hosts, groups, versions, cluster vars | `molecule/environments/*` |
@@ -139,7 +139,7 @@ sequenceDiagram
   T->>R: docker run --rm (socket, /workspace, MOLECULE_ENV)
   R->>R: slurp .secrets/id_rsa(.pub), ansible_password
   R->>D: exec in N as root (docker connection)
-  D->>N: authorized_keys, splunk user + sudo, rm /run/nologin, ethtool -K eth0
+  D->>N: authorized_keys, splunk user + sudo, rm /run/nologin
   T->>R: docker run --rm --network splunk-test-network
   R->>N: SSH ansible@splunkapp-prod01 (key from /workspace/testing/.secrets)
   R->>R: role: stat /opt/splunk/bin/splunk → absent → install_splunk.yml
@@ -192,7 +192,7 @@ if installed before this run and installed version < splunk_package_version:
 
 - A failed stage stops the workflow and leaves containers up for debugging; `task infra:destroy` or `task reset` cleans up.
 - Destroy steps use `ignore_errors`, so a partly created lab still tears down.
-- The veth offload fix is applied once per runner command and once per node in prepare; nothing reapplies it after a container restart.
+- The veth offload fix is applied once per runner command, and on every node and the controller by a systemd unit at each boot, so it survives a container or host restart.
 - Download retries 3 times, 10 s apart.
 
 ## Verification

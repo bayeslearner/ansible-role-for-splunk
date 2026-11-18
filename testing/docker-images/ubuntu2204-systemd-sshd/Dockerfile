@@ -36,6 +36,26 @@ RUN ln -sf /lib/systemd/system/systemd-user-sessions.service \
 # Enable SSH service (this was missing!)
 RUN systemctl enable ssh.service
 
+# Docker's virtual network pair can corrupt large transfers when checksum offload is on, which broke
+# copying the Splunk package to a node. This unit turns offload off at every boot of the container,
+# so the fix survives a restart of the container or of the lab host.
+RUN printf '%s\n' \
+      '[Unit]' \
+      'Description=Lab: turn off checksum offload on eth0' \
+      'ConditionPathExists=/sys/class/net/eth0' \
+      '' \
+      '[Service]' \
+      'Type=oneshot' \
+      'RemainAfterExit=yes' \
+      'ExecStart=/usr/sbin/ethtool -K eth0 tx off rx off' \
+      '' \
+      '[Install]' \
+      'WantedBy=multi-user.target' \
+      > /etc/systemd/system/lab-veth-offload.service && \
+    mkdir -p /etc/systemd/system/multi-user.target.wants && \
+    ln -sf /etc/systemd/system/lab-veth-offload.service \
+        /etc/systemd/system/multi-user.target.wants/lab-veth-offload.service
+
 VOLUME ["/sys/fs/cgroup"]
 EXPOSE 22
 STOPSIGNAL SIGRTMIN+3
