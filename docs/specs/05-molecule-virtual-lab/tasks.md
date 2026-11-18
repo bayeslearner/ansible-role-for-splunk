@@ -56,6 +56,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R10
     - Verification: `docs/history/research-<date>-lab-hosts.md`, kept generic; host-specific details stay in the private work notes, not this public repo
   - [ ] 3.2 `MOLECULE_ENV=small task workflow:full` passes on the pve2 VM
+    - 2026-11-18: no such VM is known to this session: none is recorded, and from the work Mac `ssh -o BatchMode=yes pve-02 hostname` answers "Host key verification failed." Creating a VM on that host belongs to the homelab's own session; a request with the lab's measured needs is left in the owner's private operator notes. Stays open until a VM exists.
     - Depends: 1.2, 3.1
     - Requirements: R10
   - [x] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
@@ -191,3 +192,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 6.12: destroy reports a removal that fails (it ignored all three), and the port check covers the Git server's ports. The "Learn Molecule" and "Code tour" tabs on the Board were checked against today's code and corrected where stale.
 - 2026-11-18: 1.1 closed from the day's runs on the second Mac, which had never had the lab, plus a secrets run in an empty directory (`docs/history/verification-2026-11-18-lab-setup.md`). The record says where this falls short of one unbroken run on one clean host. Noted there: a checkout shared through a file sync shares its lab secrets between machines.
 - 2026-11-18: 3.12 closed: the lab's containers were created on a Podman engine with no pull (`docs/history/verification-2026-11-18-lab-on-podman.md`). The attempt found that the images' amd64 platform came from a shell variable outside the lab (6.13, fixed in the Taskfile) and that SELinux blocks the runner from the engine socket (6.14, a new setting). The spec's design lines on destroy, the port check and the Taskfile's size were also corrected.
+- 2026-11-18: 3.1 and 3.2 wait for a VM that does not exist yet as far as this session can tell (the check and its answer are on 3.2). A request for it, with the measured memory, disk and port needs, went to the session that owns that hardware.
