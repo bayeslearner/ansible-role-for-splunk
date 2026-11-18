@@ -27,3 +27,12 @@ jobs:
         run: pipx run pre-commit==4.3.0 run --all-files --show-diff-on-failure
       - name: spec lint
         run: python3 scripts/spec_lint.py
+      # The Taskfile is the lab's only entry point. Parse it, and expand the templates of a named lab
+      # without running anything, so a broken variable or template fails here and not on a lab host.
+      - name: Taskfile parses
+        working-directory: testing
+        run: |
+          sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b "$RUNNER_TEMP/bin" v3.54.0
+          "$RUNNER_TEMP/bin/task" --list-all
+          LAB_NAME=b LAB_PORT_OFFSET=100 MOLECULE_ENV=prod "$RUNNER_TEMP/bin/task" -n workflow:full
+          LAB_NAME=b LAB_PORT_OFFSET=100 "$RUNNER_TEMP/bin/task" -n reset
