@@ -68,6 +68,23 @@
         == (groups['indexer'] | default([]) | length)
       retries: 30
       delay: 10
+      # The call carries the admin password, so its output is hidden. Let it finish without failing,
+      # and fail in the next task, which can say what the manager answered.
+      failed_when: false
+
+    - name: Fail unless every indexer is an Up peer
+      vars:
+        lab_idxc_entries: "{{ lab_idxc_peers.json.entry | default([]) }}"
+      ansible.builtin.assert:
+        that:
+          - lab_idxc_peers.status | default(0) == 200
+          - (lab_idxc_entries | selectattr('content.status', 'equalto', 'Up') | list | length) == (groups['indexer'] | default([]) | length)
+        quiet: true
+        fail_msg: >-
+          Not every indexer is an Up peer of {{ inventory_hostname }} after 5 minutes.
+          Expected {{ groups['indexer'] | default([]) | length }} Up ({{ groups['indexer'] | default([]) | sort | join(', ') }}).
+          The manager answered HTTP {{ lab_idxc_peers.status | default('nothing') }} and lists:
+          {% for e in lab_idxc_entries %}{{ e.content.label }}={{ e.content.status }}{{ ', ' if not loop.last else '' }}{% else %}no peers{% endfor %}.
 
     - name: Report the indexer cluster
       ansible.builtin.debug:
@@ -96,13 +113,30 @@
         == (groups['shcluster'] | length)
       retries: 30
       delay: 10
+      failed_when: false
+
+    - name: Fail unless the cluster has a captain and every member is Up
+      vars:
+        lab_shc_entries: "{{ lab_shc_members.json.entry | default([]) }}"
+      ansible.builtin.assert:
+        that:
+          - lab_shc_members.status | default(0) == 200
+          - (lab_shc_entries | selectattr('content.status', 'equalto', 'Up') | list | length) == (groups['shcluster'] | length)
+        quiet: true
+        fail_msg: >-
+          Not every search head cluster member is Up after 5 minutes.
+          Expected {{ groups['shcluster'] | length }} Up ({{ groups['shcluster'] | sort | join(', ') }}).
+          {{ inventory_hostname }} answered HTTP {{ lab_shc_members.status | default('nothing') }}
+          (503 means the cluster has no captain) and lists:
+          {% for e in lab_shc_entries %}{{ e.content.label }}={{ e.content.status }}{{ ', ' if not loop.last else '' }}{% else %}no members{% endfor %}.
+      run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
 
     - name: Report the search head cluster
       ansible.builtin.debug:
         msg: "{{ lab_shc_members.json.entry | map(attribute='content.label') | list | sort | join(', ') }} are Up members of the search head cluster"
       run_once: true  # noqa: run-once[task]  the lab uses Ansible's default linear strategy
 
-# Informational until the Git server is bootstrapped (spec 05, task 2.3).
+# Informational by decision: infra verify asserts the Git server's repositories (spec 05, task 2.3).
 - name: Report whether the Git server answers (informational)
   hosts: localhost
   gather_facts: false

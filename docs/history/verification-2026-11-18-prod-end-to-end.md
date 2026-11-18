@@ -77,6 +77,19 @@ A second full `prod` lab on the same machine, at `1e666c3`: `MOLECULE_ENV=prod t
 
 With a stopped node both kinds of check fail, on different hosts: the service check on the stopped node and the cluster check on the manager or the other member. The wrong-key faults isolate the cluster checks: the node runs, its service check passes, and only the cluster check fails. (This record first said a stopped node never reaches the cluster checks. That was wrong: it came from reading only the first lines of the log, and was corrected after reading the play recaps.) The result of the stopped-indexer verify was read from its log; the script that would have written its exit code was stopped at that point so the lab could be kept for the wrong-key faults.
 
+## Later still: a failed cluster check says what it found
+
+In the runs above a failed cluster check printed only "the output has been hidden due to the fact that 'no_log: true' was specified": the call to Splunk carries the admin password, and the failure came from that same task. In `day0/verify.yml` the hidden call now finishes without failing and a separate assert reports. A third full `prod` lab, on the working tree committed with this section (`workflow:quick` exit 0, both clusters formed). Raw output: `~/lab-runs/2026-11-18-verify-messages/`.
+
+| Fault | `task day0:verify` | Message |
+|---|---|---|
+| `splunkapp-prod02` running with a wrong cluster key | exit 201 | "Not every indexer is an Up peer of splunk-master after 5 minutes. Expected 2 Up (splunkapp-prod01, splunkapp-prod02). The manager answered HTTP 200 and lists: splunkapp-prod02=Stopped, splunkapp-prod01=Up." |
+| `systemctl stop Splunkd` on `splunkshc-prod02` | exit 201 | "Not every search head cluster member is Up after 5 minutes. Expected 2 Up (splunkshc-prod01, splunkshc-prod02). splunkshc-prod01 answered HTTP 503 (503 means the cluster has no captain) and lists: no members." |
+| both restored | exit 0, both clusters reported Up | |
+| `task reset` | exit 0; no lab container left | |
+
+The first attempt at this lab failed earlier, in infra prepare, on one node: "failed to transfer file … AnsiballZ_systemd.py" at "Start SSH service" on `splunkshc-prod02`. The engine did not copy a file into that container. It happened once in about a dozen `prod` infra runs that day, the attempt reset cleanly, and the next attempt passed with no change. Its cause was not found; if it recurs it is a task for the lab.
+
 ## Not covered
 
 - A native amd64 Linux host, and Podman.
