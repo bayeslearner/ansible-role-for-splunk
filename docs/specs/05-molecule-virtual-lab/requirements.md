@@ -45,6 +45,7 @@ The Docker and Molecule harness under `testing/`: images, the Taskfile entry poi
 - 2026-11-18: Superseded for the service and port checks. The owner approved the portfolio plan's last-mile list, which makes day0 verify able to fail (tasks 6.1); the cluster and Git server plays stay informational until 2.1 and 2.3. Source: the plan in the private `bayes-ops` notes, approved in the project session. Later the same day the cluster plays became asserting (task 2.1) and the Git server gained real repositories (task 2.3); its day0 report stays informational, and infra verify checks the repositories.
 - 2026-03-20: upstream maintainer changes kept from PR #252: veth checksum fix, common inventory, volume namespacing, UF group support (project memory "Upstream maintainer").
 - 2026-11-02: reconstructed as this spec and set ACTIVE so verification and portability work have a home ([2026-11-02-01-adopt-spec-layout](../../decisions/2026-11-02-01-adopt-spec-layout.md)).
+- 2026-11-18: R10 and the Glossary name the pve2 VM as a lab host. That VM has not been created yet (tasks 3.1, 3.2). It stays a target because the owner named it on 2026-11-02; whether it still comes before the pre-production host is the owner's to say. Meanwhile the lab has run in full on two Macs, and its containers are created on a Podman engine.
 
 ## Configuration
 
