@@ -12,7 +12,7 @@ Load at session start (also listed in `.claude/required-skills`): `house-rules`,
 
 ## The board
 
-- Board (Claude Doc shape): https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP. Generated tabs (Overview, Steering, Specs with one subtab per spec, Decisions, Worknotes) sit beside the hand-written "Learn Molecule through the lab" and "Review of spec 05". Regenerate with `python3 docs/board/seed.py doc --out .build/doc-board` and apply `plan.json` with the Docs connector (`spec-driven-dev`, Project Board); the minted ids are in `docs/board/doc-tabs.json`. Config: `docs/board/board.json`, `orientation.md`, `spec-summaries.json`.
+- Board (Claude Doc shape): https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP. Generated tabs (Overview, Steering, Specs with one subtab per spec, Decisions, Worknotes) sit beside the hand-written "Learn Molecule through the lab", "Code tour and last mile" and "Review of spec 05". The two teaching tabs quote the Taskfile and playbooks: after a change to a quoted file, check them against the code. Regenerate with `python3 docs/board/seed.py doc --out .build/doc-board` and apply `plan.json` with the Docs connector (`spec-driven-dev`, Project Board); the minted ids are in `docs/board/doc-tabs.json`. Config: `docs/board/board.json`, `orientation.md`, `spec-summaries.json`.
 - Notes Viewer (ansible-role-for-splunk): https://claude.ai/artifact/LES4pcfC7J9giupJGLE6D2
 
 ## Required reading on session start
@@ -44,7 +44,11 @@ task shell -- ansible-controller   # operate the lab from the controller
 task reset                         # remove containers, test volumes and network
 ```
 
-Lint (repo root): `pre-commit run --all-files` (yamllint, ansible-lint on `roles/ playbooks/ environments/ testing/molecule/`); `uvx pre-commit run --all-files` works without installing it. Spec lint: `python3 scripts/spec_lint.py`.
+A second lab on the same engine: `LAB_NAME=<name> LAB_PORT_OFFSET=<n>` on every command for it (`testing/README.md`).
+
+🚨 A run that installs Splunk needs 10 to 39 GB of the container engine's disk (`testing/README.md`). Never run one on a machine whose engine disk is shared with other work; lint, syntax checks and at most the infra scenario are fine there.
+
+Lint (repo root): `pre-commit run --all-files` (yamllint, ansible-lint on `roles/ playbooks/ environments/ testing/molecule/`); `uvx pre-commit run --all-files` works without installing it. Spec lint: `python3 scripts/spec_lint.py`. GitHub Actions runs both, and a Taskfile dry-run, on every push to `main` (`.github/workflows/lint.yml`).
 
 ## Layout
 
