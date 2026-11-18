@@ -64,4 +64,3 @@ Found after the runs above, on the tree at `9735f35`, and fixed in the commit th
 | after | `MOLECULE_ENV=dev task workflow:full` | exit 0; 10 Molecule steps "Executed: Successful"; no lab container left (`dev-full-after-fix.log`) |
 
 The fix: `day0:test` and `day1:test` pass `--destroy=never`, and `day0/destroy.yml` is deleted. Removing containers stays with `task infra:destroy`.
-

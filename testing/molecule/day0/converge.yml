@@ -126,4 +126,3 @@
       when: >-
         lab_shc_status.rc != 0 or
         'not part of any cluster' in (lab_shc_status.stdout ~ lab_shc_status.stderr)
-
