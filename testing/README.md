@@ -24,9 +24,9 @@ Host (macOS / Linux)
         |     /workspace (bind mount)
         |
         +-- splunk-master                Cluster Manager
-        +-- splunk-license               License Manager / DMC
-        +-- splunkapp-prod01             Indexer (site1)
-        +-- splunkapp-prod02             Indexer (site2, AlmaLinux)
+        +-- splunk-license               Splunk node in the licence-manager and DMC groups
+        +-- splunkapp-prod01             Indexer (cluster peer)
+        +-- splunkapp-prod02             Indexer (cluster peer, AlmaLinux)
         +-- splunkshc-prod01             Search Head
         +-- splunkshc-prod02             Search Head (AlmaLinux)
         +-- splunk-deploy                SH Deployer
@@ -87,6 +87,8 @@ Each stage ends with a check, and a failed check fails the run.
 | `day1` | restarts Splunk through the role, runs the role's status check, accepts the licence | the Splunk unit is not active (it prints the node's processes, last log errors and unit status first) |
 
 On `prod`, infra also prepares the Git server: one repository per app the inventory names under `git_apps`, at `ssh://git@git-server/test/<app>`, each with a minimal Splunk app, readable with the lab key. The owner is `test`, with the lab's generated Splunk admin password; the web UI is at `http://localhost:8929`.
+
+The lab has no Splunk licence file. Every node runs on its own trial licence, and `splunk-license` is a plain Splunk node that sits in the role's licence-manager group; no node is pointed at it.
 
 On `prod`, day0 forms a two-peer indexer cluster (replication and search factor 2) and a two-member search head cluster. Two members is below the three Splunk recommends; it is the smallest that exercises the role's cluster tasks.
 

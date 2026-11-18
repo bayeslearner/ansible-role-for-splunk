@@ -34,7 +34,7 @@ Legend: ✅ done · 🟡 partial · ❌ missing or broken · ⏳ planned · — 
 > `prod` as a whole: its eleven containers have never run together (it needs about 30 GB of free engine disk). The search head cluster formed in a four-node test but was not verified healthy. The role deploying apps from the Git server has no run behind it (day 2, spec 10). Rows with a run name their record; `small` and `dev` ran on the Mac on 2026-11-18.
 
 > [!warning] Known gaps
-> - day0 forms `prod`'s indexer cluster and search head cluster, but a full `prod` run is owed (task 2.1). The inventory's two indexer sites are not used: the role's manager task sets no multisite options.
+> - day0 forms `prod`'s indexer cluster and search head cluster, but a full `prod` run is owed (task 2.1). The cluster is single-site, and no licence manager is configured: the lab has no licence file, so every node runs on a trial licence.
 > - The lab has run only on macOS. Published ports bind to `127.0.0.1`, the Git server refuses sign-up and the controller has no Docker socket (tasks 3.3, 3.4). Infra refuses lab names that already resolve outside the lab (3.6). Nodes stay privileged by decision, and through them the role changes the host's huge-pages setting (3.5). Still open for a shared host: one lab per engine (3.7).
 
 ## Day 2 (spec 10, planned)
