@@ -216,6 +216,9 @@ These are acceptable on a laptop and are the open questions for `splunkapp-prepr
 ## Decisions
 
 - [2026-11-02-01-adopt-spec-layout](../../decisions/2026-11-02-01-adopt-spec-layout.md)
+- [2026-11-18-01-main-default-branch.md](../../decisions/2026-11-18-01-main-default-branch.md): the lab branch is `main` and the fork's default branch.
+- [2026-11-18-02-lab-behaviour-changes.md](../../decisions/2026-11-18-02-lab-behaviour-changes.md): seven agent decisions on teardown, failure handling, the controller's Ansible, clusters, verify, the Git server and privileged nodes.
+- [2026-11-18-03-host-name-and-site-names.md](../../decisions/2026-11-18-03-host-name-and-site-names.md): open; two owner questions.
 
 ## As Built
 

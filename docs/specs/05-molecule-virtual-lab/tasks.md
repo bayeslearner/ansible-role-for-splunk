@@ -47,7 +47,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R1
   - [x] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
     - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). A lab run is still owed.
-    - Run 2026-11-18 on `main`, which contains `upstream/master` at `750c071`: `small` and `dev` pass infra, day0 and day1, and the role's cluster tasks formed an indexer cluster. Nothing in the merged role broke those paths. Not exercised: app deployment (`apps`, `git_apps`), which waits for the Git server (2.3).
+    - Run 2026-11-18 on `main`, which contains `upstream/master` at `750c071`: `small` and `dev` pass infra, day0 and day1, and the role's cluster tasks formed an indexer cluster. Nothing in the merged role broke those paths. Not exercised: app deployment (`apps`, `git_apps`). The Git server's repositories exist since 2.3; running the role's app tasks against them is day 2 work (spec 10).
     - Requirements: R4, R5
 
 - [ ] 3. Portability and isolation for the pve2 VM and the pre-production host
