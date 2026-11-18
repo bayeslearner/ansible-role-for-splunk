@@ -28,6 +28,10 @@ driver:
   name: default
 
 scenario:
+  # Molecule's default destroy sequence starts with `cleanup`, which this scenario has no
+  # playbook for; naming the sequence removes a "Missing playbook" warning from every destroy.
+  destroy_sequence:
+    - destroy
   test_sequence:
     - dependency
     - destroy
