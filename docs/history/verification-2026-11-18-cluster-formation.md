@@ -42,6 +42,10 @@ Two defects in the first draft of the new plays were found and fixed during thes
 - the captain check used `splunk_auth`, whose user name comes from the role's defaults and is undefined in a play that does not load the role;
 - `splunk show shcluster-status` exits 0 on a member that has not joined a cluster, so the bootstrap was skipped until the check also read the command's words.
 
+## Second attempt at the search head half, same day
+
+After the Git server and image work (tree at `c1f4906`), the four-node search head half was started again, to lower Splunk's free-disk floor on the members for the test and see the member check pass. It did not get that far: with two nodes installed, the install of the two search heads failed with `tar: … Cannot write: No space left on device` (`shc2-converge.log`). The day's image rebuilds had taken the engine's free disk from about 17 GB to 14.4 GB. The lab was torn down and the temporary topology removed. A healthy search head cluster is still unshown.
+
 ## Not covered
 
 - `prod` as a whole (eleven containers) has not run. It needs a host with about 30 GB of free engine disk; memory for nine Splunk nodes at 0.8 to 1 GiB each is 8 to 9 GiB before load.
