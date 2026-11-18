@@ -17,7 +17,7 @@ The first `MOLECULE_ENV=dev task workflow:quick` after `234c8aa` failed at day0 
 | `MOLECULE_ENV=dev task workflow:quick` | exit 0; `[day0 > converge]` and `[day0 > verify]` "Executed: Successful" (`dev-quick.log`) |
 | `MOLECULE_ENV=dev task day1:test` | exit 0 (`dev-day1.log`) |
 
-`dms` was not rerun; it has the same shape as `dev`.
+`dms` (Splunk Enterprise 10.6.1.1) was run later the same day on the tree at `cb98458`: `MOLECULE_ENV=dms task download:splunk` exit 0, then `MOLECULE_ENV=dms task workflow:full` exit 0 with 10 Molecule steps "Executed: Successful" (`dms-download.log`, `dms-full.log`). That is its first run on Docker; its earlier record is from Podman on the pre-production host.
 
 ## Setup run twice (task 1.1)
 
