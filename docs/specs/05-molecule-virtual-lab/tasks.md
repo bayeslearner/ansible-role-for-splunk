@@ -53,10 +53,11 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 3. Portability and isolation for the pve2 VM and the pre-production host
   - [ ] 3.1 Record the facts of each lab host before the first run: OS, kernel and cgroup version, Docker engine and CLI versions, egress to download.splunk.com and Docker Hub, the user the lab runs as, DNS search domains
+    - 2026-11-18: no facts record has been written for either host. What the 2026-11-10 and 2026-11-11 runs showed about the pre-production host is in the Log (root Podman and its socket). The pve2 VM's facts cannot be taken: no such VM exists yet (see 3.2). Stays open for that VM, and for a generic `research-<date>-lab-hosts.md` in this repository.
     - Requirements: R10
     - Verification: `docs/history/research-<date>-lab-hosts.md`, kept generic; host-specific details stay in the private work notes, not this public repo
   - [ ] 3.2 `MOLECULE_ENV=small task workflow:full` passes on the pve2 VM
-    - 2026-11-18: no such VM is known to this session: none is recorded, and from the work Mac `ssh -o BatchMode=yes pve-02 hostname` answers "Host key verification failed." Creating a VM on that host belongs to the homelab's own session; a request with the lab's measured needs is left in the owner's private operator notes. Stays open until a VM exists.
+    - 2026-11-18: no such VM is known to this session: none is recorded, and from the work Mac `ssh -o BatchMode=yes pve-02 hostname` answers "Host key verification failed." Creating a VM on that host belongs to the homelab's own session; a request with the lab's measured needs is left in the owner's private operator notes for that session; it has not been picked up. Stays open until a VM exists.
     - Depends: 1.2, 3.1
     - Requirements: R10
   - [x] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
@@ -64,7 +65,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.4 Remove the Docker socket from the controller, or document why the operator path needs it (nothing in the scenarios uses it from the controller)
     - Requirements: NFR Isolation
   - [x] 3.5 Decide whether nodes can run without `privileged` and `cgroupns_mode: host` on the target hosts' cgroup version; record the result
-    - 2026-11-18: decided for the one engine tried (Docker on OrbStack, cgroup v2): nodes stay privileged. A node runs Splunk without `privileged` given the host cgroup namespace and `NET_ADMIN`, but the role's `disable-thp.service` then fails, so the node would no longer be the target the role is written for. Result and the shared-host consequence: `docs/history/research-2026-11-18-nodes-without-privileged.md`. The pve2 VM and the pre-production host still need the same check under 3.1.
+    - 2026-11-18: decided for the one engine tried (Docker on OrbStack, cgroup v2): nodes stay privileged. A node runs Splunk without `privileged` given the host cgroup namespace and `NET_ADMIN`, but the role's `disable-thp.service` then fails, so the node would no longer be the target the role is written for. Result and the shared-host consequence: `docs/history/research-2026-11-18-nodes-without-privileged.md`. The pre-production host, and the pve2 VM once it exists, still need the same check under 3.1.
     - Requirements: NFR Isolation
   - [x] 3.6 Lab names cannot resolve to real hosts: give the lab network its own DNS suffix or names that cannot collide, and fail infra if any inventory host lacks a running container
     - 2026-11-18: done as a refusal: infra stops before creating anything when a lab host name already resolves outside the lab. The lab's names are unchanged and the network has no DNS suffix of its own; the check covers the moment a lab is built; a name that starts resolving later is not caught (design, Security). Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`.
@@ -76,7 +77,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
     - Requirements: R10
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
-    - Depends: 3.2, 3.3, 3.4, 3.6
+    - Depends: 3.3, 3.4, 3.6 (all closed). 3.2 was listed here so the lab would meet a plain Linux Docker host first; with no pve2 VM, this run can go first if the owner asks for it
     - Requirements: R10
   - [x] 3.10 The engine socket is a variable: `DOCKER_SOCK` (default `/var/run/docker.sock`) is the socket the runner mounts (the controller mounted it too until 3.4), so the lab can run against a Podman API service whose storage is not the host's default store (a shared host's `/var` may be too small for the lab)
     - Requirements: R10, NFR Isolation
@@ -192,4 +193,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 6.12: destroy reports a removal that fails (it ignored all three), and the port check covers the Git server's ports. The "Learn Molecule" and "Code tour" tabs on the Board were checked against today's code and corrected where stale.
 - 2026-11-18: 1.1 closed from the day's runs on the second Mac, which had never had the lab, plus a secrets run in an empty directory (`docs/history/verification-2026-11-18-lab-setup.md`). The record says where this falls short of one unbroken run on one clean host. Noted there: a checkout shared through a file sync shares its lab secrets between machines.
 - 2026-11-18: 3.12 closed: the lab's containers were created on a Podman engine with no pull (`docs/history/verification-2026-11-18-lab-on-podman.md`). The attempt found that the images' amd64 platform came from a shell variable outside the lab (6.13, fixed in the Taskfile) and that SELinux blocks the runner from the engine socket (6.14, a new setting). The spec's design lines on destroy, the port check and the Taskfile's size were also corrected.
-- 2026-11-18: 3.1 and 3.2 wait for a VM that does not exist yet as far as this session can tell (the check and its answer are on 3.2). A request for it, with the measured memory, disk and port needs, went to the session that owns that hardware.
+- 2026-11-18: 3.1 and 3.2 wait for a VM that does not exist yet as far as this session can tell (the check and its answer are on 3.2). A request for it, with the measured memory, disk and port needs, is left for the session that owns that hardware; 3.1 waits on the same VM for its half.

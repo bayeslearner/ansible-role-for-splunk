@@ -196,7 +196,7 @@ if installed before this run and installed version < splunk_package_version:
 
 - A failed stage stops the workflow and leaves containers up for debugging; `task infra:destroy` or `task reset` cleans up.
 - `infra:destroy` removes the hosts of the topology `MOLECULE_ENV` names when it runs. A lab built as `prod` and destroyed as `small` keeps its other nodes; `task reset` removes them, because it clears whatever is left on the lab's network.
-- The container engine publishes a port that another program already holds without an error, and that program then answers on it. `task lab:ports` catches this for the web terminal's port before the lab is created; on a topology with a Git server it probes that server's two ports as well.
+- The container engine publishes a port that another program already holds without an error, and that program then answers on it. `task lab:ports` catches this for each port whose own container does not exist yet: the web terminal's, and on a topology with a Git server that server's two.
 - Destroy removes containers with `state: absent`, which passes when a container is already gone, so a partly created lab still tears down; a removal that really fails now fails the destroy (it was ignored before 2026-11-18).
 - The veth offload fix is applied once per runner command, and on every node and the controller by a systemd unit at each boot, so it survives a container or host restart.
 - Download retries 3 times, 10 s apart.
