@@ -198,7 +198,7 @@ if installed before this run and installed version < splunk_package_version:
 
 ## Verification
 
-Recorded runs: all four topologies in full, 2026-11-18: `small`, `dev` and `dms` on the first Mac, `prod` end to end on a second Mac with its own engine, after its two cluster halves on the first (`docs/history/verification-2026-11-18-*.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). `prod` then ran as a whole. Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
+Recorded runs: all four topologies in full, 2026-11-18: `small`, `dev` and `dms` on the first Mac, `prod` end to end on a second Mac with its own engine, after its two cluster halves on the first (`docs/history/verification-2026-11-18-*.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
 
 ## Security
 

@@ -46,7 +46,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 2.6 `download.yml` defaults `MOLECULE_ENV` when empty (`default('small', true)`), as `prepare.yml` already does
     - Requirements: R1
   - [x] 2.7 Test the lab against `upstream/master`'s role (24 commits past `555beec`: nix-user refactor, app deployment rewrite with `apps`/`git_apps`, `splunk_secret_content`); record what breaks
-    - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). Lab runs followed on 2026-11-18 (2.7).
+    - Merged in `eeb2d89`; `ansible-playbook --syntax-check` passes for day0 and day1 converge (ansible-core 2.18). Lab runs followed on 2026-11-18 (next line).
     - Run 2026-11-18 on `main`, which contains `upstream/master` at `750c071`: `small` and `dev` pass infra, day0 and day1, and the role's cluster tasks formed an indexer cluster. Nothing in the merged role broke those paths. Not exercised: app deployment (`apps`, `git_apps`). The Git server's repositories exist since 2.3; running the role's app tasks against them is day 2 work (spec 10).
     - Requirements: R4, R5
 
@@ -94,7 +94,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 5. Polish and docs
   - [ ] 5.1 `testing/README.md` matches the code after 2.x and 3.x (topology names, what `prod` forms, ports, host requirements)
-    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. Stays open for the measured memory and CPU figures (5.5) and for 3.x.
+    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. The measured memory and disk table went in with 5.5. Stays open for 3.x.
   - [x] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
     - 2026-11-18, first half done: `day0/destroy.yml` was not unused. `molecule test` ran it whenever day0 failed, deleting the lab and leaving its node volumes. It is removed, and `day0:test` and `day1:test` pass `--destroy=never`. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`. Second half done the same day: `setup` no longer starts `mol-run`; `task runner:shell` starts it on demand and `runner:stop` removes it.
   - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
