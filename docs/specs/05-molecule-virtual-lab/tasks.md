@@ -166,23 +166,8 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R3, R8
     - Verification: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`, "Later the same day"
 
-- [ ] 7. Front door: the lab in a browser for people other than its operator
-  - Copy, do not redesign: the source is `work-n8n-devenvs/learning-lab` (`compose.yml`, `services/caddy/Caddyfile`, the homepage), the same as the Cribl lab's. Decision `docs/decisions/2026-11-18-04-front-door.md`.
-  - [ ] 7.1 `task lab:open` and `task lab:close`, as the design's Front Door section says: open refuses without infra, writes the Caddyfile and homepage from the inventory under `.build/front-door/<lab>/`, starts or reloads `<prefix>caddy`, and is safe to rerun after day0 or day1; close removes the front door and nothing else; `infra:destroy` calls close first. No test target starts a front door
-    - Requirements: R11
-  - [ ] 7.2 The homepage: the topology, each node with its role, one link per service, public or LAN links by the address it was opened from; a service that is not up yet answers with a page naming the stage to run
-    - Requirements: R11
-  - [ ] 7.3 `<prefix>cloudflared`, started by `lab:open` only when `.secrets/` holds this lab's tunnel token; README recipe for the tunnel, its names and the Access application in the operator's Cloudflare account
-    - Requirements: R11
-  - [ ] 7.4 Sign-in on the LAN path (Caddy basic auth, password generated into `.secrets/` by `setup:secrets`), and the terminal guests get: the controller's shell, which is root on the lab, or a separate one. A shared lab runs only on a host that holds nothing else
-    - Requirements: R7, R11
-  - [ ] 7.5 Splunk Web (sign-in, and the search head cluster's links between members), Gitea and the terminal work behind Cloudflare then Caddy; record the settings each needed (Splunk's `tools.proxy` and `root_endpoint` or none, Gitea's `ROOT_URL`, cookie attributes)
-    - Requirements: R11
-  - [ ] 7.6 From a second machine with nothing installed: after sign-in, the homepage, the terminal, every Splunk Web and the Git server open by their URLs; once through the tunnel on the pve2 VM, once on the LAN without a tunnel. Record in `docs/history/`
-    - Requirements: R11
-    - Depends: 7.1–7.5
-  - [ ] 7.7 `testing/README.md` section and the `lab-front-door` row of the feature matrix brought up to what 7.6 showed
-    - Requirements: R11
+- [>] -> 08-lab-front-door 7. Front door: the lab in a browser for people other than its operator
+  - Moved whole to spec 08 on 2026-11-18 at the owner's request, before any work began; its tasks are 1.1–1.7 there.
 
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
@@ -229,3 +214,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: 6.17: the Git server bootstrap says why it failed; shown with a mismatched owner password, which a kept Git volume and regenerated secrets produce (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`). Both teaching tabs were checked against the day0 verify change and needed no edit.
 - 2026-11-18: Correction. Earlier Log lines and notes said the pve2 VM does not exist and pve2 is unreachable. Both were wrong: `pve-02` is the homelab's Proxmox node, reachable from the work Mac with the lab key, and the homelab has a self-service path for a Docker VM on it. The owner pointed this out; `house-facts` now describes the homelab. 3.1 and 3.2 can proceed once a VM is created there.
 - 2026-11-18: Group 7 added at the owner's request: the lab gets the front door of his n8n and Cribl teaching labs, so people other than the operator open it in a browser after sign-in with nothing installed (R11, `docs/decisions/2026-11-18-04-front-door.md`). Two designs of the agent's own (a Tailscale subnet router, an SSH bastion) were rejected before it; the decision file says why.
+- 2026-11-18: Group 7 and R11 moved to `docs/specs/08-lab-front-door/` at the owner's request: the front door is new capability, and spec 05 can close without it. Nothing of it had been built.
