@@ -16,25 +16,25 @@ anchors: []
 
 People other than the lab's operator open a kept lab in a browser: after sign-in, with nothing installed, a homepage and one URL each for the web terminal, every Splunk Web and the Git server. Moved out of spec 05 (its group 7 and R11) on 2026-11-18 at the owner's request, before any of it was built. Decision: `docs/decisions/2026-11-18-04-front-door.md`.
 
-# Requirements
+## Requirements
 
-## R1. Front door
+### R1. Front door
 WHEN the operator shares a lab, THE lab SHALL give each visitor, after sign-in and with nothing installed, a homepage URL and one URL each for the web terminal, every Splunk Web in the topology and the Git server, using the front door of the owner's other teaching labs (Caddy by host name, a static homepage, optionally the lab's own Cloudflare tunnel and Access application).
 
-## Non-Functional
+### Non-Functional
 - **Copy, do not design:** the parts, their configuration and the README recipe follow the owner's n8n learning lab (`work-n8n-devenvs/learning-lab`), which shares them with his Cribl lab. A difference from that source is stated and justified where it is made.
 - **Tests stay private:** no test target depends on, starts or publishes a front door.
 - **No work host facts:** recipes for a shared work host are written generically; host names, networks and users stay out of this public repository.
 
-## Out Of Scope
+### Out Of Scope
 - Single sign-on against an organisation's identity provider (an owner decision; the LAN path gets a password).
 - A terminal per visitor.
 
-# Design
+## Design
 
 The parts are copied from the owner's n8n learning lab (`work-n8n-devenvs/learning-lab`), which shares them with his Cribl lab: Caddy routing by Host name, a static homepage, a web terminal, and optionally the lab's own `cloudflared` with one tunnel rule to `caddy:80` behind a Cloudflare Access application. What this design decides is when the lab has them, and what a shared lab exposes. Decision: `docs/decisions/2026-11-18-04-front-door.md`.
 
-## When the lab has a front door
+### When the lab has a front door
 
 Sharing is a separate act on a kept lab, never a side effect of building or testing one.
 
@@ -48,7 +48,7 @@ Sharing is a separate act on a kept lab, never a side effect of building or test
 
 `LAB_NAME` gives each lab its own front door (`<prefix>caddy`, `<prefix>cloudflared`), and `LAB_PORT_OFFSET` moves its LAN ports, so two shared labs on one engine do not collide.
 
-## What `lab:open` does
+### What `lab:open` does
 
 1. Reads the topology's inventory (the same files infra reads) and writes, under `.build/front-door/<lab>/`, a Caddyfile with one site block per service and a homepage listing the topology, each node with its role, and one link per service. Services: the homepage, the terminal, each host in a group that runs Splunk Web (search heads, the cluster manager, the deployment server, the monitoring console, standalone nodes) on its port 8000, and the Git server when the topology has one.
 2. Starts `<prefix>caddy` on the lab network. Each service gets a public name `<lab>-<service>.<LAB_DOMAIN>` and a LAN port from a block of ports above the lab's other ones, bound to `LAB_BIND_ADDRESS`; the homepage picks public or LAN links by the address it was opened from, as the learning lab's does.
@@ -57,7 +57,7 @@ Sharing is a separate act on a kept lab, never a side effect of building or test
 
 The tunnel, its names and the Access application are created once per shared lab in the operator's Cloudflare account. On the owner's homelab that is lab work for its manager session; this repository carries only the container, the token's place in `.secrets/` and a README recipe.
 
-## Who signs in, and to what
+### Who signs in, and to what
 
 | Where the lab runs | Reached by | Sign-in in front of the lab |
 |---|---|---|
@@ -67,16 +67,16 @@ The tunnel, its names and the Access application are created once per shared lab
 
 Behind the sign-in, Splunk Web and Gitea keep their own logins; the terminal keeps its basic auth.
 
-## What a shared lab exposes
+### What a shared lab exposes
 
 The web terminal is a shell as `ansible` on the controller, and `ansible` has passwordless sudo in a privileged container (spec 05, design, Security). Whoever is admitted to the terminal is root on the lab and can reach the host's devices. The learning lab's terminal is an unprivileged user on an internal network; this lab's cannot be without giving up what it is for, running the role from the controller. So:
 
 - a shared lab runs on a host that holds nothing else: a throwaway VM (on the owner's homelab, a dev VM on `pve-02`), never an engine shared with other work;
 - the Access policy, or the LAN password, admits only people trusted with that VM.
 
-Task 7.4 decides whether guests get the controller's shell or a separate one, after the rest works.
+Task 1.4 decides whether guests get the controller's shell or a separate one, after the rest works.
 
-# Tasks
+## Tasks
 
 - [ ] 1.1 `task lab:open` and `task lab:close`, as the Design section says: open refuses without infra, writes the Caddyfile and homepage from the inventory under `.build/front-door/<lab>/`, starts or reloads `<prefix>caddy`, and is safe to rerun after day0 or day1; close removes the front door and nothing else; `infra:destroy` calls close first. No test target starts a front door
   - Requirements: R1

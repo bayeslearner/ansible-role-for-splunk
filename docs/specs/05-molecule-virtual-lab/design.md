@@ -203,7 +203,7 @@ if installed before this run and installed version < splunk_package_version:
 
 ## Verification
 
-Recorded runs: all four topologies in full, 2026-11-18: `small`, `dev` and `dms` on the first Mac, `prod` end to end on a second Mac with its own engine, after its two cluster halves on the first (`docs/history/verification-2026-11-18-*.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
+Recorded runs: all four topologies in full, 2026-11-18: `small`, `dev` and `dms` on the first Mac, `prod` end to end on a second Mac with its own engine, after its two cluster halves on the first (`docs/history/verification-2026-11-18-*.md`); `small` in full on a Linux Docker VM, 2026-11-19 (`docs/history/verification-2026-11-18-small-on-a-linux-vm.md`); `dms` on the pre-production host, 2026-11-10 (tasks Log). Checks the harness itself contains: `infra/prepare.yml` (lab secrets exist), `infra/verify.yml` (systemd is PID 1 on each node over the docker connection, and the controller reaches every node over SSH), `day0/verify.yml` (unit active, ports open, cluster members Up), `day1/verify.yml` (asserts the service is active and prints diagnostics for a node that is not). Verification tasks are in `tasks.md`.
 
 ## Security
 
@@ -240,7 +240,7 @@ Reconstructed from the code, compared with the README and requirements:
 | R7 web terminal | As specified; login 200 with the password, 401 without | ✅ run on `dev` |
 | R8 git server | As specified: infra creates the owner, installs the lab key, and creates and seeds one repository per app in `git_apps`; infra verify reads each from the controller | ✅ infra run on `prod` |
 | R9 workflows | As specified; `mol-run` starts only for `task runner:shell`; a failed `day0:test` or `day1:test` leaves the lab running (`--destroy=never`); before 2026-11-18 Molecule ran `day0/destroy.yml` on a failed day0 and deleted the lab; `task reset` removes a lab whichever topology built it and leaves another lab on the engine alone | ✅ run on two Macs |
-| R10 portability | Run on macOS (Docker under OrbStack, on two machines) and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 with today's code the containers are created on Podman, but neither a Linux Docker host nor the pre-production host has had a full run of today's code (3.2, 3.9) |
+| R10 portability | Run on macOS (Docker under OrbStack, on two machines), in full for `small` on a Linux x86_64 Docker VM (2026-11-19), and, for `dms`, on the pre-production host under root Podman. Images are named `localhost/<name>` so both engines resolve them. `LAB_NAME` and `LAB_PORT_OFFSET` give a lab its own container names, network, volumes and ports, so several labs share one engine | 🟡 the pre-production host has not had a full run of today's code (3.9) |
 
 ## Architect's Review
 
