@@ -168,13 +168,13 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 7. Front door: the lab in a browser for people other than its operator
   - Copy, do not redesign: the source is `work-n8n-devenvs/learning-lab` (`compose.yml`, `services/caddy/Caddyfile`, the homepage), the same as the Cribl lab's. Decision `docs/decisions/2026-11-18-04-front-door.md`.
-  - [ ] 7.1 A Caddy container on the lab network, started by infra, with one site block per service: the homepage, the controller's web terminal, each node's Splunk Web and the Git server. `task infra` writes the Caddyfile from the topology's inventory, so `small` and `prod` each get their own blocks. Its LAN ports bind to `LAB_BIND_ADDRESS` and move with `LAB_PORT_OFFSET`
+  - [ ] 7.1 `task lab:open` and `task lab:close`, as the design's Front Door section says: open refuses without infra, writes the Caddyfile and homepage from the inventory under `.build/front-door/<lab>/`, starts or reloads `<prefix>caddy`, and is safe to rerun after day0 or day1; close removes the front door and nothing else; `infra:destroy` calls close first. No test target starts a front door
     - Requirements: R11
-  - [ ] 7.2 A static homepage, written from the same inventory: the topology, each node with its role, and one link per service; it picks public or LAN links by the address it was opened from, as the learning lab's does
+  - [ ] 7.2 The homepage: the topology, each node with its role, one link per service, public or LAN links by the address it was opened from; a service that is not up yet answers with a page naming the stage to run
     - Requirements: R11
-  - [ ] 7.3 The lab's own `cloudflared`, started only when `.secrets/` holds a tunnel token, with the one tunnel rule to `caddy:80`. The tunnel, its names and the Access application are created in the operator's Cloudflare account (on the owner's homelab, by its manager session); the README says how
+  - [ ] 7.3 `<prefix>cloudflared`, started by `lab:open` only when `.secrets/` holds this lab's tunnel token; README recipe for the tunnel, its names and the Access application in the operator's Cloudflare account
     - Requirements: R11
-  - [ ] 7.4 The web terminal reaches the lab through Caddy only, as the learning lab's does; decide whether the controller keeps its own published port 3000
+  - [ ] 7.4 Sign-in on the LAN path (Caddy basic auth, password generated into `.secrets/` by `setup:secrets`), and the terminal guests get: the controller's shell, which is root on the lab, or a separate one. A shared lab runs only on a host that holds nothing else
     - Requirements: R7, R11
   - [ ] 7.5 Splunk Web (sign-in, and the search head cluster's links between members), Gitea and the terminal work behind Cloudflare then Caddy; record the settings each needed (Splunk's `tools.proxy` and `root_endpoint` or none, Gitea's `ROOT_URL`, cookie attributes)
     - Requirements: R11
