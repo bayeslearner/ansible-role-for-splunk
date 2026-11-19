@@ -5,7 +5,7 @@ closed_as: null
 since: 2026-11-02
 until: null
 epic: testing
-features: [lab-setup, lab-topologies, lab-infra, lab-day0-install, lab-day1-ops, lab-controller, lab-web-terminal, lab-git-server, lab-cleanup]
+features: [lab-setup, lab-topologies, lab-infra, lab-day0-install, lab-day1-ops, lab-controller, lab-web-terminal, lab-git-server, lab-cleanup, lab-front-door]
 supersedes: []
 superseded_by: null
 depends_on: []
@@ -96,6 +96,9 @@ WHEN the `prod` topology is up, THE lab SHALL run a Gitea server reachable as `g
 
 ### R10. Portability
 THE lab SHALL run unchanged on macOS with OrbStack, on a Linux x86_64 Docker host (the pve2 VM), and on `splunkapp-preprod02`.
+
+### R11. Front door
+WHEN the operator shares a lab, THE lab SHALL give each visitor, after sign-in and with nothing installed, a homepage URL and one URL each for the web terminal, every Splunk Web in the topology and the Git server, using the front door of the owner's other teaching labs (Caddy by host name, a static homepage, optionally the lab's own Cloudflare tunnel and Access application). Decision: `docs/decisions/2026-11-18-04-front-door.md`.
 
 ## Non-Functional Requirements
 

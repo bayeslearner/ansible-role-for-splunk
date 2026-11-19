@@ -166,6 +166,24 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R3, R8
     - Verification: `docs/history/verification-2026-11-18-prod-infra-and-git-server.md`, "Later the same day"
 
+- [ ] 7. Front door: the lab in a browser for people other than its operator
+  - Copy, do not redesign: the source is `work-n8n-devenvs/learning-lab` (`compose.yml`, `services/caddy/Caddyfile`, the homepage), the same as the Cribl lab's. Decision `docs/decisions/2026-11-18-04-front-door.md`.
+  - [ ] 7.1 A Caddy container on the lab network, started by infra, with one site block per service: the homepage, the controller's web terminal, each node's Splunk Web and the Git server. `task infra` writes the Caddyfile from the topology's inventory, so `small` and `prod` each get their own blocks. Its LAN ports bind to `LAB_BIND_ADDRESS` and move with `LAB_PORT_OFFSET`
+    - Requirements: R11
+  - [ ] 7.2 A static homepage, written from the same inventory: the topology, each node with its role, and one link per service; it picks public or LAN links by the address it was opened from, as the learning lab's does
+    - Requirements: R11
+  - [ ] 7.3 The lab's own `cloudflared`, started only when `.secrets/` holds a tunnel token, with the one tunnel rule to `caddy:80`. The tunnel, its names and the Access application are created in the operator's Cloudflare account (on the owner's homelab, by its manager session); the README says how
+    - Requirements: R11
+  - [ ] 7.4 The web terminal reaches the lab through Caddy only, as the learning lab's does; decide whether the controller keeps its own published port 3000
+    - Requirements: R7, R11
+  - [ ] 7.5 Splunk Web (sign-in, and the search head cluster's links between members), Gitea and the terminal work behind Cloudflare then Caddy; record the settings each needed (Splunk's `tools.proxy` and `root_endpoint` or none, Gitea's `ROOT_URL`, cookie attributes)
+    - Requirements: R11
+  - [ ] 7.6 From a second machine with nothing installed: after sign-in, the homepage, the terminal, every Splunk Web and the Git server open by their URLs; once through the tunnel on the pve2 VM, once on the LAN without a tunnel. Record in `docs/history/`
+    - Requirements: R11
+    - Depends: 7.1–7.5
+  - [ ] 7.7 `testing/README.md` section and the `lab-front-door` row of the feature matrix brought up to what 7.6 showed
+    - Requirements: R11
+
 ## Log
 - 2026-11-02: Spec reconstructed from the code at `6ff020f` and set ACTIVE (decided by the agent; the owner may reverse). No lab run has a recorded result, and the work Mac has none of the lab images. Gaps found while reading are tasks 2.1–2.7, 3.3–3.8, 4.1 and 5.2–5.4. Kun named the hosts the lab will run on: the pve2 VM first, then the pre-production host (`docs/steering/product.md`).
 - 2026-11-02: Merged `upstream/master` (`750c071`) into `feature/virtual-lab`. Upstream changed nothing under `testing/`, so the Taskfile entry point and the controller-first design are unchanged. Day0 and day1 converge pass `--syntax-check` against the merged role.
@@ -210,3 +228,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: Two labs ran day0 at the same moment, then day1 at the same moment, on one engine; both passed, and resetting one left the other passing its verify (`docs/history/verification-2026-11-18-two-labs-on-one-engine.md`). This was the last limit recorded against 3.7.
 - 2026-11-18: 6.17: the Git server bootstrap says why it failed; shown with a mismatched owner password, which a kept Git volume and regenerated secrets produce (`docs/history/verification-2026-11-18-prod-infra-and-git-server.md`). Both teaching tabs were checked against the day0 verify change and needed no edit.
 - 2026-11-18: Correction. Earlier Log lines and notes said the pve2 VM does not exist and pve2 is unreachable. Both were wrong: `pve-02` is the homelab's Proxmox node, reachable from the work Mac with the lab key, and the homelab has a self-service path for a Docker VM on it. The owner pointed this out; `house-facts` now describes the homelab. 3.1 and 3.2 can proceed once a VM is created there.
+- 2026-11-18: Group 7 added at the owner's request: the lab gets the front door of his n8n and Cribl teaching labs, so people other than the operator open it in a browser after sign-in with nothing installed (R11, `docs/decisions/2026-11-18-04-front-door.md`). Two designs of the agent's own (a Tailscale subnet router, an SSH bastion) were rejected before it; the decision file says why.
