@@ -52,12 +52,14 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
     - Requirements: R4, R5
 
 - [ ] 3. Portability and isolation for the pve2 VM and the pre-production host
-  - [ ] 3.1 Record the facts of each lab host before the first run: OS, kernel and cgroup version, Docker engine and CLI versions, egress to download.splunk.com and Docker Hub, the user the lab runs as, DNS search domains
+  - [x] 3.1 Record the facts of each lab host before the first run: OS, kernel and cgroup version, Docker engine and CLI versions, egress to download.splunk.com and Docker Hub, the user the lab runs as, DNS search domains
     - 2026-11-18: no facts record has been written for either host. What the 2026-11-10 and 2026-11-11 runs showed about the pre-production host is in the Log (root Podman and its socket). The pve2 VM's facts are taken once it is created on `pve-02` (see 3.2). Stays open for that, and for a generic `research-<date>-lab-hosts.md` in this repository.
+    - 2026-11-19: done for the Macs and the pve2 VM, with the commands to take them on a new host: `docs/history/research-2026-11-18-lab-hosts.md`. The pre-production host's facts are taken with its run (3.9). The privileged check of 3.5 repeated on the VM: both node images boot privileged and unprivileged, as on the Mac.
     - Requirements: R10
     - Verification: `docs/history/research-<date>-lab-hosts.md`, kept generic; host-specific details stay in the private work notes, not this public repo
-  - [ ] 3.2 `MOLECULE_ENV=small task workflow:full` passes on the pve2 VM
+  - [x] 3.2 `MOLECULE_ENV=small task workflow:full` passes on the pve2 VM
     - 2026-11-18: Correction of an earlier note here, which said no such VM exists. "pve2" is `pve-02`, the homelab's Proxmox node (192.168.1.222), and the homelab provides throwaway Docker VMs on it for exactly this kind of test (`homecloud-lab/docs/guides/dev-vms.md`). The "Host key verification failed" answer meant an unknown host key without the lab key loaded, not a missing host; from the work Mac it answers ping and ports 22 and 8006. Next: load the lab key, create a dev VM there with the owner's go-ahead, then run 3.1 and 3.2 on it.
+    - 2026-11-19: passed on a fresh dev VM on `pve-02` (Ubuntu 24.04, Docker 29.1.3, native x86_64): `task setup` then `workflow:full`, exit 0, 4 min 23 s, nothing left on the engine. Record: `docs/history/verification-2026-11-18-small-on-a-linux-vm.md`. The VM was deleted after the run.
     - Depends: 1.2, 3.1
     - Requirements: R10
   - [x] 3.3 Published ports bind to `127.0.0.1` by default with a variable to widen them; Gitea registration disabled
@@ -215,3 +217,4 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 - 2026-11-18: Correction. Earlier Log lines and notes said the pve2 VM does not exist and pve2 is unreachable. Both were wrong: `pve-02` is the homelab's Proxmox node, reachable from the work Mac with the lab key, and the homelab has a self-service path for a Docker VM on it. The owner pointed this out; `house-facts` now describes the homelab. 3.1 and 3.2 can proceed once a VM is created there.
 - 2026-11-18: Group 7 added at the owner's request: the lab gets the front door of his n8n and Cribl teaching labs, so people other than the operator open it in a browser after sign-in with nothing installed (R11, `docs/decisions/2026-11-18-04-front-door.md`). Two designs of the agent's own (a Tailscale subnet router, an SSH bastion) were rejected before it; the decision file says why.
 - 2026-11-18: Group 7 and R11 moved to `docs/specs/08-lab-front-door/` at the owner's request: the front door is new capability, and spec 05 can close without it. Nothing of it had been built.
+- 2026-11-19: 3.1 and 3.2 closed on a throwaway VM on the homelab's `pve-02`, made with the owner's go-ahead and deleted after the run (`docs/history/verification-2026-11-18-small-on-a-linux-vm.md`, `docs/history/research-2026-11-18-lab-hosts.md`). Open required tasks: 3.9 (pre-production host) and 5.1 (README).

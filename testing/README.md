@@ -53,7 +53,8 @@ dms             = single all-in-one node on a newer Splunk + controller
 
 - 🚨 On a machine that runs other containers, the lab shares the engine's disk with them. A full engine disk fails the lab and can take the other workloads down. Run the larger topologies on an engine of their own.
 - `testing/software/` (the Splunk packages, 1 to 4 GB) and `testing/.runs/` are ignored by git. If the checkout lives in a synced folder such as Dropbox, keep them out of the sync too (`xattr -w com.dropbox.ignored 1 testing/software` on macOS).
-- [Task](https://taskfile.dev/) (go-task) on the host
+- [Task](https://taskfile.dev/) (go-task) on the host. On Linux, where distributions package an unrelated `task`, take the release binary: `curl -fsSL https://github.com/go-task/task/releases/download/v3.54.0/task_linux_amd64.tar.gz | tar -xz -C ~/.local/bin task` (3.54.0 is the version CI uses).
+- Hosts the lab has run on: macOS with OrbStack or Podman (amd64 images emulated on Apple Silicon), and a Linux x86_64 VM with Docker as a user in the `docker` group, where nothing is emulated and `small` ran end to end in 4 min 23 s after setup ([record](../docs/history/verification-2026-11-18-small-on-a-linux-vm.md)). The facts to read on a new host first: [research-2026-11-18-lab-hosts.md](../docs/history/research-2026-11-18-lab-hosts.md).
 
 ## Quick start
 ```bash
