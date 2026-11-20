@@ -8,7 +8,7 @@ specs_root: docs/specs
 
 ## Skills
 
-Load at session start (also listed in `.claude/required-skills`): `house-rules`, `work-discipline`, `spec-driven-dev`. Load `house-facts` before touching a host (the pve2 VM, `splunkapp-preprod01`, Docker) and `splunk-platform` for Splunk configuration questions.
+Load at session start (also listed in `.claude/required-skills`): `house-rules`, `work-discipline`, `spec-driven-dev`. Load `house-facts` before touching a host (the pve2 VM, `splunkapp-preprod02`, Docker) and `splunk-platform` for Splunk configuration questions.
 
 ## The board
 
