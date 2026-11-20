@@ -13,6 +13,7 @@ Load at session start (also listed in `.claude/required-skills`): `house-rules`,
 ## The board
 
 - Board (Claude Doc shape): https://claude.ai/artifact/EbJy948pCFVvGPkZHtQBoP. Generated tabs (Overview, Steering, Specs with one subtab per spec, Decisions, Worknotes) sit beside the hand-written "Learn Molecule through the lab", "Code tour and last mile" and "Review of spec 05". The two teaching tabs quote the Taskfile and playbooks: after a change to a quoted file, check them against the code. Regenerate with `python3 docs/board/seed.py doc --out .build/doc-board` and apply `plan.json` with the Docs connector (`spec-driven-dev`, Project Board); the minted ids are in `docs/board/doc-tabs.json`. Config: `docs/board/board.json`, `orientation.md`, `spec-summaries.json`.
+- Board, HTML page: https://claude.ai/artifact/WCbneMKxdKJJuiWAfcXAo2, kept beside the doc for its **Code** tab (the lab files worth reading, from `review` in `board.json`), which opens each file in a reading pane over the page, read live from Dropbox, with "Open in Notes Viewer" for line comments. Reseed with `python3 docs/board/seed.py --out .build/board --versions <versions.json>` and send `batches.json` with `ArtifactData`; republish the page from `python3 docs/board/seed.py page --out .build/board-page/board.html` with capabilities db, user, comments and mcp (Dropbox fetch, list_folder, search).
 - Notes Viewer (ansible-role-for-splunk): https://claude.ai/artifact/LES4pcfC7J9giupJGLE6D2
 
 ## Required reading on session start

@@ -92,5 +92,102 @@
       "worknotes": "a7"
     },
     "reseed": "python3 docs/board/seed.py doc"
-  }
+  },
+  "review": [
+    {
+      "group": "Entry point",
+      "path": "testing/Taskfile.yml",
+      "why": "Every lab command starts here: the variables that name a lab, the runner container each stage runs in, and the targets setup, infra, day0, day1, workflow, lab:open and reset."
+    },
+    {
+      "group": "Entry point",
+      "path": "testing/molecule/infra/molecule.yml",
+      "why": "How Molecule is wired: the default driver, the three inventory layers (.secrets, common, the topology) and the scenario's sequences."
+    },
+    {
+      "group": "Infra stage",
+      "path": "testing/molecule/infra/create.yml",
+      "why": "Starts one systemd container per inventory host plus the controller and Git server: names, network, volumes, published ports and the pre-flight checks."
+    },
+    {
+      "group": "Infra stage",
+      "path": "testing/molecule/infra/prepare.yml",
+      "why": "Turns the containers into SSH hosts: the lab key, the ansible user, the controller's web terminal and Ansible, and the Git server bootstrap."
+    },
+    {
+      "group": "Infra stage",
+      "path": "testing/molecule/infra/verify.yml",
+      "why": "What infra proves before day0 runs: SSH from the controller to every node, matching Ansible versions, the Git repositories."
+    },
+    {
+      "group": "Infra stage",
+      "path": "testing/molecule/infra/destroy.yml",
+      "why": "Teardown: what is removed, and how a failed removal is reported."
+    },
+    {
+      "group": "Day 0 (install)",
+      "path": "testing/molecule/day0/converge.yml",
+      "why": "Checks the engine has disk for every install, then runs the role over SSH, as production does: install, then cluster formation."
+    },
+    {
+      "group": "Day 0 (install)",
+      "path": "testing/molecule/day0/verify.yml",
+      "why": "The checks that say an install worked: splunkd up on every node, and the indexer and search head clusters formed."
+    },
+    {
+      "group": "Day 0 (install)",
+      "path": "testing/molecule/day0/inventory/group_vars/all.yml",
+      "why": "The SSH connection settings day0 adds over the topology's inventory."
+    },
+    {
+      "group": "Day 1 (change)",
+      "path": "testing/molecule/day1/converge.yml",
+      "why": "Day-1 operations on the running estate: restart Splunk, health checks, licence acceptance."
+    },
+    {
+      "group": "Day 1 (change)",
+      "path": "testing/molecule/day1/verify.yml",
+      "why": "How day1 proves the change landed."
+    },
+    {
+      "group": "Shared",
+      "path": "testing/molecule/tasks/splunk_diagnostics.yml",
+      "why": "What a failed check prints: service state, process list and logs, shared by day0 and day1."
+    },
+    {
+      "group": "Topologies",
+      "path": "testing/molecule/environments/prod/hosts.yml",
+      "why": "The largest topology: indexer cluster, search head cluster, deployer, deployment server, forwarder, controller and Git server."
+    },
+    {
+      "group": "Topologies",
+      "path": "testing/molecule/environments/small/hosts.yml",
+      "why": "The default topology: two Splunk nodes and the controller."
+    },
+    {
+      "group": "Topologies",
+      "path": "testing/molecule/environments/common/group_vars/all.yml",
+      "why": "What every topology shares: the SSH connection to the nodes (lab key, scp), the Splunk version and package, install paths."
+    },
+    {
+      "group": "Images",
+      "path": "testing/docker-images/ansible-controller/Dockerfile",
+      "why": "The controller you log into: ttyd behind nginx, pinned ansible-core."
+    },
+    {
+      "group": "Images",
+      "path": "testing/docker-images/ubuntu2204-systemd-sshd/Dockerfile",
+      "why": "The Splunk node image: systemd as PID 1, sshd, the checksum-offload unit."
+    },
+    {
+      "group": "Images",
+      "path": "testing/docker-images/molecule-runner/Dockerfile",
+      "why": "The runner every stage runs in: Molecule, ansible-core and the collections, pinned."
+    },
+    {
+      "group": "Front door (spec 08)",
+      "path": "testing/front-door/render.py",
+      "why": "Writes the Caddyfile and homepage from the inventory: which services get a link, LAN ports, sign-in, public names."
+    }
+  ]
 }
