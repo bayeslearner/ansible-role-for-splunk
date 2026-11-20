@@ -33,6 +33,7 @@ Host (macOS / Linux)
         +-- splunk-fwdmanager            Deployment Server
         +-- splunk-uf01                  Universal Forwarder
         +-- git-server                   Gitea (app repos)
+        +-- caddy, cloudflared           front door, only after `task lab:open`
 
 Topology shown: prod (MOLECULE_ENV=prod)
 small (default) = splunk-license + splunkapp-prod01 + controller
@@ -54,7 +55,13 @@ dms             = single all-in-one node on a newer Splunk + controller
 - 🚨 On a machine that runs other containers, the lab shares the engine's disk with them. A full engine disk fails the lab and can take the other workloads down. Run the larger topologies on an engine of their own.
 - `testing/software/` (the Splunk packages, 1 to 4 GB) and `testing/.runs/` are ignored by git. If the checkout lives in a synced folder such as Dropbox, keep them out of the sync too (`xattr -w com.dropbox.ignored 1 testing/software` on macOS).
 - [Task](https://taskfile.dev/) (go-task) on the host. On Linux, where distributions package an unrelated `task`, take the release binary: `curl -fsSL https://github.com/go-task/task/releases/download/v3.54.0/task_linux_amd64.tar.gz | tar -xz -C ~/.local/bin task` (3.54.0 is the version CI uses).
-- Hosts the lab has run on: macOS with OrbStack or Podman (amd64 images emulated on Apple Silicon), and a Linux x86_64 VM with Docker as a user in the `docker` group, where nothing is emulated and `small` ran end to end in 4 min 23 s after setup ([record](../docs/history/verification-2026-11-18-small-on-a-linux-vm.md)). The facts to read on a new host first: [research-2026-11-18-lab-hosts.md](../docs/history/research-2026-11-18-lab-hosts.md).
+- Hosts the lab has run on:
+  - macOS with OrbStack, every topology end to end, the amd64 images emulated on Apple Silicon.
+  - A Linux x86_64 VM with Docker, as a user in the `docker` group: nothing is emulated, and `small` ran end to end in 4 min 23 s after setup ([record](../docs/history/verification-2026-11-18-small-on-a-linux-vm.md)).
+  - A Linux x86_64 host under root Podman: `dms` passed infra and day0; day1 was not run there.
+  - Not working: an Apple Silicon Mac under Podman. The images build and the containers start, but infra's prepare step fails because the runner's amd64 `docker` client crashes under emulation ([record](../docs/history/verification-2026-11-18-lab-on-podman.md)).
+
+  The facts to read on a new host first: [research-2026-11-18-lab-hosts.md](../docs/history/research-2026-11-18-lab-hosts.md).
 
 ## Quick start
 ```bash
@@ -178,7 +185,7 @@ Both `diag:` targets exit non-zero when something is wrong.
 ## Engine socket and published ports
 - The lab's images are named `localhost/<name>:latest` (`localhost/molecule-runner:latest` and so on). Docker and Podman both resolve that form to the local image.
 - `DOCKER_SOCK` (default `/var/run/docker.sock`) is the engine socket the runner mounts. The controller does not get the socket: it reaches the nodes over SSH only. Set it to use another engine, such as a Podman API socket.
-- `LAB_BIND_ADDRESS` (default `127.0.0.1`) is the address the lab's published ports bind to: 3000 (web terminal), 2222 and 8929 (Git server). Set `LAB_BIND_ADDRESS=0.0.0.0` to reach them from another machine.
+- `LAB_BIND_ADDRESS` (default `127.0.0.1`) is the address the lab's published ports bind to: 3000 (web terminal), 2222 and 8929 (Git server), and, while the lab is shared, the front door's ports from 8100 upward. Set `LAB_BIND_ADDRESS=0.0.0.0` to reach them from another machine.
 - The lab's images are built and run as `linux/amd64` on every host (`LAB_PLATFORM`), because the role downloads Splunk's x86_64 packages. On an ARM machine such as an Apple Silicon Mac the engine runs them emulated, which is slower; nothing needs setting.
 - `LAB_RUNNER_ARGS` adds arguments to the runner container. On a host where SELinux is enforcing, set `LAB_RUNNER_ARGS='--security-opt label=disable'`, or the runner cannot open the engine socket ("Permission denied"). On a Podman host, `docker` must be Podman's own command (`podman-docker`), and `DOCKER_SOCK` its socket.
 - `LAB_NAME` and `LAB_PORT_OFFSET` run a second lab on the same engine. `LAB_NAME=b LAB_PORT_OFFSET=100 MOLECULE_ENV=small task workflow:quick` creates containers named `b-<host>` on the network `splunk-test-network-b`, with volumes named `ansible-splunk-lab-b-…` and the three ports moved to 3100, 2322 and 9029. Inside the lab every host keeps its inventory name, so playbooks and the controller work unchanged. Give the same two variables to every later command for that lab (`task shell -- ansible-controller`, `task diag:ssh`, `task reset`). `LAB_NAME` holds lower-case letters and digits only. `task infra:create` stops when a port the lab would publish is already in use on the machine.

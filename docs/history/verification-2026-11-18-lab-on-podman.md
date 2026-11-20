@@ -35,7 +35,7 @@ On the second Mac (Docker under OrbStack), with `DOCKER_DEFAULT_PLATFORM` unset 
 
 ## Not shown here
 
-- **The prepare step on this engine.** It failed on every node with "Docker version check … failed: SIGSEGV": the `docker` client inside the amd64 runner crashes under this machine's emulation of amd64. The Docker connection that prepare uses calls that client. On the pre-production host (x86_64, root Podman) prepare, day0 and day1 passed on 2026-11-10 and 2026-11-11 with nothing emulated, so this is a limit of an ARM machine running the lab under Podman, not of Podman.
+- **The prepare step on this engine.** It failed on every node with "Docker version check … failed: SIGSEGV": the `docker` client inside the amd64 runner crashes under this machine's emulation of amd64. The Docker connection that prepare uses calls that client. On the pre-production host (x86_64, root Podman) prepare and day0 (converge and verify) passed on 2026-11-10 and 2026-11-11 with nothing emulated; day1 was not run there, so this is a limit of an ARM machine running the lab under Podman, not of Podman.
 - A rootful Podman engine with today's code, and an x86_64 Linux host with today's code (tasks 3.2 and 3.9).
 
 ## Left as found
