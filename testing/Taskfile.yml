@@ -48,6 +48,13 @@ vars:
   _NET: 'splunk-test-network{{if .LAB_NAME}}-{{.LAB_NAME}}{{end}}'
   _VOL: '{{if .LAB_NAME}}ansible-splunk-lab-{{.LAB_NAME}}-{{else}}ansible-splunk-test-{{end}}'
   _WEB_PORT: '{{add 3000 (atoi .LAB_PORT_OFFSET)}}'
+  # The front door's images (copied from the n8n learning lab's), pinned by tag and digest.
+  _CADDY_IMAGE: 'docker.io/library/caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d'
+  _CLOUDFLARED_IMAGE: 'docker.io/cloudflare/cloudflared:2026.9.3@sha256:072c067d25ccbe61d46e18f0d0723255f2bb5304f7317caa95b27031520ff92c'
+  # The lab's name in front-door paths and public names: LAB_NAME, or "splunk" for the unnamed lab.
+  _LAB: '{{.LAB_NAME | default "splunk"}}'
+  # Public domain for the front door's names (<lab>-<service>.<LAB_DOMAIN>); empty means LAN only.
+  LAB_DOMAIN: '{{.LAB_DOMAIN | default ""}}'
   _LAB_NAME_OK: 'case "{{.LAB_NAME}}" in *[!a-z0-9]*) exit 1;; esac'
   # Common docker run args for molecule tasks (ENV resolved per-invocation)
   _DOCKER_ARGS: >-
@@ -218,6 +225,7 @@ tasks:
   infra:destroy:
     desc: "Destroy infrastructure containers"
     cmds:
+      - task: lab:close
       - echo "Destroying infrastructure containers..."
       - '{{._MOL}} molecule destroy -s infra'
 
@@ -349,6 +357,54 @@ tasks:
     cmds:
       - docker rm -f {{._PFX}}mol-run 2>/dev/null || true
       - echo "Molecule runner stopped"
+
+  # === Front door (spec 08) ===
+  # Shares a kept lab: one Caddy container routes by Host name (public names through the lab's own
+  # Cloudflare tunnel) or by LAN port, and serves a homepage generated from the inventory. Copied
+  # from the owner's n8n learning lab. Never started by a test target.
+
+  lab:open:
+    desc: "Share a kept lab: start or refresh its front door (homepage, terminal, every Splunk Web, Git server)"
+    vars:
+      _FD: '{{.TASKFILE_DIR}}/.build/front-door/{{._LAB}}'
+    cmds:
+      - |
+        docker ps --filter name=^{{._PFX}}ansible-controller$ --filter status=running -q | grep -q . || {
+          echo "No running lab controller ({{._PFX}}ansible-controller). Run: MOLECULE_ENV={{.ENV}} task infra:setup"; exit 1; }
+      - mkdir -p {{._FD}}
+      # The LAN sign-in is ansible / the lab's password, the same pair the web terminal checks.
+      - docker run --rm {{._CADDY_IMAGE}} caddy hash-password --plaintext "$(cat {{.SECRETS_DIR}}/ansible_password)" > {{._FD}}/password.hash
+      - >-
+        {{._MOL}} python3 front-door/render.py molecule/environments/{{.ENV}}/hosts.yml
+        .build/front-door/{{._LAB}} --lab {{._LAB}} --env {{.ENV}} --offset {{.LAB_PORT_OFFSET}}
+        --bind {{.LAB_BIND_ADDRESS}} --password-hash-file .build/front-door/{{._LAB}}/password.hash
+        {{if .LAB_DOMAIN}}--domain {{.LAB_DOMAIN}}{{end}}
+      # Recreated on every open, so a new topology or a regenerated Caddyfile always takes effect.
+      - docker rm -f {{._PFX}}caddy >/dev/null 2>&1 || true
+      - >-
+        docker run -d --name {{._PFX}}caddy --restart unless-stopped --network {{._NET}}
+        $(cat {{._FD}}/ports)
+        -v {{._FD}}/Caddyfile:/etc/caddy/Caddyfile:ro -v {{._FD}}/html:/srv/home:ro
+        {{._CADDY_IMAGE}} >/dev/null
+      - |
+        if [ -s {{.SECRETS_DIR}}/tunnel_token_{{._LAB}} ]; then
+          docker rm -f {{._PFX}}cloudflared >/dev/null 2>&1 || true
+          docker run -d --name {{._PFX}}cloudflared --restart unless-stopped --network {{._NET}} \
+            -e TUNNEL_TOKEN="$(cat {{.SECRETS_DIR}}/tunnel_token_{{._LAB}})" \
+            {{._CLOUDFLARED_IMAGE}} tunnel --no-autoupdate run >/dev/null
+          echo "Tunnel started ({{._PFX}}cloudflared); public names: {{._LAB}}-<service>.{{.LAB_DOMAIN}}"
+        else
+          echo "No tunnel token at .secrets/tunnel_token_{{._LAB}}: the front door is LAN only."
+        fi
+      # Caddy needs a moment to listen; a homepage that never answers fails the target.
+      - curl -sS -o /dev/null --retry 10 --retry-all-errors --retry-delay 1 http://{{if eq .LAB_BIND_ADDRESS "0.0.0.0"}}127.0.0.1{{else}}{{.LAB_BIND_ADDRESS}}{{end}}:{{add 8100 (atoi .LAB_PORT_OFFSET)}}/
+      - echo "Homepage at http://{{if eq .LAB_BIND_ADDRESS "0.0.0.0"}}<this host>{{else}}{{.LAB_BIND_ADDRESS}}{{end}}:{{add 8100 (atoi .LAB_PORT_OFFSET)}}/ (sign in as ansible with .secrets/ansible_password)"
+
+  lab:close:
+    desc: "Stop sharing a lab: remove its front door; nodes, controller and data stay"
+    cmds:
+      - docker rm -f {{._PFX}}cloudflared {{._PFX}}caddy >/dev/null 2>&1 || true
+      - echo "Front door of lab {{._LAB}} removed"
 
   # === Cleanup ===
 

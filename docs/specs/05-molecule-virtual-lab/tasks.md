@@ -79,6 +79,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
     - Requirements: R10
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
+    - 2026-11-19: waits on spec 08 (the lab's front door) at the owner's word: access first, then the deploy to the pre-production host.
     - 2026-11-19: blocked on two things outside this checkout. The host (`splunkapp-preprod02`, Log 2026-11-10) does not resolve from the machine the agent runs on (`ssh -o BatchMode=yes splunkapp-preprod02 true`: "Could not resolve hostname"), so the run is the owner's or needs a route he names. What already ran there, on 2026-11-10 and 2026-11-11 under root Podman: `dms` infra, day0 converge and day0 verify; not day1, not `small`, and not today's code. And its engine disk is shared with other work, so a Splunk install there needs the owner's go-ahead and, per 3.10, a separate Podman service whose storage is not the default store. Facts to take with the run: `docs/history/research-2026-11-18-lab-hosts.md`, How to take them.
     - Depends: 3.3, 3.4, 3.6 (all closed). 3.2 was listed here so the lab meets a plain Linux Docker host (a VM on `pve-02`) before the shared host
     - Requirements: R10

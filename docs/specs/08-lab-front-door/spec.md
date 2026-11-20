@@ -1,6 +1,6 @@
 ---
 spec_id: 08-lab-front-door
-status: DRAFT
+status: ACTIVE
 closed_as: null
 since: 2026-11-18
 until: null
@@ -8,7 +8,7 @@ epic: testing
 features: [lab-front-door]
 supersedes: []
 superseded_by: null
-depends_on: [05-molecule-virtual-lab]
+depends_on: []
 anchors: []
 ---
 
@@ -78,14 +78,17 @@ Task 1.4 decides whether guests get the controller's shell or a separate one, af
 
 ## Tasks
 
-- [ ] 1.1 `task lab:open` and `task lab:close`, as the Design section says: open refuses without infra, writes the Caddyfile and homepage from the inventory under `.build/front-door/<lab>/`, starts or reloads `<prefix>caddy`, and is safe to rerun after day0 or day1; close removes the front door and nothing else; `infra:destroy` calls close first. No test target starts a front door
+- [x] 1.1 `task lab:open` and `task lab:close`, as the Design section says: open refuses without infra, writes the Caddyfile and homepage from the inventory under `.build/front-door/<lab>/`, starts or reloads `<prefix>caddy`, and is safe to rerun after day0 or day1; close removes the front door and nothing else; `infra:destroy` calls close first. No test target starts a front door
   - Requirements: R1
-- [ ] 1.2 The homepage: the topology, each node with its role, one link per service, public or LAN links by the address it was opened from; a service that is not up yet answers with a page naming the stage to run
+  - 2026-11-19: built and shown on the LAN path with a `small` lab's infra (`docs/history/verification-2026-11-19-front-door-lan.md`). `testing/front-door/render.py` writes the Caddyfile, homepage and port list; Caddy listens on LAN ports from 8100 plus `LAB_PORT_OFFSET`.
+- [x] 1.2 The homepage: the topology, each node with its role, one link per service, public or LAN links by the address it was opened from; a service that is not up yet answers with a page naming the stage to run
   - Requirements: R1
+  - 2026-11-19: shown on the LAN path, same record. Every Splunk Enterprise node gets a link, indexers included, so a visitor sees the whole cluster; the public links are written but not yet opened (1.3, 1.6).
 - [ ] 1.3 `<prefix>cloudflared`, started by `lab:open` only when `.secrets/` holds this lab's tunnel token; README recipe for the tunnel, its names and the Access application in the operator's Cloudflare account
   - Requirements: R1
 - [ ] 1.4 Sign-in on the LAN path (Caddy basic auth, password generated into `.secrets/` by `setup:secrets`), and the terminal guests get: the controller's shell, which is root on the lab, or a separate one. A shared lab runs only on a host that holds nothing else
   - Requirements: R1
+  - 2026-11-19, LAN half: the sign-in is user `ansible` with the lab's existing password (`.secrets/ansible_password`), not a new one, because ttyd checks that same pair: one sign-in passes both, and Caddy strips the header before Splunk Web and Gitea. So guests get the controller's shell for now; whether they get a separate one is still open.
 - [ ] 1.5 Splunk Web (sign-in, and the search head cluster's links between members), Gitea and the terminal work behind Cloudflare then Caddy; record the settings each needed (Splunk's `tools.proxy` and `root_endpoint` or none, Gitea's `ROOT_URL`, cookie attributes)
   - Requirements: R1
 - [ ] 1.6 From a second machine with nothing installed: after sign-in, the homepage, the terminal, every Splunk Web and the Git server open by their URLs; once through the tunnel on the pve2 VM, once on the LAN without a tunnel. Record in `docs/history/`
@@ -96,3 +99,4 @@ Task 1.4 decides whether guests get the controller's shell or a separate one, af
 
 ## Log
 - 2026-11-18: Created DRAFT from spec 05's group 7, R11 and design section, moved whole at the owner's request. Numbered 08 so it runs before the DRAFT `10-day-2-operations`; the owner may reorder. Depends on 05 closing.
+- 2026-11-19: Set ACTIVE ahead of spec 05's task 3.9 at the owner's word: access comes before the lab is deployed to the pre-production host. `depends_on: [05]` removed; 3.9 now waits on this spec. 1.1 and 1.2 done and the LAN sign-in of 1.4 built, shown with a `small` lab's infra on the work Mac (`docs/history/verification-2026-11-19-front-door-lan.md`). Next: 1.5 and 1.6 on a pve-02 VM with Splunk installed, and the tunnel (1.3), whose Cloudflare tunnel and Access application are lab work for the homelab's manager session.
