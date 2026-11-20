@@ -79,6 +79,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
   - [x] 3.8 Reapply the veth offload fix on container start (a systemd unit in the node images) so it survives restarts of the lab host
     - Requirements: R10
   - [ ] 3.9 `MOLECULE_ENV=small task workflow:full` passes on the pre-production host
+    - 2026-11-19: blocked on two things outside this checkout. The host does not resolve from the machine the agent runs on (`ssh -o BatchMode=yes splunkapp-preprod01 true`: "Could not resolve hostname"), so the run is the owner's or needs a route he names. And its engine disk is shared with other work, so a Splunk install there needs the owner's go-ahead and, per 3.10, a separate Podman service whose storage is not the default store. Facts to take with the run: `docs/history/research-2026-11-18-lab-hosts.md`, How to take them.
     - Depends: 3.3, 3.4, 3.6 (all closed). 3.2 was listed here so the lab meets a plain Linux Docker host (a VM on `pve-02`) before the shared host
     - Requirements: R10
   - [x] 3.10 The engine socket is a variable: `DOCKER_SOCK` (default `/var/run/docker.sock`) is the socket the runner mounts (the controller mounted it too until 3.4), so the lab can run against a Podman API service whose storage is not the host's default store (a shared host's `/var` may be too small for the lab)
@@ -102,7 +103,7 @@ Built code that has no recorded verification stays `[ ]` with "built in <commit>
 
 - [ ] 5. Polish and docs
   - [ ] 5.1 `testing/README.md` matches the code after 2.x and 3.x (topology names, what `prod` forms, ports, host requirements)
-    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. The measured memory and disk table went in with 5.5. On 2026-11-18 the README also gained `LAB_NAME`, `LAB_PORT_OFFSET`, `LAB_PLATFORM`, `LAB_RUNNER_ARGS`, the per-stage commands and the cleanup note, each checked against the Taskfile. Stays open for what the lab-host runs change (3.2, 3.9).
+    - 2026-11-18: brought up to `a05d639`: topology lists, what each stage does and checks, clusters on `prod`, troubleshooting targets, `DOCKER_SOCK` and `LAB_BIND_ADDRESS`, cleanup, disk needs. The measured memory and disk table went in with 5.5. On 2026-11-18 the README also gained `LAB_NAME`, `LAB_PORT_OFFSET`, `LAB_PLATFORM`, `LAB_RUNNER_ARGS`, the per-stage commands and the cleanup note, each checked against the Taskfile. Stays open for what the lab-host runs change (3.2, 3.9). 2026-11-19: the 3.2 part is in (the hosts line of `testing/README.md` names the Linux VM run); 3.9 remains.
   - [x] 5.2 Remove or wire `day0/destroy.yml`; stop `mol-run` after `infra:test` or drop `runner:start` from `setup`
     - 2026-11-18, first half done: `day0/destroy.yml` was not unused. `molecule test` ran it whenever day0 failed, deleting the lab and leaving its node volumes. It is removed, and `day0:test` and `day1:test` pass `--destroy=never`. Evidence: `docs/history/verification-2026-11-18-dev-topology-and-operator-path.md`. Second half done the same day: `setup` no longer starts `mol-run`; `task runner:shell` starts it on demand and `runner:stop` removes it.
   - [x] 5.3 `diag:ssh` and `diag:terminal` exit non-zero on failure
