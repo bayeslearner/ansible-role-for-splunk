@@ -84,13 +84,15 @@ Task 1.4 decides whether guests get the controller's shell or a separate one, af
 - [x] 1.2 The homepage: the topology, each node with its role, one link per service, public or LAN links by the address it was opened from; a service that is not up yet answers with a page naming the stage to run
   - Requirements: R1
   - 2026-11-19: shown on the LAN path, same record. Every Splunk Enterprise node gets a link, indexers included, so a visitor sees the whole cluster; the public links are written but not yet opened (1.3, 1.6).
-- [ ] 1.3 `<prefix>cloudflared`, started by `lab:open` only when `.secrets/` holds this lab's tunnel token; README recipe for the tunnel, its names and the Access application in the operator's Cloudflare account
+- [x] 1.3 `<prefix>cloudflared`, started by `lab:open` only when `.secrets/` holds this lab's tunnel token; README recipe for the tunnel, its names and the Access application in the operator's Cloudflare account
   - Requirements: R1
+  - 2026-11-19: the tunnel `splunk-lab`, its Access application over eleven names and their CNAMEs were created by this session through the Cloudflare API, on the owner's word; `lab:open` with `LAB_DOMAIN` started `cloudflared` on the pve-02 VM and every public name answered with the Access sign-in (`docs/history/verification-2026-11-19-front-door-on-a-linux-vm.md`). Recipe: `testing/README.md`, Sharing a lab.
 - [ ] 1.4 Sign-in on the LAN path (Caddy basic auth, password generated into `.secrets/` by `setup:secrets`), and the terminal guests get: the controller's shell, which is root on the lab, or a separate one. A shared lab runs only on a host that holds nothing else
   - Requirements: R1
   - 2026-11-19, LAN half: the sign-in is user `ansible` with the lab's existing password (`.secrets/ansible_password`), not a new one, because ttyd checks that same pair: one sign-in passes both, and Caddy strips the header before Splunk Web and Gitea. So guests get the controller's shell for now; whether they get a separate one is still open.
 - [ ] 1.5 Splunk Web (sign-in, and the search head cluster's links between members), Gitea and the terminal work behind Cloudflare then Caddy; record the settings each needed (Splunk's `tools.proxy` and `root_endpoint` or none, Gitea's `ROOT_URL`, cookie attributes)
   - Requirements: R1
+  - 2026-11-19, `small` half: Splunk Web needed no setting behind Caddy (redirects follow the Host header; sign-in and the launcher work), and the terminal's websocket upgrades through it. Open: the search head cluster's links and Gitea, on `prod`.
 - [ ] 1.6 From a second machine with nothing installed: after sign-in, the homepage, the terminal, every Splunk Web and the Git server open by their URLs; once through the tunnel on the pve2 VM, once on the LAN without a tunnel. Record in `docs/history/`
   - Requirements: R1
   - Depends: 1.1–1.5
@@ -100,3 +102,4 @@ Task 1.4 decides whether guests get the controller's shell or a separate one, af
 ## Log
 - 2026-11-18: Created DRAFT from spec 05's group 7, R11 and design section, moved whole at the owner's request. Numbered 08 so it runs before the DRAFT `10-day-2-operations`; the owner may reorder. Depends on 05 closing.
 - 2026-11-19: Set ACTIVE ahead of spec 05's task 3.9 at the owner's word: access comes before the lab is deployed to the pre-production host. `depends_on: [05]` removed; 3.9 now waits on this spec. 1.1 and 1.2 done and the LAN sign-in of 1.4 built, shown with a `small` lab's infra on the work Mac (`docs/history/verification-2026-11-19-front-door-lan.md`). Next: 1.5 and 1.6 on a pve-02 VM with Splunk installed, and the tunnel (1.3), whose Cloudflare tunnel and Access application are lab work for the homelab's manager session.
+- 2026-11-19: on a pve-02 VM with `small` built, the LAN front door worked from the work Mac (homepage, terminal and its websocket, Splunk sign-in on both nodes through Caddy). The tunnel and Access application were created by this session, not by the homelab's manager session, on the owner's word; `lab:open` connected it and every public name sits behind Access (`docs/history/verification-2026-11-19-front-door-on-a-linux-vm.md`). README section added (1.7, in part).

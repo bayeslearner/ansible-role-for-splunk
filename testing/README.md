@@ -151,6 +151,20 @@ After `task infra:setup`, a web terminal is exposed at `http://localhost:3000/tt
 - Auth is enabled (`ansible:<password>`).
 - The password is in `testing/.secrets/ansible_password`.
 
+## Sharing a lab (front door)
+
+`task lab:open` shares a kept lab with people who have nothing installed: a homepage, the web terminal, every Splunk node's Splunk Web and the Git server, each at its own URL. It copies the front door of the owner's n8n and Cribl teaching labs: one Caddy container on the lab network routes by host name or LAN port, and the lab's own `cloudflared` carries public names when a tunnel token exists. No test target starts it; `task lab:close` removes it and leaves the lab; `infra:destroy` closes it first. Design and reasons: `docs/specs/08-lab-front-door/spec.md`.
+
+```bash
+MOLECULE_ENV=small task workflow:quick                    # a kept lab (infra + day0)
+LAB_BIND_ADDRESS=0.0.0.0 MOLECULE_ENV=small task lab:open # LAN: http://<host>:8100/
+```
+
+- **LAN.** Ports 8100 upward (plus `LAB_PORT_OFFSET`), one per service, in the order `lab:open` prints: homepage, terminal, Git server (when the topology has one), then each Splunk node. Every LAN port asks for user `ansible` and `.secrets/ansible_password`, the pair the terminal checks, so one sign-in covers both. Splunk Web and Gitea keep their own logins (Splunk: `admin`, `splunk_admin_password` in `.secrets/inventory/group_vars/all.yml`).
+- **Internet.** Put the tunnel's token in `.secrets/tunnel_token_<lab>` (the unnamed lab is `splunk`) and run `LAB_DOMAIN=<domain> task lab:open`. The public names are `<lab>-<service>.<domain>`, for example `splunk-home` and `splunk-splunk-license`. In the operator's Cloudflare account the tunnel has one rule, every hostname to `http://caddy:80` (`<lab>-caddy` for a named lab), and an Access application covers every name before its CNAME exists; Access is the sign-in, so public names carry no Caddy password.
+- **What a visitor gets.** The terminal is a shell as `ansible`, which is root on the lab. Share a lab only on a host that holds nothing else, and only with people trusted with that host.
+- A node that is not built yet answers with the stage to run (`task day0:converge`).
+
 ## Troubleshooting
 ```bash
 task status          # containers on the lab network
