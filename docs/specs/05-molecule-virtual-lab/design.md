@@ -68,7 +68,7 @@ flowchart TB
 | `task reset` | — | destroy, stop runner, remove any container still on the lab's network (a lab built from another topology), its volumes and the network | operator |
 | `day0/converge.yml`, `day0/verify.yml` | run from runner or controller | role install; checks | Molecule, operator |
 | `http://<host>:3000/ttyd` | basic auth `ansible:<password>` | web shell as `ansible` on the controller | operator |
-| `http://<host>:8929`, `ssh -p 2222` | Gitea | one repository per app in `git_apps`, at `ssh://git@git-server/test/<app>`, created and seeded by infra | infra verify; the role's `splunk_apps` tasks (not yet run in the lab) |
+| `http://<host>:8929`, `ssh -p 2222` | Gitea | one repository per app in `git_apps`, at `ssh://git@git-server/test/<app>`, created and seeded by infra | infra verify; the role's `splunk_apps` tasks (not yet run in the lab; spec 10, Requirement 1) |
 
 ## Dataflow
 
